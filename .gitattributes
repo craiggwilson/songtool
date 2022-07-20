@@ -1,0 +1,6 @@
+* text=lf
+
+*.go text
+*.md text
+*.mod text
+*.sum text

@@ -2,14 +2,7 @@ package theory
 
 import (
 	"sort"
-
-	"github.com/craiggwilson/songtools/theory/note"
 )
-
-const DegreeClassCount = 7
-const PitchClassCount = 12
-
-var degreeClassToPitchClass = []note.PitchClass{0, 2, 4, 5, 7, 9, 11}
 
 func DefaultConfig() Config {
 
@@ -133,7 +126,7 @@ func DefaultConfig() Config {
 
 	return Config{
 		MinorKeySymbols:     []rune{'m'},
-		NaturalNoteNames:    []rune{'A', 'B', 'C', 'D', 'E', 'F', 'G'},
+		NaturalNoteNames:    []rune{'C', 'D', 'E', 'F', 'G', 'A', 'B'},
 		SharpSymbols:        []rune{'#'},
 		FlatSymbols:         []rune{'b'},
 		BaseNoteDelimiters:  []rune{'/'},
@@ -152,24 +145,6 @@ type Config struct {
 	MajorChordIntervals []int
 
 	ChordModifiers []ChordModifierGroup
-}
-
-func (c *Config) DegreeClass(naturalNoteName rune) (note.DegreeClass, bool) {
-	for i, nn := range c.NaturalNoteNames {
-		if nn == naturalNoteName {
-			return note.DegreeClass(i), true
-		}
-	}
-
-	return 0, false
-}
-
-func (C *Config) PitchClassFromDegreeClass(degreeClass note.DegreeClass) (note.PitchClass, bool) {
-	if int(degreeClass) < len(degreeClassToPitchClass) {
-		return degreeClassToPitchClass[int(degreeClass)], true
-	}
-
-	return 0, false
 }
 
 type ChordModifierGroup struct {
