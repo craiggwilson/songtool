@@ -8,5 +8,5 @@ type Chord struct {
 	Root      note.Note
 	Intervals []int
 	Suffix    string
-	BaseNote  note.Note
+	Base      note.Note
 }

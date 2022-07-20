@@ -3,9 +3,11 @@ package theory
 import (
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 	"unicode/utf8"
 
+	"github.com/craiggwilson/songtools/theory/chord"
 	"github.com/craiggwilson/songtools/theory/key"
 	"github.com/craiggwilson/songtools/theory/note"
 )
@@ -16,13 +18,50 @@ func NewParser(cfg Config) *Parser {
 
 type Parser struct {
 	Config Config
-
-	minorSuffix string
 }
 
-// func (p *Parser) ParseChord(text string) (chord.Chord, error) {
+func (p *Parser) ParseChord(text string) (chord.Chord, error) {
+	root, pos, err := p.parseNote(text, 0)
+	if err != nil {
+		return chord.Chord{}, fmt.Errorf("expected note at position 0: %w", err)
+	}
 
-// }
+	// Start with major chord intervals.
+	intervals := make([]int, len(p.Config.MajorChordIntervals))
+	copy(intervals, p.Config.MajorChordIntervals)
+
+	suffixPos := pos
+
+	// Each modifier group may have multiple applications, but once a group has passed, no more additions.
+	for _, modifierGroup := range p.Config.ChordModifiers {
+		changed := true
+		for changed {
+			changed = false
+			for _, mod := range modifierGroup.Modifiers {
+				if strings.HasPrefix(text[pos:], mod.Match) && (len(mod.Except) == 0 || !strings.HasPrefix(text[pos:], mod.Except)) {
+					intervals = modifyIntervals(intervals, mod.Intervals)
+					pos += len(mod.Match)
+					changed = true
+				}
+			}
+		}
+	}
+
+	basePos := pos
+
+	base, pos, _ := p.parseBaseNote(text, pos)
+
+	if len(text) != pos {
+		return chord.Chord{}, fmt.Errorf("expected EOF at position %d, but had %s", pos, text[pos:])
+	}
+
+	return chord.Chord{
+		Root:      root,
+		Intervals: intervals,
+		Suffix:    text[suffixPos:basePos],
+		Base:      base,
+	}, nil
+}
 
 func (p *Parser) ParseKey(text string) (key.Key, error) {
 	n, pos, err := p.parseNote(text, 0)
@@ -30,25 +69,21 @@ func (p *Parser) ParseKey(text string) (key.Key, error) {
 		return key.Key{}, fmt.Errorf("expected note at position 0: %w", err)
 	}
 
-	if len(p.minorSuffix) == 0 {
-	Outer:
-		for _, comp := range p.Config.ChordComponents {
-			for _, entry := range comp.Entries {
-				if len(entry.Intervals) == 2 && ((entry.Intervals[0] == 3 && entry.Intervals[1] == -4) || (entry.Intervals[0] == -4 && entry.Intervals[1] == 3)) {
-					p.minorSuffix = entry.Match
-					break Outer
-				}
-			}
-		}
+	kind := key.Major
 
-		if len(p.minorSuffix) == 0 {
-			return key.Key{}, fmt.Errorf("unable to determine minor suffix from Config.ChordComponents")
+	if len(text) > pos {
+		v, w := utf8.DecodeRuneInString(text[pos:])
+		for _, r := range p.Config.MinorKeySymbols {
+			if v == r {
+				kind = key.Minor
+				pos += w
+				break
+			}
 		}
 	}
 
-	kind := key.Major
-	if strings.HasPrefix(text[pos:], p.minorSuffix) {
-		kind = key.Minor
+	if len(text) != pos {
+		return key.Key{}, fmt.Errorf("expected EOF at position %d, but had %s", pos, text[pos:])
 	}
 
 	return key.Key{
@@ -58,12 +93,30 @@ func (p *Parser) ParseKey(text string) (key.Key, error) {
 }
 
 func (p *Parser) ParseNote(text string) (note.Note, error) {
-	n, _, err := p.parseNote(text, 0)
+	n, pos, err := p.parseNote(text, 0)
+	if len(text) != pos {
+		return note.Note{}, fmt.Errorf("expected EOF at position %d, but had %s", pos, text[pos:])
+	}
 	return n, err
 }
 
+func (p *Parser) parseBaseNote(text string, pos int) (note.Note, int, error) {
+	if len(text) <= pos {
+		return note.Note{}, pos, io.ErrUnexpectedEOF
+	}
+
+	v, w := utf8.DecodeRuneInString(text[pos:])
+	for _, r := range p.Config.BaseNoteDelimiters {
+		if v == r {
+			return p.parseNote(text, pos+w)
+		}
+	}
+
+	return note.Note{}, pos, fmt.Errorf("expected base note separator, but got %v", v)
+}
+
 func (p *Parser) parseNote(text string, pos int) (note.Note, int, error) {
-	naturalNoteName, newPos, err := p.parseNaturalNoteName(text, 0)
+	naturalNoteName, newPos, err := p.parseNaturalNoteName(text, pos)
 	if err != nil {
 		return note.Note{}, pos, fmt.Errorf("expected natural note name at position %d: %w", newPos, err)
 	}
@@ -90,7 +143,7 @@ func (p *Parser) parseNote(text string, pos int) (note.Note, int, error) {
 	}
 
 	return note.Note{
-		Name:        text[:newPos],
+		Name:        text[pos:newPos],
 		DegreeClass: degreeClass,
 		PitchClass:  pitchClass,
 		Accidentals: accidentals,
@@ -133,4 +186,39 @@ func (p *Parser) parseSharpOrFlat(text string, pos int) (int, int, error) {
 	}
 
 	return 0, pos, fmt.Errorf("expected sharp or flat, but got %v", v)
+}
+
+func modifyIntervals(intervals []int, modifiers []int) []int {
+	for i := 0; i < len(modifiers); i++ {
+		if modifiers[i] > 0 {
+			found := false
+			for j := 0; j < len(intervals); j++ {
+				if intervals[j] == modifiers[i] {
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				intervals = append(intervals, modifiers[i])
+			}
+		}
+		if modifiers[i] < 0 {
+			mod := modifiers[i] * -1
+			for j := 0; j < len(intervals); j++ {
+				if intervals[j] == mod {
+					for k := j + 1; k < len(intervals); k++ {
+						intervals[k-1] = intervals[k]
+					}
+					intervals = intervals[:len(intervals)-1]
+				}
+			}
+		}
+	}
+
+	sort.Slice(intervals, func(i, j int) bool {
+		return intervals[i] < intervals[j]
+	})
+
+	return intervals
 }

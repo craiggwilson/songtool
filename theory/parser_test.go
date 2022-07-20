@@ -6,9 +6,87 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/craiggwilson/songtools/theory"
+	"github.com/craiggwilson/songtools/theory/chord"
 	"github.com/craiggwilson/songtools/theory/key"
 	"github.com/craiggwilson/songtools/theory/note"
 )
+
+func TestParser_ParseChord(t *testing.T) {
+	testCases := []struct {
+		name        string
+		expected    chord.Chord
+		expectedErr error
+	}{
+		{
+			name: "A",
+			expected: chord.Chord{
+				Root: note.Note{
+					Name:        "A",
+					DegreeClass: 0,
+					PitchClass:  0,
+					Accidentals: 0,
+				},
+				Intervals: []int{1, 4, 7},
+			},
+		},
+		{
+			name: "Amaj9",
+			expected: chord.Chord{
+				Root: note.Note{
+					Name:        "A",
+					DegreeClass: 0,
+					PitchClass:  0,
+					Accidentals: 0,
+				},
+				Intervals: []int{1, 4, 7, 11, 14},
+				Suffix:    "maj9",
+			},
+		},
+		{
+			name: "Gbbmsus2add6",
+			expected: chord.Chord{
+				Root: note.Note{
+					Name:        "Gbb",
+					DegreeClass: 6,
+					PitchClass:  11,
+					Accidentals: -2,
+				},
+				Intervals: []int{1, 2, 7, 9},
+				Suffix:    "msus2add6",
+			},
+		},
+		{
+			name: "C#m7/G#",
+			expected: chord.Chord{
+				Root: note.Note{
+					Name:        "C#",
+					DegreeClass: 2,
+					PitchClass:  4,
+					Accidentals: 1,
+				},
+				Intervals: []int{1, 3, 7, 10},
+				Suffix:    "m7",
+				Base: note.Note{
+					Name:        "G#",
+					DegreeClass: 6,
+					PitchClass:  11,
+					Accidentals: 1,
+				},
+			},
+		},
+	}
+
+	p := theory.NewParser(theory.DefaultConfig())
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			actual, err := p.ParseChord(tc.name)
+			require.ErrorIs(t, err, tc.expectedErr)
+
+			require.Equal(t, tc.expected, actual)
+		})
+	}
+}
 
 func TestParser_ParseKey(t *testing.T) {
 	testCases := []struct {
