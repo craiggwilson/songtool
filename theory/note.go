@@ -3,6 +3,8 @@ package theory
 import (
 	"fmt"
 	"io"
+	"math"
+	"strings"
 	"unicode/utf8"
 )
 
@@ -15,6 +17,12 @@ type Note struct {
 
 type DegreeClass int
 type PitchClass int
+type Enharmonic int
+
+const (
+	EnharmonicSharp Enharmonic = 1
+	EnharmonicFlat  Enharmonic = -1
+)
 
 func ParseNote(cfg *Config, text string) (Note, error) {
 	n, pos, err := parseNote(cfg, text, 0)
@@ -28,21 +36,56 @@ func ParseNote(cfg *Config, text string) (Note, error) {
 	return n, err
 }
 
+func TransposeNote(cfg *Config, n Note, degreeClassInterval int, pitchClassInterval int) Note {
+	newDegreeClass := adjustDegreeClass(cfg, n.DegreeClass, degreeClassInterval)
+	newPitchClass := adjustPitchClass(cfg, n.PitchClass, pitchClassInterval)
+
+	pitchClassDeltaFromDegreeClasses := pitchClassDelta(cfg, pitchClassFromDegreeClass(cfg, n.DegreeClass), pitchClassFromDegreeClass(cfg, newDegreeClass))
+	pitchClassDeltaFromPitchClass := pitchClassDelta(cfg, n.PitchClass, newPitchClass)
+
+	accidentalsOffset := pitchClassDeltaFromPitchClass - pitchClassDeltaFromDegreeClasses
+
+	newAccidentals := normalizeAccidentals(cfg, n.Accidentals+accidentalsOffset)
+
+	naturalNoteName := cfg.NaturalNoteNames[newDegreeClass]
+	accidentalToken := ""
+	if newAccidentals > 0 {
+		accidentalToken = strings.Repeat(string(cfg.SharpSymbols[0]), newAccidentals)
+	} else if newAccidentals < 0 {
+		accidentalToken = strings.Repeat(string(cfg.FlatSymbols[0]), int(math.Abs(float64(newAccidentals))))
+	}
+
+	return Note{
+		Name:        string(naturalNoteName) + accidentalToken,
+		DegreeClass: newDegreeClass,
+		PitchClass:  newPitchClass,
+		Accidentals: newAccidentals,
+	}
+}
+
+// func TransposeNote(cfg *Config, n Note, interval int, enharmonic Enharmonic) (Note, error) {
+// 	// First, figure out if we should change the degree class. We can do this by looking at the current note's pitch
+// 	// class and degree class and see if the bumped pitch class falls into a different degree class.
+// 	newPitchClass := n.PitchClass + PitchClass(interval)
+// 	newDegreeClass := DegreeClassFromPitchClass(cfg, newPitchClass, enharmonic)
+
+// }
+
 func parseNote(cfg *Config, text string, pos int) (Note, int, error) {
 	naturalNoteName, newPos, err := parseNaturalNoteName(cfg, text, pos)
 	if err != nil {
 		return Note{}, pos, fmt.Errorf("expected natural note name at position %d: %w", newPos, err)
 	}
 
-	degreeClass := DegreeClassFromNaturalNoteName(cfg, naturalNoteName)
-	pitchClass := PitchClassFromDegreeClass(cfg, degreeClass)
+	degreeClass := degreeClassFromNaturalNoteName(cfg, naturalNoteName)
+	pitchClass := pitchClassFromDegreeClass(cfg, degreeClass)
 
 	accidentals, newPos := parseAccidentals(cfg, text, newPos)
 
 	return Note{
 		Name:        text[pos:newPos],
 		DegreeClass: degreeClass,
-		PitchClass:  AdjustPitchClass(cfg, pitchClass, accidentals),
+		PitchClass:  adjustPitchClass(cfg, pitchClass, accidentals),
 		Accidentals: accidentals,
 	}, newPos, nil
 }

@@ -5,7 +5,6 @@ import (
 )
 
 func DefaultConfig() Config {
-
 	modGroups := []ChordModifierGroup{
 		{
 			Name: "Quality",
@@ -125,13 +124,15 @@ func DefaultConfig() Config {
 	}
 
 	return Config{
-		MinorKeySymbols:     []rune{'m'},
-		NaturalNoteNames:    []rune{'C', 'D', 'E', 'F', 'G', 'A', 'B'},
-		SharpSymbols:        []rune{'#'},
-		FlatSymbols:         []rune{'b'},
-		BaseNoteDelimiters:  []rune{'/'},
-		MajorChordIntervals: []int{1, 4, 7},
-		ChordModifiers:      modGroups,
+		MinorKeySymbols:         []rune{'m'},
+		NaturalNoteNames:        []rune{'C', 'D', 'E', 'F', 'G', 'A', 'B'},
+		SharpSymbols:            []rune{'#'},
+		FlatSymbols:             []rune{'b'},
+		BaseNoteDelimiters:      []rune{'/'},
+		MajorChordIntervals:     []int{1, 4, 7},
+		ChordModifiers:          modGroups,
+		PitchClassCount:         12,
+		DegreeClassToPitchClass: []PitchClass{0, 2, 4, 5, 7, 9, 11},
 	}
 }
 
@@ -145,6 +146,9 @@ type Config struct {
 	MajorChordIntervals []int
 
 	ChordModifiers []ChordModifierGroup
+
+	PitchClassCount         int
+	DegreeClassToPitchClass []PitchClass
 }
 
 type ChordModifierGroup struct {

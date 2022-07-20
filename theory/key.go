@@ -35,7 +35,7 @@ func GenerateKeys(cfg *Config, kind KeyKind) []Key {
 	for i, nnn := range cfg.NaturalNoteNames {
 
 		degreeClass := DegreeClass(i)
-		pitchClass := PitchClassFromDegreeClass(cfg, degreeClass)
+		pitchClass := pitchClassFromDegreeClass(cfg, degreeClass)
 
 		keys = append(keys, Key{
 			Note: Note{
@@ -51,7 +51,7 @@ func GenerateKeys(cfg *Config, kind KeyKind) []Key {
 			Note: Note{
 				Name:        string(nnn) + string(cfg.SharpSymbols[0]),
 				DegreeClass: degreeClass,
-				PitchClass:  AdjustPitchClass(cfg, pitchClass, 1),
+				PitchClass:  adjustPitchClass(cfg, pitchClass, 1),
 				Accidentals: 1,
 			},
 			Kind: kind,
@@ -61,7 +61,7 @@ func GenerateKeys(cfg *Config, kind KeyKind) []Key {
 			Note: Note{
 				Name:        string(nnn) + string(cfg.FlatSymbols[0]),
 				DegreeClass: degreeClass,
-				PitchClass:  AdjustPitchClass(cfg, pitchClass, -1),
+				PitchClass:  adjustPitchClass(cfg, pitchClass, -1),
 				Accidentals: -1,
 			},
 			Kind: kind,
