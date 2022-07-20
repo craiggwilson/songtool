@@ -219,9 +219,8 @@ func TestGenerateKeys(t *testing.T) {
 
 func TestParseKey(t *testing.T) {
 	testCases := []struct {
-		name        string
-		expected    theory.Key
-		expectedErr error
+		name     string
+		expected theory.Key
 	}{
 		{
 			name: "A",
@@ -302,7 +301,7 @@ func TestParseKey(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			actual, err := theory.ParseKey(&cfg, tc.name)
-			require.ErrorIs(t, err, tc.expectedErr)
+			require.Nil(t, err)
 
 			require.Equal(t, tc.expected, actual)
 		})

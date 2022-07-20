@@ -29,10 +29,6 @@ func (kk KeyKind) String() string {
 	}
 }
 
-func CompareKeys(a, b Key) int {
-	return CompareNotes(a.Note, b.Note)
-}
-
 func GenerateKeys(cfg *Config, kind KeyKind) []Key {
 	keys := make([]Key, 0, len(cfg.NaturalNoteNames)*3)
 
@@ -97,7 +93,7 @@ func ParseKey(cfg *Config, text string) (Key, error) {
 	}
 
 	if len(text) != pos {
-		return Key{}, fmt.Errorf("expected EOF at position %d, but had %s", pos, text[pos:])
+		return Key{}, fmt.Errorf("expected EOF at position %d, but had %q", pos, text[pos:])
 	}
 
 	return Key{
@@ -108,6 +104,17 @@ func ParseKey(cfg *Config, text string) (Key, error) {
 
 func SortKeys(keys []Key) {
 	sort.Slice(keys, func(i, j int) bool {
-		return CompareKeys(keys[i], keys[j]) < 0
+		switch {
+		case keys[i].Note.DegreeClass < keys[j].Note.DegreeClass:
+			return true
+		case keys[i].Note.DegreeClass > keys[j].Note.DegreeClass:
+			return false
+		case keys[i].Note.Accidentals < keys[j].Note.Accidentals:
+			return true
+		case keys[i].Note.Accidentals > keys[j].Note.Accidentals:
+			return false
+		default:
+			return false
+		}
 	})
 }

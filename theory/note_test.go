@@ -9,9 +9,9 @@ import (
 
 func TestParseNote(t *testing.T) {
 	testCases := []struct {
-		name        string
-		expected    theory.Note
-		expectedErr error
+		name           string
+		expected       theory.Note
+		expectedErrMsg string
 	}{
 		{
 			name: "A",
@@ -67,6 +67,21 @@ func TestParseNote(t *testing.T) {
 				Accidentals: -2,
 			},
 		},
+		{
+			name:           "Ab#",
+			expected:       theory.Note{},
+			expectedErrMsg: `expected EOF at position 2, but had "#"`,
+		},
+		{
+			name:           "A#b",
+			expected:       theory.Note{},
+			expectedErrMsg: `expected EOF at position 2, but had "b"`,
+		},
+		{
+			name:           "H",
+			expected:       theory.Note{},
+			expectedErrMsg: `expected natural note name at position 0: expected one of ['C' 'D' 'E' 'F' 'G' 'A' 'B'], but got 'H'`,
+		},
 	}
 
 	cfg := theory.DefaultConfig()
@@ -74,8 +89,9 @@ func TestParseNote(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			actual, err := theory.ParseNote(&cfg, tc.name)
-			require.ErrorIs(t, err, tc.expectedErr)
-
+			if len(tc.expectedErrMsg) > 0 {
+				require.EqualError(t, err, tc.expectedErrMsg)
+			}
 			require.Equal(t, tc.expected, actual)
 		})
 	}

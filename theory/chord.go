@@ -105,5 +105,5 @@ func parseBaseNote(cfg *Config, text string, pos int) (Note, int, error) {
 		}
 	}
 
-	return Note{}, pos, fmt.Errorf("expected base note separator, but got %v", v)
+	return Note{}, pos, fmt.Errorf("expected one of %q, but got %q", cfg.BaseNoteDelimiters, v)
 }

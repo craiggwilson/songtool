@@ -9,9 +9,8 @@ import (
 
 func TestParseChord(t *testing.T) {
 	testCases := []struct {
-		name        string
-		expected    theory.Chord
-		expectedErr error
+		name     string
+		expected theory.Chord
 	}{
 		{
 			name: "A",
@@ -77,8 +76,7 @@ func TestParseChord(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			actual, err := theory.ParseChord(&cfg, tc.name)
-			require.ErrorIs(t, err, tc.expectedErr)
-
+			require.Nil(t, err)
 			require.Equal(t, tc.expected, actual)
 		})
 	}

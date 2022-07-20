@@ -16,25 +16,14 @@ type Note struct {
 type DegreeClass int
 type PitchClass int
 
-func CompareNotes(a, b Note) int {
-	switch {
-	case a.DegreeClass < b.DegreeClass:
-		return -1
-	case a.DegreeClass > b.DegreeClass:
-		return 1
-	case a.Accidentals < b.Accidentals:
-		return -1
-	case a.Accidentals > b.Accidentals:
-		return 1
-	default:
-		return 0
-	}
-}
-
 func ParseNote(cfg *Config, text string) (Note, error) {
 	n, pos, err := parseNote(cfg, text, 0)
+	if err != nil {
+		return Note{}, err
+	}
+
 	if len(text) != pos {
-		return Note{}, fmt.Errorf("expected EOF at position %d, but had %s", pos, text[pos:])
+		return Note{}, fmt.Errorf("expected EOF at position %d, but had %q", pos, text[pos:])
 	}
 	return n, err
 }
@@ -48,16 +37,7 @@ func parseNote(cfg *Config, text string, pos int) (Note, int, error) {
 	degreeClass := DegreeClassFromNaturalNoteName(cfg, naturalNoteName)
 	pitchClass := PitchClassFromDegreeClass(cfg, degreeClass)
 
-	accidentals := 0
-	for {
-		var accidental int
-		accidental, newPos, err = parseAccidental(cfg, text, newPos)
-		if err != nil {
-			break
-		}
-
-		accidentals += accidental
-	}
+	accidentals, newPos := parseAccidentals(cfg, text, newPos)
 
 	return Note{
 		Name:        text[pos:newPos],
@@ -80,27 +60,68 @@ func parseNaturalNoteName(cfg *Config, text string, pos int) (rune, int, error) 
 		}
 	}
 
-	return 0, pos, fmt.Errorf("expected natural note name, but got %v", v)
+	return 0, pos, fmt.Errorf("expected one of %q, but got %q", cfg.NaturalNoteNames, v)
 }
 
-func parseAccidental(cfg *Config, text string, pos int) (int, int, error) {
+func parseAccidentals(cfg *Config, text string, pos int) (int, int) {
 	if len(text) <= pos {
-		return 0, pos, io.ErrUnexpectedEOF
+		return 0, pos
 	}
 
+	accidentals, pos := parseSharps(cfg, text, pos)
+	if accidentals != 0 {
+		return accidentals, pos
+	}
+
+	return parseFlats(cfg, text, pos)
+}
+
+func parseSharps(cfg *Config, text string, pos int) (int, int) {
+	if len(text) <= pos {
+		return 0, pos
+	}
+
+	accidentals := 0
+
+	changed := true
 	v, w := utf8.DecodeRuneInString(text[pos:])
-
-	for _, ss := range cfg.SharpSymbols {
-		if v == ss {
-			return 1, pos + w, nil
+	for changed {
+		changed = false
+		for _, ss := range cfg.SharpSymbols {
+			if v == ss {
+				accidentals++
+				pos += w
+				changed = true
+				v, w = utf8.DecodeRuneInString(text[pos:])
+				break
+			}
 		}
 	}
 
-	for _, fs := range cfg.FlatSymbols {
-		if v == fs {
-			return -1, pos + w, nil
+	return accidentals, pos
+}
+
+func parseFlats(cfg *Config, text string, pos int) (int, int) {
+	if len(text) <= pos {
+		return 0, pos
+	}
+
+	accidentals := 0
+
+	changed := true
+	v, w := utf8.DecodeRuneInString(text[pos:])
+	for changed {
+		changed = false
+		for _, ss := range cfg.FlatSymbols {
+			if v == ss {
+				accidentals--
+				pos += w
+				changed = true
+				v, w = utf8.DecodeRuneInString(text[pos:])
+				break
+			}
 		}
 	}
 
-	return 0, pos, fmt.Errorf("expected sharp or flat, but got %v", v)
+	return accidentals, pos
 }
