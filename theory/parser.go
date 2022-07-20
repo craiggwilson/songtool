@@ -3,8 +3,10 @@ package theory
 import (
 	"fmt"
 	"io"
+	"strings"
 	"unicode/utf8"
 
+	"github.com/craiggwilson/songtools/theory/key"
 	"github.com/craiggwilson/songtools/theory/note"
 )
 
@@ -14,15 +16,46 @@ func NewParser(cfg Config) *Parser {
 
 type Parser struct {
 	Config Config
+
+	minorSuffix string
 }
 
 // func (p *Parser) ParseChord(text string) (chord.Chord, error) {
 
 // }
 
-// func (p *Parser) ParseKey(text string) (key.Key, error) {
+func (p *Parser) ParseKey(text string) (key.Key, error) {
+	n, pos, err := p.parseNote(text, 0)
+	if err != nil {
+		return key.Key{}, fmt.Errorf("expected note at position 0: %w", err)
+	}
 
-// }
+	if len(p.minorSuffix) == 0 {
+	Outer:
+		for _, comp := range p.Config.ChordComponents {
+			for _, entry := range comp.Entries {
+				if len(entry.Intervals) == 2 && ((entry.Intervals[0] == 3 && entry.Intervals[1] == -4) || (entry.Intervals[0] == -4 && entry.Intervals[1] == 3)) {
+					p.minorSuffix = entry.Match
+					break Outer
+				}
+			}
+		}
+
+		if len(p.minorSuffix) == 0 {
+			return key.Key{}, fmt.Errorf("unable to determine minor suffix from Config.ChordComponents")
+		}
+	}
+
+	kind := key.Major
+	if strings.HasPrefix(text[pos:], p.minorSuffix) {
+		kind = key.Minor
+	}
+
+	return key.Key{
+		Note: n,
+		Kind: kind,
+	}, nil
+}
 
 func (p *Parser) ParseNote(text string) (note.Note, error) {
 	n, _, err := p.parseNote(text, 0)
@@ -61,7 +94,7 @@ func (p *Parser) parseNote(text string, pos int) (note.Note, int, error) {
 		DegreeClass: degreeClass,
 		PitchClass:  pitchClass,
 		Accidentals: accidentals,
-	}, pos, nil
+	}, newPos, nil
 }
 
 func (p *Parser) parseNaturalNoteName(text string, pos int) (rune, int, error) {
