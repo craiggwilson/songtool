@@ -207,11 +207,9 @@ func TestGenerateKeys(t *testing.T) {
 		},
 	}
 
-	cfg := theory.DefaultConfig()
-
 	for _, tc := range testCases {
 		t.Run(tc.kind.String(), func(t *testing.T) {
-			actual := theory.GenerateKeys(&cfg, tc.kind)
+			actual := theory.GenerateKeys(nil, tc.kind)
 			require.Equal(t, tc.expected, actual)
 		})
 	}
@@ -296,11 +294,9 @@ func TestParseKey(t *testing.T) {
 		},
 	}
 
-	cfg := theory.DefaultConfig()
-
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			actual, err := theory.ParseKey(&cfg, tc.name)
+			actual, err := theory.ParseKey(nil, tc.name)
 			require.Nil(t, err)
 
 			require.Equal(t, tc.expected, actual)

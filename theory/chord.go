@@ -16,6 +16,10 @@ type Chord struct {
 }
 
 func ParseChord(cfg *Config, text string) (Chord, error) {
+	if cfg == nil {
+		cfg = &defaultConfig
+	}
+
 	root, pos, err := parseNote(cfg, text, 0)
 	if err != nil {
 		return Chord{}, fmt.Errorf("expected note at position 0: %w", err)

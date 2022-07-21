@@ -30,6 +30,10 @@ func (kk KeyKind) String() string {
 }
 
 func GenerateKeys(cfg *Config, kind KeyKind) []Key {
+	if cfg == nil {
+		cfg = &defaultConfig
+	}
+
 	keys := make([]Key, 0, len(cfg.NaturalNoteNames)*3)
 
 	for i, nnn := range cfg.NaturalNoteNames {

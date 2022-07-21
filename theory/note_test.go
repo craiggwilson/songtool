@@ -1,6 +1,7 @@
 package theory_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/craiggwilson/songtools/theory"
@@ -84,15 +85,81 @@ func TestParseNote(t *testing.T) {
 		},
 	}
 
-	cfg := theory.DefaultConfig()
-
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			actual, err := theory.ParseNote(&cfg, tc.name)
+			actual, err := theory.ParseNote(nil, tc.name)
 			if len(tc.expectedErrMsg) > 0 {
 				require.EqualError(t, err, tc.expectedErrMsg)
 			}
 			require.Equal(t, tc.expected, actual)
 		})
 	}
+}
+
+func TestTransposeNote(t *testing.T) {
+	testCases := []struct {
+		from                theory.Note
+		degreeClassInterval int
+		pitchClassInterval  int
+		expected            theory.Note
+	}{
+		{
+			from:                mustParseNote(nil, "C"),
+			degreeClassInterval: 1,
+			pitchClassInterval:  2,
+			expected:            mustParseNote(nil, "D"),
+		},
+		{
+			from:                mustParseNote(nil, "C"),
+			degreeClassInterval: 1,
+			pitchClassInterval:  1,
+			expected:            mustParseNote(nil, "Db"),
+		},
+		{
+			from:                mustParseNote(nil, "C"),
+			degreeClassInterval: 0,
+			pitchClassInterval:  1,
+			expected:            mustParseNote(nil, "C#"),
+		},
+		{
+			from:                mustParseNote(nil, "C"),
+			degreeClassInterval: 0,
+			pitchClassInterval:  -1,
+			expected:            mustParseNote(nil, "Cb"),
+		},
+		{
+			from:                mustParseNote(nil, "C"),
+			degreeClassInterval: -1,
+			pitchClassInterval:  -1,
+			expected:            mustParseNote(nil, "B"),
+		},
+		{
+			from:                mustParseNote(nil, "C"),
+			degreeClassInterval: -1,
+			pitchClassInterval:  -2,
+			expected:            mustParseNote(nil, "Bb"),
+		},
+		{
+			from:                mustParseNote(nil, "C"),
+			degreeClassInterval: -2,
+			pitchClassInterval:  -2,
+			expected:            mustParseNote(nil, "A#"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("%s +- (%d, %d)", tc.from.Name, tc.degreeClassInterval, tc.pitchClassInterval), func(t *testing.T) {
+			actual := theory.TransposeNote(nil, tc.from, tc.degreeClassInterval, tc.pitchClassInterval)
+			require.Equal(t, tc.expected, actual)
+		})
+	}
+}
+
+func mustParseNote(cfg *theory.Config, text string) theory.Note {
+	n, err := theory.ParseNote(cfg, text)
+	if err != nil {
+		panic(err)
+	}
+
+	return n
 }

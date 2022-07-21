@@ -25,6 +25,10 @@ const (
 )
 
 func ParseNote(cfg *Config, text string) (Note, error) {
+	if cfg == nil {
+		cfg = &defaultConfig
+	}
+
 	n, pos, err := parseNote(cfg, text, 0)
 	if err != nil {
 		return Note{}, err
@@ -37,6 +41,10 @@ func ParseNote(cfg *Config, text string) (Note, error) {
 }
 
 func TransposeNote(cfg *Config, n Note, degreeClassInterval int, pitchClassInterval int) Note {
+	if cfg == nil {
+		cfg = &defaultConfig
+	}
+
 	newDegreeClass := adjustDegreeClass(cfg, n.DegreeClass, degreeClassInterval)
 	newPitchClass := adjustPitchClass(cfg, n.PitchClass, pitchClassInterval)
 

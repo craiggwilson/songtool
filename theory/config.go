@@ -4,6 +4,8 @@ import (
 	"sort"
 )
 
+var defaultConfig Config = DefaultConfig()
+
 func DefaultConfig() Config {
 	modGroups := []ChordModifierGroup{
 		{
