@@ -98,6 +98,65 @@ func TestParseNote(t *testing.T) {
 
 func TestTransposeNote(t *testing.T) {
 	testCases := []struct {
+		from               theory.Note
+		pitchClassInterval int
+		enharmonic         theory.Enharmonic
+		expected           theory.Note
+	}{
+		{
+			from:               mustParseNote(nil, "C"),
+			pitchClassInterval: 2,
+			enharmonic:         theory.EnharmonicSharp,
+			expected:           mustParseNote(nil, "D"),
+		},
+		{
+			from:               mustParseNote(nil, "C"),
+			pitchClassInterval: 1,
+			enharmonic:         theory.EnharmonicSharp,
+			expected:           mustParseNote(nil, "C#"),
+		},
+		{
+			from:               mustParseNote(nil, "C"),
+			pitchClassInterval: 1,
+			enharmonic:         theory.EnharmonicFlat,
+			expected:           mustParseNote(nil, "Db"),
+		},
+		{
+			from:               mustParseNote(nil, "C#"),
+			pitchClassInterval: 0,
+			enharmonic:         theory.EnharmonicFlat,
+			expected:           mustParseNote(nil, "Db"),
+		},
+		{
+			from:               mustParseNote(nil, "Db"),
+			pitchClassInterval: 0,
+			enharmonic:         theory.EnharmonicSharp,
+			expected:           mustParseNote(nil, "C#"),
+		},
+		{
+			from:               mustParseNote(nil, "C"),
+			pitchClassInterval: -1,
+			enharmonic:         theory.EnharmonicSharp,
+			expected:           mustParseNote(nil, "B"),
+		},
+		{
+			from:               mustParseNote(nil, "C"),
+			pitchClassInterval: -1,
+			enharmonic:         theory.EnharmonicFlat,
+			expected:           mustParseNote(nil, "B"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("%s +- (%d, %d)", tc.from.Name, tc.pitchClassInterval, tc.enharmonic), func(t *testing.T) {
+			actual := theory.TransposeNote(nil, tc.from, tc.pitchClassInterval, tc.enharmonic)
+			require.Equal(t, tc.expected, actual)
+		})
+	}
+}
+
+func TestTransposeNoteDirect(t *testing.T) {
+	testCases := []struct {
 		from                theory.Note
 		degreeClassInterval int
 		pitchClassInterval  int
@@ -149,7 +208,7 @@ func TestTransposeNote(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%s +- (%d, %d)", tc.from.Name, tc.degreeClassInterval, tc.pitchClassInterval), func(t *testing.T) {
-			actual := theory.TransposeNote(nil, tc.from, tc.degreeClassInterval, tc.pitchClassInterval)
+			actual := theory.TransposeNoteDirect(nil, tc.from, tc.degreeClassInterval, tc.pitchClassInterval)
 			require.Equal(t, tc.expected, actual)
 		})
 	}

@@ -44,7 +44,16 @@ func ParseNote(cfg *Config, text string) (Note, error) {
 	return n, err
 }
 
-func TransposeNote(cfg *Config, n Note, degreeClassInterval int, pitchClassInterval int) Note {
+func TransposeNote(cfg *Config, n Note, pitchClassInterval int, enharmonic Enharmonic) Note {
+	if cfg == nil {
+		cfg = &defaultConfig
+	}
+
+	newDegreeClass := degreeClassFromPitchClass(cfg, adjustPitchClass(cfg, n.PitchClass, pitchClassInterval), enharmonic)
+	return TransposeNoteDirect(cfg, n, int(newDegreeClass)-int(n.DegreeClass), pitchClassInterval)
+}
+
+func TransposeNoteDirect(cfg *Config, n Note, degreeClassInterval int, pitchClassInterval int) Note {
 	if cfg == nil {
 		cfg = &defaultConfig
 	}
@@ -55,9 +64,7 @@ func TransposeNote(cfg *Config, n Note, degreeClassInterval int, pitchClassInter
 	pitchClassDeltaFromDegreeClasses := pitchClassDelta(cfg, pitchClassFromDegreeClass(cfg, n.DegreeClass), pitchClassFromDegreeClass(cfg, newDegreeClass))
 	pitchClassDeltaFromPitchClass := pitchClassDelta(cfg, n.PitchClass, newPitchClass)
 
-	accidentalsOffset := pitchClassDeltaFromPitchClass - pitchClassDeltaFromDegreeClasses
-
-	newAccidentals := normalizeAccidentals(cfg, n.Accidentals+accidentalsOffset)
+	newAccidentals := normalizeAccidentals(cfg, n.Accidentals+pitchClassDeltaFromPitchClass-pitchClassDeltaFromDegreeClasses)
 
 	naturalNoteName := cfg.NaturalNoteNames[newDegreeClass]
 	accidentalToken := ""
@@ -74,14 +81,6 @@ func TransposeNote(cfg *Config, n Note, degreeClassInterval int, pitchClassInter
 		Accidentals: newAccidentals,
 	}
 }
-
-// func TransposeNote(cfg *Config, n Note, interval int, enharmonic Enharmonic) (Note, error) {
-// 	// First, figure out if we should change the degree class. We can do this by looking at the current note's pitch
-// 	// class and degree class and see if the bumped pitch class falls into a different degree class.
-// 	newPitchClass := n.PitchClass + PitchClass(interval)
-// 	newDegreeClass := DegreeClassFromPitchClass(cfg, newPitchClass, enharmonic)
-
-// }
 
 func parseNote(cfg *Config, text string, pos int) (Note, int, error) {
 	naturalNoteName, newPos, err := parseNaturalNoteName(cfg, text, pos)

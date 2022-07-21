@@ -78,6 +78,10 @@ func GenerateKeys(cfg *Config, kind KeyKind) []Key {
 }
 
 func ParseKey(cfg *Config, text string) (Key, error) {
+	if cfg == nil {
+		cfg = &defaultConfig
+	}
+
 	n, pos, err := parseNote(cfg, text, 0)
 	if err != nil {
 		return Key{}, fmt.Errorf("expected note at position 0: %w", err)
@@ -124,7 +128,7 @@ func SortKeys(keys []Key) {
 }
 
 func TransposeKey(cfg *Config, key Key, degreeClassInterval int, pitchClassInterval int) Key {
-	newKeyNote := TransposeNote(cfg, key.Note, degreeClassInterval, pitchClassInterval)
+	newKeyNote := TransposeNoteDirect(cfg, key.Note, degreeClassInterval, pitchClassInterval)
 	return Key{
 		Note: newKeyNote,
 		Kind: key.Kind,
