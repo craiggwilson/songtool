@@ -1,6 +1,6 @@
 package songio
 
-import "github.com/craiggwilson/songtools/pkg/theory"
+import "github.com/craiggwilson/songtool/pkg/theory"
 
 type KeyDirectiveLine struct {
 	Key theory.Key

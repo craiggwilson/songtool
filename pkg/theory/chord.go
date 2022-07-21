@@ -1,6 +1,7 @@
 package theory
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"sort"
@@ -9,14 +10,22 @@ import (
 )
 
 type Chord struct {
-	Root      Note
-	Intervals []int
-	Suffix    string
-	Base      BaseNote
+	Root      Note     `json:"root"`
+	Intervals []int    `json:"invervals"`
+	Suffix    string   `json:"suffix"`
+	Base      BaseNote `json:"base"`
 }
 
 func (c *Chord) IsValid() bool {
 	return c.Root.IsValid()
+}
+
+func (c Chord) MarshalJSON() ([]byte, error) {
+	type rawChord Chord
+	return json.Marshal(struct {
+		Name string `json:"name"`
+		rawChord
+	}{c.Name(), rawChord(c)})
 }
 
 func (c *Chord) Name() string {
@@ -30,7 +39,7 @@ func (c *Chord) Name() string {
 
 type BaseNote struct {
 	Note
-	Delimiter rune
+	Delimiter rune `json:"delimiter"`
 }
 
 func ParseChord(cfg *Config, text string) (Chord, error) {

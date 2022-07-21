@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/craiggwilson/songtools/pkg/cmd"
+	"github.com/craiggwilson/songtool/pkg/cmd"
 )
 
 var (
@@ -14,12 +14,10 @@ var (
 )
 
 func main() {
-	if exitCode := cmd.Main(cmd.VersionInfo{
+	cmd.Run(cmd.VersionInfo{
 		Version: version,
 		Commit:  commit,
 		Date:    date,
 		BuiltBy: builtBy,
-	}, os.Args[1:]); exitCode != 0 {
-		os.Exit(exitCode)
-	}
+	}, os.Args[1:])
 }

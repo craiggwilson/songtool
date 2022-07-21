@@ -3,7 +3,7 @@ package theory_test
 import (
 	"testing"
 
-	"github.com/craiggwilson/songtools/pkg/theory"
+	"github.com/craiggwilson/songtool/pkg/theory"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,7 +22,7 @@ func TestGenerateKeys(t *testing.T) {
 						PitchClass:  11,
 						Accidentals: -1,
 					},
-					Kind: 1,
+					Kind: theory.KeyMajor,
 				},
 				{
 					Note: theory.Note{
@@ -31,7 +31,7 @@ func TestGenerateKeys(t *testing.T) {
 						PitchClass:  0,
 						Accidentals: 0,
 					},
-					Kind: 1,
+					Kind: theory.KeyMajor,
 				},
 				{
 					Note: theory.Note{
@@ -40,7 +40,7 @@ func TestGenerateKeys(t *testing.T) {
 						PitchClass:  1,
 						Accidentals: 1,
 					},
-					Kind: 1,
+					Kind: theory.KeyMajor,
 				},
 				{
 					Note: theory.Note{
@@ -49,7 +49,7 @@ func TestGenerateKeys(t *testing.T) {
 						PitchClass:  1,
 						Accidentals: -1,
 					},
-					Kind: 1,
+					Kind: theory.KeyMajor,
 				},
 				{
 					Note: theory.Note{
@@ -58,7 +58,7 @@ func TestGenerateKeys(t *testing.T) {
 						PitchClass:  2,
 						Accidentals: 0,
 					},
-					Kind: 1,
+					Kind: theory.KeyMajor,
 				},
 				{
 					Note: theory.Note{
@@ -67,7 +67,7 @@ func TestGenerateKeys(t *testing.T) {
 						PitchClass:  3,
 						Accidentals: 1,
 					},
-					Kind: 1,
+					Kind: theory.KeyMajor,
 				},
 				{
 					Note: theory.Note{
@@ -76,7 +76,7 @@ func TestGenerateKeys(t *testing.T) {
 						PitchClass:  3,
 						Accidentals: -1,
 					},
-					Kind: 1,
+					Kind: theory.KeyMajor,
 				},
 				{
 					Note: theory.Note{
@@ -85,7 +85,7 @@ func TestGenerateKeys(t *testing.T) {
 						PitchClass:  4,
 						Accidentals: 0,
 					},
-					Kind: 1,
+					Kind: theory.KeyMajor,
 				},
 				{
 					Note: theory.Note{
@@ -94,7 +94,7 @@ func TestGenerateKeys(t *testing.T) {
 						PitchClass:  5,
 						Accidentals: 1,
 					},
-					Kind: 1,
+					Kind: theory.KeyMajor,
 				},
 				{
 					Note: theory.Note{
@@ -103,7 +103,7 @@ func TestGenerateKeys(t *testing.T) {
 						PitchClass:  4,
 						Accidentals: -1,
 					},
-					Kind: 1,
+					Kind: theory.KeyMajor,
 				},
 				{
 					Note: theory.Note{
@@ -112,7 +112,7 @@ func TestGenerateKeys(t *testing.T) {
 						PitchClass:  5,
 						Accidentals: 0,
 					},
-					Kind: 1,
+					Kind: theory.KeyMajor,
 				},
 				{
 					Note: theory.Note{
@@ -121,7 +121,7 @@ func TestGenerateKeys(t *testing.T) {
 						PitchClass:  6,
 						Accidentals: 1,
 					},
-					Kind: 1,
+					Kind: theory.KeyMajor,
 				},
 				{
 					Note: theory.Note{
@@ -130,7 +130,7 @@ func TestGenerateKeys(t *testing.T) {
 						PitchClass:  6,
 						Accidentals: -1,
 					},
-					Kind: 1,
+					Kind: theory.KeyMajor,
 				},
 				{
 					Note: theory.Note{
@@ -139,7 +139,7 @@ func TestGenerateKeys(t *testing.T) {
 						PitchClass:  7,
 						Accidentals: 0,
 					},
-					Kind: 1,
+					Kind: theory.KeyMajor,
 				}, {
 					Note: theory.Note{
 						Name:        "G#",
@@ -147,7 +147,7 @@ func TestGenerateKeys(t *testing.T) {
 						PitchClass:  8,
 						Accidentals: 1,
 					},
-					Kind: 1,
+					Kind: theory.KeyMajor,
 				},
 				{
 					Note: theory.Note{
@@ -156,7 +156,7 @@ func TestGenerateKeys(t *testing.T) {
 						PitchClass:  8,
 						Accidentals: -1,
 					},
-					Kind: 1,
+					Kind: theory.KeyMajor,
 				},
 				{
 					Note: theory.Note{
@@ -165,7 +165,7 @@ func TestGenerateKeys(t *testing.T) {
 						PitchClass:  9,
 						Accidentals: 0,
 					},
-					Kind: 1,
+					Kind: theory.KeyMajor,
 				},
 				{
 					Note: theory.Note{
@@ -174,7 +174,7 @@ func TestGenerateKeys(t *testing.T) {
 						PitchClass:  10,
 						Accidentals: 1,
 					},
-					Kind: 1,
+					Kind: theory.KeyMajor,
 				},
 				{
 					Note: theory.Note{
@@ -183,7 +183,7 @@ func TestGenerateKeys(t *testing.T) {
 						PitchClass:  10,
 						Accidentals: -1,
 					},
-					Kind: 1,
+					Kind: theory.KeyMajor,
 				},
 				{
 					Note: theory.Note{
@@ -192,7 +192,7 @@ func TestGenerateKeys(t *testing.T) {
 						PitchClass:  11,
 						Accidentals: 0,
 					},
-					Kind: 1,
+					Kind: theory.KeyMajor,
 				},
 				{
 					Note: theory.Note{
@@ -201,7 +201,7 @@ func TestGenerateKeys(t *testing.T) {
 						PitchClass:  0,
 						Accidentals: 1,
 					},
-					Kind: 1,
+					Kind: theory.KeyMajor,
 				},
 			},
 		},

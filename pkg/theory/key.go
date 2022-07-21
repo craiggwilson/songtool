@@ -1,21 +1,35 @@
 package theory
 
 import (
+	"encoding/json"
 	"fmt"
 	"sort"
 	"unicode/utf8"
 )
 
 type Key struct {
-	Note
-	Kind KeyKind
+	Note   Note    `json:"note"`
+	Suffix string  `json:"suffix,omitempty"`
+	Kind   KeyKind `json:"kind"`
 }
 
-type KeyKind int
+func (k Key) MarshalJSON() ([]byte, error) {
+	type rawKey Key
+	return json.Marshal(struct {
+		Name string `json:"name"`
+		rawKey
+	}{k.Name(), rawKey(k)})
+}
+
+func (k *Key) Name() string {
+	return k.Note.Name + k.Suffix
+}
+
+type KeyKind string
 
 const (
-	KeyMajor KeyKind = iota + 1
-	KeyMinor
+	KeyMajor KeyKind = "major"
+	KeyMinor KeyKind = "minor"
 )
 
 func (kk KeyKind) String() string {
@@ -36,6 +50,11 @@ func GenerateKeys(cfg *Config, kind KeyKind) []Key {
 
 	keys := make([]Key, 0, len(cfg.NaturalNoteNames)*3)
 
+	suffix := ""
+	if kind == KeyMinor {
+		suffix = string(cfg.MinorKeySymbols[0])
+	}
+
 	for i, nnn := range cfg.NaturalNoteNames {
 
 		degreeClass := DegreeClass(i)
@@ -48,7 +67,8 @@ func GenerateKeys(cfg *Config, kind KeyKind) []Key {
 				PitchClass:  pitchClass,
 				Accidentals: 0,
 			},
-			Kind: kind,
+			Suffix: suffix,
+			Kind:   kind,
 		})
 
 		keys = append(keys, Key{
@@ -58,7 +78,8 @@ func GenerateKeys(cfg *Config, kind KeyKind) []Key {
 				PitchClass:  adjustPitchClass(cfg, pitchClass, 1),
 				Accidentals: 1,
 			},
-			Kind: kind,
+			Suffix: suffix,
+			Kind:   kind,
 		})
 
 		keys = append(keys, Key{
@@ -68,7 +89,8 @@ func GenerateKeys(cfg *Config, kind KeyKind) []Key {
 				PitchClass:  adjustPitchClass(cfg, pitchClass, -1),
 				Accidentals: -1,
 			},
-			Kind: kind,
+			Suffix: suffix,
+			Kind:   kind,
 		})
 	}
 
@@ -120,6 +142,10 @@ func SortKeys(keys []Key) {
 		case keys[i].Note.Accidentals < keys[j].Note.Accidentals:
 			return true
 		case keys[i].Note.Accidentals > keys[j].Note.Accidentals:
+			return false
+		case keys[i].Suffix < keys[j].Suffix:
+			return true
+		case keys[i].Suffix > keys[j].Suffix:
 			return false
 		default:
 			return false

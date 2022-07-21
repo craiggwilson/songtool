@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/craiggwilson/songtools/pkg/theory"
+	"github.com/craiggwilson/songtool/pkg/theory"
 	"github.com/stretchr/testify/require"
 )
 

@@ -9,10 +9,10 @@ import (
 )
 
 type Note struct {
-	Name        string
-	DegreeClass DegreeClass
-	PitchClass  PitchClass
-	Accidentals int
+	Name        string      `json:"name"`
+	DegreeClass DegreeClass `json:"degreeClass"`
+	PitchClass  PitchClass  `json:"pitchClass"`
+	Accidentals int         `json:"accidentals"`
 }
 
 func (n *Note) IsValid() bool {
