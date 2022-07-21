@@ -29,7 +29,7 @@ func (r *TransposingSongReader) NextLine() (Line, bool) {
 		newKey := theory.TransposeKey(r.cfg, tnl.Key, r.degreeClassInterval, r.pitchClassInterval)
 		tnl.Key = newKey
 	case *ChordLine:
-		for _, seg := range tnl.Segments {
+		for _, seg := range tnl.Chords {
 			seg.Chord = theory.TransposeChord(r.cfg, seg.Chord, r.degreeClassInterval, r.pitchClassInterval)
 			// TODO: deal with length
 		}

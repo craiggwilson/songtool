@@ -1,5 +1,7 @@
 package songio
 
+import "github.com/craiggwilson/songtools/theory"
+
 type Line interface {
 	line()
 }
@@ -9,13 +11,18 @@ type EmptyLine struct{}
 func (EmptyLine) line() {}
 
 type ChordLine struct {
-	Segments []ChordSegment
+	Chords []ChordSegment
 }
 
 func (l *ChordLine) line() {}
 
-type LyricLine struct {
-	Segments []LyricSegment
+type ChordSegment struct {
+	theory.Chord
+	Offset int
 }
 
-func (l *LyricLine) line() {}
+type TextLine struct {
+	Text string
+}
+
+func (l *TextLine) line() {}

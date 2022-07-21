@@ -103,41 +103,22 @@ func (r *ChordsOverLyricsReader) Err() error {
 
 func (r *ChordsOverLyricsReader) parseContent(text string) Line {
 	var chordSegments []ChordSegment
-	var lyricSegments []LyricSegment
-
-	parseSegment := func(wordStartIdx int, text string) {
-		if len(lyricSegments) == 0 {
-			if chord, err := theory.ParseChord(r.cfg, text); err == nil {
-				chordSegments = append(chordSegments, ChordSegment{
-					Chord:  chord,
-					offset: wordStartIdx,
-				})
-				return
-			}
-
-			if len(chordSegments) > 0 {
-				for _, cs := range chordSegments {
-					lyricSegments = append(lyricSegments, LyricSegment{
-						Lyric:  cs.Chord.Name(),
-						offset: cs.offset,
-					})
-				}
-
-				chordSegments = nil
-			}
-		}
-
-		lyricSegments = append(lyricSegments, LyricSegment{
-			Lyric:  text,
-			offset: wordStartIdx,
-		})
-	}
 
 	wordStartIdx := -1
 	for i, n := range text {
 		if unicode.IsSpace(n) {
 			if wordStartIdx > -1 {
-				parseSegment(wordStartIdx, text[wordStartIdx:i])
+				chord, err := theory.ParseChord(r.cfg, text[wordStartIdx:i])
+				if err != nil {
+					return &TextLine{
+						Text: text,
+					}
+				}
+
+				chordSegments = append(chordSegments, ChordSegment{
+					Chord:  chord,
+					Offset: wordStartIdx,
+				})
 				wordStartIdx = -1
 			}
 		} else if wordStartIdx == -1 {
@@ -146,17 +127,21 @@ func (r *ChordsOverLyricsReader) parseContent(text string) Line {
 	}
 
 	if wordStartIdx > -1 {
-		parseSegment(wordStartIdx, text[wordStartIdx:])
-	}
-
-	if len(chordSegments) > 0 {
-		return &ChordLine{
-			Segments: chordSegments,
+		chord, err := theory.ParseChord(r.cfg, text[wordStartIdx:])
+		if err != nil {
+			return &TextLine{
+				Text: text,
+			}
 		}
+
+		chordSegments = append(chordSegments, ChordSegment{
+			Chord:  chord,
+			Offset: wordStartIdx,
+		})
 	}
 
-	return &LyricLine{
-		Segments: lyricSegments,
+	return &ChordLine{
+		Chords: chordSegments,
 	}
 }
 
