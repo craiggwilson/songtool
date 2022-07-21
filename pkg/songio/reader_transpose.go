@@ -1,6 +1,6 @@
 package songio
 
-import "github.com/craiggwilson/songtools/theory"
+import "github.com/craiggwilson/songtools/pkg/theory"
 
 func Transpose(cfg *theory.Config, src SongReader, degreeClassInterval int, pitchClassInterval int) *TransposingSongReader {
 	return &TransposingSongReader{

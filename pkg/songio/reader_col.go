@@ -6,7 +6,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/craiggwilson/songtools/theory"
+	"github.com/craiggwilson/songtools/pkg/theory"
 )
 
 type ChordsOverLyricsReader struct {

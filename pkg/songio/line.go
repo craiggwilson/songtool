@@ -1,6 +1,6 @@
 package songio
 
-import "github.com/craiggwilson/songtools/theory"
+import "github.com/craiggwilson/songtools/pkg/theory"
 
 type Line interface {
 	line()

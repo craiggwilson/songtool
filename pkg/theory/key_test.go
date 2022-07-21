@@ -3,7 +3,7 @@ package theory_test
 import (
 	"testing"
 
-	"github.com/craiggwilson/songtools/theory"
+	"github.com/craiggwilson/songtools/pkg/theory"
 	"github.com/stretchr/testify/require"
 )
 

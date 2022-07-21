@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/craiggwilson/songtools/songio"
+	"github.com/craiggwilson/songtools/pkg/songio"
 	"github.com/stretchr/testify/require"
 )
 
