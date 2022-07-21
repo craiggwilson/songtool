@@ -19,9 +19,3 @@ type LyricLine struct {
 }
 
 func (l *LyricLine) line() {}
-
-type DirectiveLine struct {
-	Directive Directive
-}
-
-func (l *DirectiveLine) line() {}

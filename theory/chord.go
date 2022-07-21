@@ -12,11 +12,25 @@ type Chord struct {
 	Root      Note
 	Intervals []int
 	Suffix    string
-	Base      Note
+	Base      BaseNote
 }
 
 func (c *Chord) IsValid() bool {
 	return c.Root.IsValid()
+}
+
+func (c *Chord) Name() string {
+	name := c.Root.Name + c.Suffix
+	if c.Base.IsValid() {
+		name += string(c.Base.Delimiter) + c.Base.Name
+	}
+
+	return name
+}
+
+type BaseNote struct {
+	Note
+	Delimiter rune
 }
 
 func ParseChord(cfg *Config, text string) (Chord, error) {
@@ -70,7 +84,10 @@ func TransposeChord(cfg *Config, chord Chord, degreeClassInterval int, pitchClas
 	newRoot := TransposeNoteDirect(cfg, chord.Root, degreeClassInterval, pitchClassInterval)
 	newBase := chord.Base
 	if chord.Base.IsValid() {
-		newBase = TransposeNoteDirect(cfg, chord.Base, degreeClassInterval, pitchClassInterval)
+		newBase = BaseNote{
+			Note:      TransposeNoteDirect(cfg, chord.Base.Note, degreeClassInterval, pitchClassInterval),
+			Delimiter: chord.Base.Delimiter,
+		}
 	}
 
 	newIntervals := make([]int, len(chord.Intervals))
@@ -119,17 +136,21 @@ func modifyIntervals(intervals []int, modifiers []int) []int {
 	return intervals
 }
 
-func parseBaseNote(cfg *Config, text string, pos int) (Note, int, error) {
+func parseBaseNote(cfg *Config, text string, pos int) (BaseNote, int, error) {
 	if len(text) <= pos {
-		return Note{}, pos, io.ErrUnexpectedEOF
+		return BaseNote{}, pos, io.ErrUnexpectedEOF
 	}
 
 	v, w := utf8.DecodeRuneInString(text[pos:])
 	for _, r := range cfg.BaseNoteDelimiters {
 		if v == r {
-			return parseNote(cfg, text, pos+w)
+			note, pos, err := parseNote(cfg, text, pos+w)
+			return BaseNote{
+				Note:      note,
+				Delimiter: v,
+			}, pos, err
 		}
 	}
 
-	return Note{}, pos, fmt.Errorf("expected one of %q, but got %q", cfg.BaseNoteDelimiters, v)
+	return BaseNote{}, pos, fmt.Errorf("expected one of %q, but got %q", cfg.BaseNoteDelimiters, v)
 }

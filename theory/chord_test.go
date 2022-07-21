@@ -61,11 +61,14 @@ func TestParseChord(t *testing.T) {
 				},
 				Intervals: []int{1, 3, 7, 10},
 				Suffix:    "m7",
-				Base: theory.Note{
-					Name:        "G#",
-					DegreeClass: 4,
-					PitchClass:  8,
-					Accidentals: 1,
+				Base: theory.BaseNote{
+					Note: theory.Note{
+						Name:        "G#",
+						DegreeClass: 4,
+						PitchClass:  8,
+						Accidentals: 1,
+					},
+					Delimiter: '/',
 				},
 			},
 		},

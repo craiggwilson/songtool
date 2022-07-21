@@ -12,14 +12,13 @@ type Segment interface {
 type ChordSegment struct {
 	Chord theory.Chord
 
-	length int
 	offset int
 }
 
 func (s *ChordSegment) seg() {}
 
 func (s *ChordSegment) Len() int {
-	return s.length
+	return len(s.Chord.Name())
 }
 
 func (s *ChordSegment) Offset() int {
@@ -29,14 +28,13 @@ func (s *ChordSegment) Offset() int {
 type LyricSegment struct {
 	Lyric string
 
-	length int
 	offset int
 }
 
 func (s *LyricSegment) seg() {}
 
 func (s *LyricSegment) Len() int {
-	return s.length
+	return len(s.Lyric)
 }
 
 func (s *LyricSegment) Offset() int {

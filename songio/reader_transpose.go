@@ -2,15 +2,10 @@ package songio
 
 import "github.com/craiggwilson/songtools/theory"
 
-type SongReader interface {
-	NextLine() (Line, bool)
-	Err() error
-}
-
-func Transpose(cfg *theory.Config, r SongReader, degreeClassInterval int, pitchClassInterval int) *TransposingSongReader {
+func Transpose(cfg *theory.Config, src SongReader, degreeClassInterval int, pitchClassInterval int) *TransposingSongReader {
 	return &TransposingSongReader{
 		cfg:                 cfg,
-		r:                   r,
+		src:                 src,
 		degreeClassInterval: degreeClassInterval,
 		pitchClassInterval:  pitchClassInterval,
 	}
@@ -18,24 +13,21 @@ func Transpose(cfg *theory.Config, r SongReader, degreeClassInterval int, pitchC
 
 type TransposingSongReader struct {
 	cfg                 *theory.Config
-	r                   SongReader
+	src                 SongReader
 	degreeClassInterval int
 	pitchClassInterval  int
 }
 
 func (r *TransposingSongReader) NextLine() (Line, bool) {
-	nl, ok := r.r.NextLine()
+	nl, ok := r.src.NextLine()
 	if !ok {
 		return nl, false
 	}
 
 	switch tnl := nl.(type) {
-	case *DirectiveLine:
-		switch td := tnl.Directive.(type) {
-		case *KeyDirective:
-			newKey := theory.TransposeKey(r.cfg, td.Key, r.degreeClassInterval, r.pitchClassInterval)
-			td.Key = newKey
-		}
+	case *KeyDirectiveLine:
+		newKey := theory.TransposeKey(r.cfg, tnl.Key, r.degreeClassInterval, r.pitchClassInterval)
+		tnl.Key = newKey
 	case *ChordLine:
 		for _, seg := range tnl.Segments {
 			seg.Chord = theory.TransposeChord(r.cfg, seg.Chord, r.degreeClassInterval, r.pitchClassInterval)
@@ -47,5 +39,5 @@ func (r *TransposingSongReader) NextLine() (Line, bool) {
 }
 
 func (r *TransposingSongReader) Err() error {
-	return r.r.Err()
+	return r.src.Err()
 }
