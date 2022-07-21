@@ -15,6 +15,10 @@ type Chord struct {
 	Base      Note
 }
 
+func (c *Chord) IsValid() bool {
+	return c.Root.IsValid()
+}
+
 func ParseChord(cfg *Config, text string) (Chord, error) {
 	if cfg == nil {
 		cfg = &defaultConfig
@@ -60,6 +64,24 @@ func ParseChord(cfg *Config, text string) (Chord, error) {
 		Suffix:    text[suffixPos:basePos],
 		Base:      base,
 	}, nil
+}
+
+func TransposeChord(cfg *Config, chord Chord, degreeClassInterval int, pitchClassInterval int) Chord {
+	newRoot := TransposeNote(cfg, chord.Root, degreeClassInterval, pitchClassInterval)
+	newBase := chord.Base
+	if chord.Base.IsValid() {
+		newBase = TransposeNote(cfg, chord.Base, degreeClassInterval, pitchClassInterval)
+	}
+
+	newIntervals := make([]int, len(chord.Intervals))
+	copy(newIntervals, chord.Intervals)
+
+	return Chord{
+		Root:      newRoot,
+		Intervals: newIntervals,
+		Suffix:    chord.Suffix,
+		Base:      newBase,
+	}
 }
 
 func modifyIntervals(intervals []int, modifiers []int) []int {

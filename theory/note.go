@@ -15,6 +15,10 @@ type Note struct {
 	Accidentals int
 }
 
+func (n *Note) IsValid() bool {
+	return len(n.Name) > 0
+}
+
 type DegreeClass int
 type PitchClass int
 type Enharmonic int

@@ -7,7 +7,7 @@ import (
 )
 
 type Key struct {
-	Note Note
+	Note
 	Kind KeyKind
 }
 
@@ -121,4 +121,12 @@ func SortKeys(keys []Key) {
 			return false
 		}
 	})
+}
+
+func TransposeKey(cfg *Config, key Key, degreeClassInterval int, pitchClassInterval int) Key {
+	newKeyNote := TransposeNote(cfg, key.Note, degreeClassInterval, pitchClassInterval)
+	return Key{
+		Note: newKeyNote,
+		Kind: key.Kind,
+	}
 }
