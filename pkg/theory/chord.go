@@ -89,12 +89,12 @@ func ParseChord(cfg *Config, text string) (Chord, error) {
 	}, nil
 }
 
-func TransposeChord(cfg *Config, chord Chord, degreeClassInterval int, pitchClassInterval int) Chord {
-	newRoot := TransposeNoteDirect(cfg, chord.Root, degreeClassInterval, pitchClassInterval)
+func TransposeChord(cfg *Config, chord Chord, interval Interval) Chord {
+	newRoot := TransposeNote(cfg, chord.Root, interval)
 	newBase := chord.Base
 	if chord.Base.IsValid() {
 		newBase = BaseNote{
-			Note:      TransposeNoteDirect(cfg, chord.Base.Note, degreeClassInterval, pitchClassInterval),
+			Note:      TransposeNote(cfg, chord.Base.Note, interval),
 			Delimiter: chord.Base.Delimiter,
 		}
 	}

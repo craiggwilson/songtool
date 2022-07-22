@@ -153,8 +153,8 @@ func SortKeys(keys []Key) {
 	})
 }
 
-func TransposeKey(cfg *Config, key Key, degreeClassInterval int, pitchClassInterval int) Key {
-	newKeyNote := TransposeNoteDirect(cfg, key.Note, degreeClassInterval, pitchClassInterval)
+func TransposeKey(cfg *Config, key Key, interval Interval) Key {
+	newKeyNote := TransposeNote(cfg, key.Note, interval)
 	return Key{
 		Note: newKeyNote,
 		Kind: key.Kind,

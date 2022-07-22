@@ -44,22 +44,13 @@ func ParseNote(cfg *Config, text string) (Note, error) {
 	return n, err
 }
 
-func TransposeNote(cfg *Config, n Note, pitchClassInterval int, enharmonic Enharmonic) Note {
+func TransposeNote(cfg *Config, n Note, interval Interval) Note {
 	if cfg == nil {
 		cfg = &defaultConfig
 	}
 
-	newDegreeClass := degreeClassFromPitchClass(cfg, adjustPitchClass(cfg, n.PitchClass, pitchClassInterval), enharmonic)
-	return TransposeNoteDirect(cfg, n, int(newDegreeClass)-int(n.DegreeClass), pitchClassInterval)
-}
-
-func TransposeNoteDirect(cfg *Config, n Note, degreeClassInterval int, pitchClassInterval int) Note {
-	if cfg == nil {
-		cfg = &defaultConfig
-	}
-
-	newDegreeClass := adjustDegreeClass(cfg, n.DegreeClass, degreeClassInterval)
-	newPitchClass := adjustPitchClass(cfg, n.PitchClass, pitchClassInterval)
+	newDegreeClass := adjustDegreeClass(cfg, n.DegreeClass, interval.DegreeClass)
+	newPitchClass := adjustPitchClass(cfg, n.PitchClass, interval.PitchClass)
 
 	pitchClassDeltaFromDegreeClasses := pitchClassDelta(cfg, pitchClassFromDegreeClass(cfg, n.DegreeClass), pitchClassFromDegreeClass(cfg, newDegreeClass))
 	pitchClassDeltaFromPitchClass := pitchClassDelta(cfg, n.PitchClass, newPitchClass)

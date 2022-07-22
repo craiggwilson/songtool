@@ -28,7 +28,7 @@ func ReadChordsOverLyrics(cfg *theory.Config, src io.Reader) *ChordsOverLyricsRe
 	}
 }
 
-func (r *ChordsOverLyricsReader) NextLine() (Line, bool) {
+func (r *ChordsOverLyricsReader) Next() (Line, bool) {
 	if r.saveLine != nil {
 		for r.blankLineCount > 0 {
 			r.blankLineCount--
@@ -68,7 +68,7 @@ func (r *ChordsOverLyricsReader) NextLine() (Line, bool) {
 		if len(r.currentSectionName) > 0 {
 			if r.blankLineCount == 0 {
 				r.blankLineCount++
-				return r.NextLine()
+				return r.Next()
 			}
 
 			oldSectionName := r.currentSectionName
@@ -102,7 +102,7 @@ func (r *ChordsOverLyricsReader) Err() error {
 }
 
 func (r *ChordsOverLyricsReader) parseContent(text string) Line {
-	var chordSegments []ChordSegment
+	var chordSegments []*ChordOffset
 
 	wordStartIdx := -1
 	for i, n := range text {
@@ -115,7 +115,7 @@ func (r *ChordsOverLyricsReader) parseContent(text string) Line {
 					}
 				}
 
-				chordSegments = append(chordSegments, ChordSegment{
+				chordSegments = append(chordSegments, &ChordOffset{
 					Chord:  chord,
 					Offset: wordStartIdx,
 				})
@@ -134,7 +134,7 @@ func (r *ChordsOverLyricsReader) parseContent(text string) Line {
 			}
 		}
 
-		chordSegments = append(chordSegments, ChordSegment{
+		chordSegments = append(chordSegments, &ChordOffset{
 			Chord:  chord,
 			Offset: wordStartIdx,
 		})

@@ -149,7 +149,7 @@ func TestTransposeNote(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%s +- (%d, %d)", tc.from.Name, tc.pitchClassInterval, tc.enharmonic), func(t *testing.T) {
-			actual := theory.TransposeNote(nil, tc.from, tc.pitchClassInterval, tc.enharmonic)
+			actual := theory.TransposeNote(nil, tc.from, theory.IntervalFromStep(nil, tc.from, tc.pitchClassInterval, tc.enharmonic))
 			require.Equal(t, tc.expected, actual)
 		})
 	}
@@ -208,7 +208,7 @@ func TestTransposeNoteDirect(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%s +- (%d, %d)", tc.from.Name, tc.degreeClassInterval, tc.pitchClassInterval), func(t *testing.T) {
-			actual := theory.TransposeNoteDirect(nil, tc.from, tc.degreeClassInterval, tc.pitchClassInterval)
+			actual := theory.TransposeNote(nil, tc.from, theory.Interval{tc.degreeClassInterval, tc.pitchClassInterval})
 			require.Equal(t, tc.expected, actual)
 		})
 	}

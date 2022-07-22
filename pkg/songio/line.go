@@ -11,12 +11,12 @@ type EmptyLine struct{}
 func (EmptyLine) line() {}
 
 type ChordLine struct {
-	Chords []ChordSegment
+	Chords []*ChordOffset
 }
 
 func (l *ChordLine) line() {}
 
-type ChordSegment struct {
+type ChordOffset struct {
 	theory.Chord
 	Offset int
 }
