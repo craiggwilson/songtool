@@ -13,12 +13,12 @@ type MetaCmd struct {
 	JSON bool `name:"json" help:"Prints the output as JSON."`
 }
 
-func (cmd *MetaCmd) Run() error {
+func (cmd *MetaCmd) Run(cfg *Config) error {
 	defer cmd.ensurePath().Close()
 
 	song := cmd.openSong()
 
-	meta, err := songio.ReadMeta(nil, song, true)
+	meta, err := songio.ReadMeta(&cfg.Theory, song, true)
 	if err != nil {
 		return err
 	}

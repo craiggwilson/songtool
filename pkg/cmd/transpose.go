@@ -16,7 +16,7 @@ type TransposeCmd struct {
 	ToKey    string `name:"to-key" xor:"keyinterval" required:"" help:"The desired key of the song. Cannot be used with 'interval'."`
 }
 
-func (cmd *TransposeCmd) Run() error {
+func (cmd *TransposeCmd) Run(cfg *Config) error {
 	defer cmd.ensurePath().Close()
 
 	song := cmd.openSong()
@@ -24,7 +24,7 @@ func (cmd *TransposeCmd) Run() error {
 	var fromKey theory.Key
 	if len(cmd.FromKey) == 0 {
 		rewinder := songio.NewRewinder(song)
-		meta, err := songio.ReadMeta(nil, rewinder, false)
+		meta, err := songio.ReadMeta(&cfg.Theory, rewinder, false)
 		if err != nil {
 			return err
 		}
@@ -38,7 +38,7 @@ func (cmd *TransposeCmd) Run() error {
 	}
 
 	if !fromKey.Note.IsValid() {
-		fk, err := theory.ParseKey(nil, cmd.FromKey)
+		fk, err := theory.ParseKey(&cfg.Theory, cmd.FromKey)
 		if err != nil {
 			return fmt.Errorf("invalid from-key: %w", err)
 		}
@@ -48,17 +48,17 @@ func (cmd *TransposeCmd) Run() error {
 
 	var interval theory.Interval
 	if len(cmd.ToKey) > 0 {
-		toKey, err := theory.ParseKey(nil, cmd.ToKey)
+		toKey, err := theory.ParseKey(&cfg.Theory, cmd.ToKey)
 		if err != nil {
 			return fmt.Errorf("invalid to-key: %w", err)
 		}
 		interval = theory.IntervalFromDiff(fromKey.Note, toKey.Note)
 	} else {
-		interval = theory.IntervalFromStep(nil, fromKey.Note, cmd.Interval, theory.EnharmonicSharp)
+		interval = theory.IntervalFromStep(&cfg.Theory, fromKey.Note, cmd.Interval, theory.EnharmonicSharp)
 	}
 
-	transposer := songio.Transpose(nil, song, interval)
+	transposer := songio.Transpose(&cfg.Theory, song, interval)
 
-	_, err := songio.WriteChordsOverLyrics(nil, transposer, os.Stdout)
+	_, err := songio.WriteChordsOverLyrics(transposer, os.Stdout)
 	return err
 }

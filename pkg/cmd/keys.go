@@ -12,14 +12,14 @@ type KeysCmd struct {
 	Kind string `name:"kind" enum:"all,major,minor" default:"all" help:"Indicates which kind of keys to generate; major, minor, or all"`
 }
 
-func (cmd *KeysCmd) Run() error {
+func (cmd *KeysCmd) Run(cfg *Config) error {
 	var keys []theory.Key
 	if cmd.Kind == "all" || cmd.Kind == "major" {
-		keys = append(keys, theory.GenerateKeys(nil, theory.KeyMajor)...)
+		keys = append(keys, theory.GenerateKeys(&cfg.Theory, theory.KeyMajor)...)
 	}
 
 	if cmd.Kind == "all" || cmd.Kind == "minor" {
-		keys = append(keys, theory.GenerateKeys(nil, theory.KeyMinor)...)
+		keys = append(keys, theory.GenerateKeys(&cfg.Theory, theory.KeyMinor)...)
 	}
 
 	theory.SortKeys(keys)

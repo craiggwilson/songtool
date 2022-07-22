@@ -12,6 +12,6 @@ func (ChordsOverLyricsFormat) Read(cfg *theory.Config, src io.Reader) (Song, err
 	return ReadChordsOverLyrics(cfg, src), nil
 }
 
-func (ChordsOverLyricsFormat) Write(cfg *theory.Config, src Song, dst io.Writer) (int, error) {
-	return WriteChordsOverLyrics(cfg, src, dst)
+func (ChordsOverLyricsFormat) Write(_ *theory.Config, src Song, dst io.Writer) (int, error) {
+	return WriteChordsOverLyrics(src, dst)
 }

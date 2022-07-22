@@ -5,10 +5,12 @@ import (
 	"fmt"
 
 	"github.com/alecthomas/kong"
+	"github.com/fatih/color"
+	"github.com/jwalton/go-supportscolor"
 )
 
 var main struct {
-	Cat       CatCmd       `cmd:"" help:"Displays a song; can be used to ensure that the song can be parsed."`
+	Cat       CatCmd       `cmd:"" help:"Displays a song."`
 	Keys      KeysCmd      `cmd:"" help:"Lists the keys that can be used in songs."`
 	Meta      MetaCmd      `cmd:"" help:"Displays the meta information about a song."`
 	Transpose TransposeCmd `cmd:"" help:"Transposes a song."`
@@ -33,7 +35,10 @@ func Run(versionInfo VersionInfo, args []string) int {
 		return 1
 	}
 
-	if err = ctx.Run(); err != nil {
+	color.NoColor = !supportscolor.Stdout().SupportsColor
+	cfg := LoadConfig("")
+
+	if err = ctx.Run(cfg); err != nil {
 		fmt.Fprintln(parser.Stdout, err)
 		return 2
 	}
