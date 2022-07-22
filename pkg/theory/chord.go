@@ -10,10 +10,20 @@ import (
 )
 
 type Chord struct {
-	Root      Note     `json:"root"`
-	Intervals []int    `json:"invervals"`
-	Suffix    string   `json:"suffix"`
-	Base      BaseNote `json:"base"`
+	Root      Note      `json:"root"`
+	Semitones []int     `json:"semitones"`
+	Suffix    string    `json:"suffix,omitempty"`
+	Base      *BaseNote `json:"base,omitempty"`
+}
+
+func (c *Chord) IsMinor() bool {
+	for _, st := range c.Semitones {
+		if st == 3 {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (c *Chord) IsValid() bool {
@@ -30,7 +40,7 @@ func (c Chord) MarshalJSON() ([]byte, error) {
 
 func (c *Chord) Name() string {
 	name := c.Root.Name + c.Suffix
-	if c.Base.IsValid() {
+	if c.Base != nil {
 		name += string(c.Base.Delimiter) + c.Base.Name
 	}
 
@@ -65,7 +75,7 @@ func ParseChord(cfg *Config, text string) (Chord, error) {
 			changed = false
 			for _, mod := range modifierGroup.Modifiers {
 				if strings.HasPrefix(text[pos:], mod.Match) && (len(mod.Except) == 0 || !strings.HasPrefix(text[pos:], mod.Except)) {
-					intervals = modifyIntervals(intervals, mod.Intervals)
+					intervals = modifySemitones(intervals, mod.Semitones)
 					pos += len(mod.Match)
 					changed = true
 				}
@@ -83,7 +93,7 @@ func ParseChord(cfg *Config, text string) (Chord, error) {
 
 	return Chord{
 		Root:      root,
-		Intervals: intervals,
+		Semitones: intervals,
 		Suffix:    text[suffixPos:basePos],
 		Base:      base,
 	}, nil
@@ -92,25 +102,25 @@ func ParseChord(cfg *Config, text string) (Chord, error) {
 func TransposeChord(cfg *Config, chord Chord, interval Interval) Chord {
 	newRoot := TransposeNote(cfg, chord.Root, interval)
 	newBase := chord.Base
-	if chord.Base.IsValid() {
-		newBase = BaseNote{
+	if chord.Base != nil {
+		newBase = &BaseNote{
 			Note:      TransposeNote(cfg, chord.Base.Note, interval),
 			Delimiter: chord.Base.Delimiter,
 		}
 	}
 
-	newIntervals := make([]int, len(chord.Intervals))
-	copy(newIntervals, chord.Intervals)
+	newIntervals := make([]int, len(chord.Semitones))
+	copy(newIntervals, chord.Semitones)
 
 	return Chord{
 		Root:      newRoot,
-		Intervals: newIntervals,
+		Semitones: newIntervals,
 		Suffix:    chord.Suffix,
 		Base:      newBase,
 	}
 }
 
-func modifyIntervals(intervals []int, modifiers []int) []int {
+func modifySemitones(intervals []int, modifiers []int) []int {
 	for i := 0; i < len(modifiers); i++ {
 		if modifiers[i] > 0 {
 			found := false
@@ -145,21 +155,21 @@ func modifyIntervals(intervals []int, modifiers []int) []int {
 	return intervals
 }
 
-func parseBaseNote(cfg *Config, text string, pos int) (BaseNote, int, error) {
+func parseBaseNote(cfg *Config, text string, pos int) (*BaseNote, int, error) {
 	if len(text) <= pos {
-		return BaseNote{}, pos, io.ErrUnexpectedEOF
+		return nil, pos, io.ErrUnexpectedEOF
 	}
 
 	v, w := utf8.DecodeRuneInString(text[pos:])
 	for _, r := range cfg.BaseNoteDelimiters {
 		if v == r {
 			note, pos, err := parseNote(cfg, text, pos+w)
-			return BaseNote{
+			return &BaseNote{
 				Note:      note,
 				Delimiter: v,
 			}, pos, err
 		}
 	}
 
-	return BaseNote{}, pos, fmt.Errorf("expected one of %q, but got %q", cfg.BaseNoteDelimiters, v)
+	return nil, pos, fmt.Errorf("expected one of %q, but got %q", cfg.BaseNoteDelimiters, v)
 }

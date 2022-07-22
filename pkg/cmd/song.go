@@ -1,56 +1,23 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/craiggwilson/songtool/pkg/songio"
-	"github.com/craiggwilson/songtool/pkg/theory"
 )
 
-type SongCmd struct {
-	Cat       SongCatCmd       `cmd:"" help:"display a song"`
-	Transpose SongTransposeCmd `cmd:"" help:"transpose a song"`
+type songCmd struct {
+	Format string   `name:"format" enum:"auto,chordsOverLyrics" default:"auto" help:"The format of the song; defaults to 'auto'."`
+	Path   *os.File `arg:"" optional:"" help:"The path to the song; '-' can be used for stdin."`
 }
 
-type SongCatCmd struct {
-	Format string `name:"format" enum:"chordsOverLyrics,chordpro" default:"chordsOverLyrics"`
-	Path   string `arg:"" help:"path to the song" type:"path" required:""`
-}
-
-func (cmd *SongCatCmd) Run() error {
-	f, err := os.Open(cmd.Path)
-	if err != nil {
-		return fmt.Errorf("opening %q: %w", cmd.Path, err)
+func (cmd *songCmd) ensurePath() *os.File {
+	if cmd.Path == nil {
+		cmd.Path = os.Stdin
 	}
-
-	defer f.Close()
-
-	it := songio.ReadChordsOverLyrics(nil, f)
-
-	_, err = songio.WriteChordsOverLyrics(nil, it, os.Stdout)
-	return err
+	return cmd.Path
 }
 
-type SongTransposeCmd struct {
-	Path     string `arg:"" help:"path to the song" type:"path" required:""`
-	Interval int    `name:"interval" short:"i"`
-}
-
-func (cmd *SongTransposeCmd) Run() error {
-	f, err := os.Open(cmd.Path)
-	if err != nil {
-		return fmt.Errorf("opening %q: %w", cmd.Path, err)
-	}
-
-	defer f.Close()
-
-	key, _ := theory.ParseKey(nil, "G")
-
-	var it songio.LineIter = songio.ReadChordsOverLyrics(nil, f)
-
-	it = songio.Transpose(nil, it, theory.IntervalFromStep(nil, key.Note, cmd.Interval, theory.EnharmonicSharp))
-
-	_, err = songio.WriteChordsOverLyrics(nil, it, os.Stdout)
-	return err
+func (cmd *songCmd) openSong() songio.Song {
+	return songio.ReadChordsOverLyrics(nil, cmd.Path)
 }

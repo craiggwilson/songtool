@@ -14,15 +14,15 @@ func DefaultConfig() Config {
 				{
 					Match:     "m",
 					Except:    "maj",
-					Intervals: []int{-4, 3},
+					Semitones: []int{-4, 3},
 				},
 				{
 					Match:     "dim",
-					Intervals: []int{-4, 3, -7, 6},
+					Semitones: []int{-4, 3, -7, 6},
 				},
 				{
 					Match:     "aug",
-					Intervals: []int{-7, 8},
+					Semitones: []int{-7, 8},
 				},
 			},
 		},
@@ -31,51 +31,51 @@ func DefaultConfig() Config {
 			Modifiers: []ChordModifier{
 				{
 					Match:     "maj7",
-					Intervals: []int{11},
+					Semitones: []int{11},
 				},
 				{
 					Match:     "maj9",
-					Intervals: []int{11, 14},
+					Semitones: []int{11, 14},
 				},
 				{
 					Match:     "maj11",
-					Intervals: []int{11, 14, 17},
+					Semitones: []int{11, 14, 17},
 				},
 				{
 					Match:     "maj13",
-					Intervals: []int{11, 14, 17, 21},
+					Semitones: []int{11, 14, 17, 21},
 				},
 				{
 					Match:     "maj13",
-					Intervals: []int{11, 14, 17, 21},
+					Semitones: []int{11, 14, 17, 21},
 				},
 				{
 					Match:     "2",
-					Intervals: []int{2, -3, -4},
+					Semitones: []int{2, -3, -4},
 				},
 				{
 					Match:     "5",
-					Intervals: []int{-3, -4},
+					Semitones: []int{-3, -4},
 				},
 				{
 					Match:     "6",
-					Intervals: []int{9},
+					Semitones: []int{9},
 				},
 				{
 					Match:     "7",
-					Intervals: []int{10},
+					Semitones: []int{10},
 				},
 				{
 					Match:     "9",
-					Intervals: []int{10, 14},
+					Semitones: []int{10, 14},
 				},
 				{
 					Match:     "11",
-					Intervals: []int{10, 14, 17},
+					Semitones: []int{10, 14, 17},
 				},
 				{
 					Match:     "13",
-					Intervals: []int{10, 14, 17, 21},
+					Semitones: []int{10, 14, 17, 21},
 				},
 			},
 		},
@@ -84,15 +84,15 @@ func DefaultConfig() Config {
 			Modifiers: []ChordModifier{
 				{
 					Match:     "sus2",
-					Intervals: []int{2, -3, -4},
+					Semitones: []int{2, -3, -4},
 				},
 				{
 					Match:     "sus4",
-					Intervals: []int{5, -3, -4},
+					Semitones: []int{5, -3, -4},
 				},
 				{
 					Match:     "sus",
-					Intervals: []int{5, -3, -4},
+					Semitones: []int{5, -3, -4},
 				},
 			},
 		},
@@ -101,19 +101,19 @@ func DefaultConfig() Config {
 			Modifiers: []ChordModifier{
 				{
 					Match:     "add2",
-					Intervals: []int{2},
+					Semitones: []int{2},
 				},
 				{
 					Match:     "add4",
-					Intervals: []int{5},
+					Semitones: []int{5},
 				},
 				{
 					Match:     "add6",
-					Intervals: []int{9},
+					Semitones: []int{9},
 				},
 				{
 					Match:     "add9",
-					Intervals: []int{14},
+					Semitones: []int{14},
 				},
 			},
 		},
@@ -161,5 +161,5 @@ type ChordModifierGroup struct {
 type ChordModifier struct {
 	Match     string
 	Except    string
-	Intervals []int
+	Semitones []int
 }

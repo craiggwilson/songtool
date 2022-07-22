@@ -8,7 +8,7 @@ import (
 	"github.com/craiggwilson/songtool/pkg/theory"
 )
 
-func WriteChordsOverLyrics(cfg *theory.Config, src LineIter, w io.Writer) (int, error) {
+func WriteChordsOverLyrics(cfg *theory.Config, src Song, w io.Writer) (int, error) {
 	n := 0
 	i := 0
 	var sb strings.Builder

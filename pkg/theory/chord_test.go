@@ -21,7 +21,7 @@ func TestParseChord(t *testing.T) {
 					PitchClass:  9,
 					Accidentals: 0,
 				},
-				Intervals: []int{1, 4, 7},
+				Semitones: []int{1, 4, 7},
 			},
 		},
 		{
@@ -33,7 +33,7 @@ func TestParseChord(t *testing.T) {
 					PitchClass:  9,
 					Accidentals: 0,
 				},
-				Intervals: []int{1, 4, 7, 11, 14},
+				Semitones: []int{1, 4, 7, 11, 14},
 				Suffix:    "maj9",
 			},
 		},
@@ -46,7 +46,7 @@ func TestParseChord(t *testing.T) {
 					PitchClass:  5,
 					Accidentals: -2,
 				},
-				Intervals: []int{1, 2, 7, 9},
+				Semitones: []int{1, 2, 7, 9},
 				Suffix:    "msus2add6",
 			},
 		},
@@ -59,9 +59,9 @@ func TestParseChord(t *testing.T) {
 					PitchClass:  1,
 					Accidentals: 1,
 				},
-				Intervals: []int{1, 3, 7, 10},
+				Semitones: []int{1, 3, 7, 10},
 				Suffix:    "m7",
-				Base: theory.BaseNote{
+				Base: &theory.BaseNote{
 					Note: theory.Note{
 						Name:        "G#",
 						DegreeClass: 4,

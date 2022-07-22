@@ -14,10 +14,12 @@ var (
 )
 
 func main() {
-	cmd.Run(cmd.VersionInfo{
+	if exitCode := cmd.Run(cmd.VersionInfo{
 		Version: version,
 		Commit:  commit,
 		Date:    date,
 		BuiltBy: builtBy,
-	}, os.Args[1:])
+	}, os.Args[1:]); exitCode != 0 {
+		os.Exit(exitCode)
+	}
 }
