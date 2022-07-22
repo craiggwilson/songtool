@@ -1,34 +1,69 @@
 package songio
 
-import "github.com/craiggwilson/songtool/pkg/theory"
+import (
+	"encoding/json"
+
+	"github.com/craiggwilson/songtool/pkg/theory"
+)
 
 type KeyDirectiveLine struct {
-	Key theory.Key
+	Key theory.Key `json:"key"`
+}
+
+func (d *KeyDirectiveLine) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Directive string     `json:"directive"`
+		Value     theory.Key `json:"value"`
+	}{
+		Directive: "key",
+		Value:     d.Key,
+	})
 }
 
 func (d *KeyDirectiveLine) line() {}
 
 type SectionEndDirectiveLine struct {
-	Name string
+	Name string `json:"name"`
+}
+
+func (d *SectionEndDirectiveLine) MarshalJSON() ([]byte, error) {
+	return json.Marshal(UnknownDirectiveLine{
+		Name:  "sectionEnd",
+		Value: d.Name,
+	})
 }
 
 func (d *SectionEndDirectiveLine) line() {}
 
 type SectionStartDirectiveLine struct {
-	Name string
+	Name string `json:"name"`
+}
+
+func (d *SectionStartDirectiveLine) MarshalJSON() ([]byte, error) {
+	return json.Marshal(UnknownDirectiveLine{
+		Name:  "sectionStart",
+		Value: d.Name,
+	})
 }
 
 func (d *SectionStartDirectiveLine) line() {}
 
 type TitleDirectiveLine struct {
-	Title string
+	Title string `json:"title"`
+}
+
+func (d *TitleDirectiveLine) MarshalJSON() ([]byte, error) {
+	return json.Marshal(UnknownDirectiveLine{
+		Name:  "title",
+		Value: d.Title,
+	})
 }
 
 func (d *TitleDirectiveLine) line() {}
 
 type UnknownDirectiveLine struct {
-	Name  string
-	Value string
+	Name  string `json:"directive"`
+	Value string `json:"value,omitempty"`
 }
 
 func (d *UnknownDirectiveLine) line() {}

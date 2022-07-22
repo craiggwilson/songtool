@@ -29,17 +29,17 @@ Loop:
 				break Loop
 			}
 
-			for _, chord := range tl.Chords {
+			for _, chordOffset := range tl.Chords {
 				if !meta.Key.Note.IsValid() {
 					kind := theory.KeyMajor
 					suffix := ""
-					if chord.IsMinor() {
+					if chordOffset.Chord.IsMinor() {
 						kind = theory.KeyMinor
 						suffix = string(cfg.MinorKeySymbols[0])
 					}
 
 					meta.Key = theory.Key{
-						Note:   chord.Root,
+						Note:   chordOffset.Chord.Root,
 						Suffix: suffix,
 						Kind:   kind,
 					}
@@ -48,9 +48,9 @@ Loop:
 					}
 				}
 
-				name := chord.Name()
+				name := chordOffset.Chord.Name()
 				if _, ok := chordSet[name]; !ok {
-					meta.Chords = append(meta.Chords, chord.Chord)
+					meta.Chords = append(meta.Chords, chordOffset.Chord)
 					chordSet[name] = struct{}{}
 				}
 			}

@@ -37,6 +37,11 @@ func (r *ChordsOverLyricsReader) Next() (Line, bool) {
 
 		line := r.saveLine
 		r.saveLine = nil
+
+		if ssdl, ok := line.(*SectionStartDirectiveLine); ok {
+			r.currentSectionName = ssdl.Name
+		}
+
 		return line, true
 	}
 
@@ -71,11 +76,11 @@ func (r *ChordsOverLyricsReader) Next() (Line, bool) {
 				return r.Next()
 			}
 
-			oldSectionName := r.currentSectionName
+			currentSectionName := r.currentSectionName
 			r.blankLineCount--
 			r.currentSectionName = ""
 			return &SectionEndDirectiveLine{
-				Name: oldSectionName,
+				Name: currentSectionName,
 			}, true
 		}
 	case *SectionStartDirectiveLine:
@@ -86,11 +91,13 @@ func (r *ChordsOverLyricsReader) Next() (Line, bool) {
 			}
 
 			currentSectionName := r.currentSectionName
-			r.currentSectionName = tl.Name
+			r.currentSectionName = ""
 
 			return &SectionEndDirectiveLine{
 				Name: currentSectionName,
 			}, true
+		} else {
+			r.currentSectionName = tl.Name
 		}
 	}
 
@@ -149,19 +156,19 @@ func (r *ChordsOverLyricsReader) parseDirective(text string) Line {
 	idx := strings.IndexRune(text, '=')
 	if idx < 0 {
 		return &UnknownDirectiveLine{
-			Name: text,
+			Name: text[1:],
 		}
 	}
 
-	name := text[:idx]
+	name := text[1:idx]
 	value := strings.TrimSpace(text[idx+1:])
 
 	switch name {
-	case "#title":
+	case "title":
 		return &TitleDirectiveLine{
 			Title: value,
 		}
-	case "#key":
+	case "key":
 		if key, err := theory.ParseKey(r.cfg, value); err == nil {
 			return &KeyDirectiveLine{
 				Key: key,

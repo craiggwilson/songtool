@@ -36,14 +36,14 @@ func WriteChordsOverLyrics(cfg *theory.Config, src Song, w io.Writer) (int, erro
 			sb.WriteString(tl.Text)
 		case *ChordLine:
 			currentOffset := 0
-			for _, chord := range tl.Chords {
-				offsetDiff := chord.Offset - currentOffset
+			for _, chordOffset := range tl.Chords {
+				offsetDiff := chordOffset.Offset - currentOffset
 				if offsetDiff > 0 {
 					sb.WriteString(strings.Repeat(" ", offsetDiff))
 					currentOffset += offsetDiff
 				}
 
-				chordName := chord.Name()
+				chordName := chordOffset.Chord.Name()
 				sb.WriteString(chordName)
 				currentOffset += len(chordName)
 			}

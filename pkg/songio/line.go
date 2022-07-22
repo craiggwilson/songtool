@@ -11,18 +11,18 @@ type EmptyLine struct{}
 func (EmptyLine) line() {}
 
 type ChordLine struct {
-	Chords []*ChordOffset
+	Chords []*ChordOffset `json:"chords"`
 }
 
 func (l *ChordLine) line() {}
 
 type ChordOffset struct {
-	theory.Chord
-	Offset int
+	Chord  theory.Chord `json:"chord"`
+	Offset int          `json:"offset"`
 }
 
 type TextLine struct {
-	Text string
+	Text string `json:"text"`
 }
 
 func (l *TextLine) line() {}
