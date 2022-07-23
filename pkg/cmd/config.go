@@ -1,12 +1,19 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/craiggwilson/songtool/pkg/theory"
 	"github.com/jwalton/gchalk"
+	"github.com/kirsle/configdir"
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/parsers/json"
+	"github.com/knadh/koanf/parsers/toml"
+	"github.com/knadh/koanf/parsers/yaml"
+	"github.com/knadh/koanf/providers/file"
 	"github.com/knadh/koanf/providers/rawbytes"
 )
 
@@ -36,6 +43,14 @@ func LoadConfig(path string) (*Config, error) {
 		return nil, fmt.Errorf("parsing default config: %w", err)
 	}
 
+	if len(path) > 0 {
+		if err := loadConfig(k, path); err != nil {
+			return nil, err
+		}
+	} else if err := loadDefaultConfig(k); err != nil {
+		return nil, err
+	}
+
 	var configFile ConfigFile
 	if err := k.Unmarshal("", &configFile); err != nil {
 		return nil, fmt.Errorf("reading config file: %w", err)
@@ -45,6 +60,46 @@ func LoadConfig(path string) (*Config, error) {
 		ConfigFile: configFile,
 		Theory:     theory.DefaultConfig(),
 	}, nil
+}
+
+func loadDefaultConfig(k *koanf.Koanf) error {
+	configDir := configdir.LocalConfig("songtool")
+	if err := configdir.MakePath(configDir); err != nil {
+		return err
+	}
+	if err := loadConfig(k, filepath.Join(configDir, "config.json")); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+	if err := loadConfig(k, filepath.Join(configDir, "config.yaml")); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+	if err := loadConfig(k, filepath.Join(configDir, "config.toml")); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+
+	return nil
+}
+
+func loadConfig(k *koanf.Koanf, path string) error {
+	ext := filepath.Ext(path)
+	switch ext {
+	case ".json":
+		if err := k.Load(file.Provider(path), json.Parser()); err != nil {
+			return fmt.Errorf("loading config at %q: %w", path, err)
+		}
+	case ".yaml":
+		if err := k.Load(file.Provider(path), yaml.Parser()); err != nil {
+			return fmt.Errorf("loading config at %q: %w", path, err)
+		}
+	case ".toml":
+		if err := k.Load(file.Provider(path), toml.Parser()); err != nil {
+			return fmt.Errorf("loading config at %q: %w", path, err)
+		}
+	default:
+		return fmt.Errorf("unsupported config format %q", ext)
+	}
+
+	return nil
 }
 
 type ConfigFile struct {
