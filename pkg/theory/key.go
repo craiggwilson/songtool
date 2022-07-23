@@ -13,12 +13,16 @@ type Key struct {
 	Kind   KeyKind `json:"kind"`
 }
 
-func (k Key) MarshalJSON() ([]byte, error) {
+func (k *Key) IsValid() bool {
+	return k.Note.IsValid()
+}
+
+func (k *Key) MarshalJSON() ([]byte, error) {
 	type rawKey Key
 	return json.Marshal(struct {
 		Name string `json:"name"`
 		rawKey
-	}{k.Name(), rawKey(k)})
+	}{k.Name(), rawKey(*k)})
 }
 
 func (k *Key) Name() string {
@@ -28,20 +32,9 @@ func (k *Key) Name() string {
 type KeyKind string
 
 const (
-	KeyMajor KeyKind = "major"
-	KeyMinor KeyKind = "minor"
+	KeyMajor KeyKind = "M"
+	KeyMinor KeyKind = "m"
 )
-
-func (kk KeyKind) String() string {
-	switch kk {
-	case KeyMajor:
-		return "major"
-	case KeyMinor:
-		return "minor"
-	default:
-		return "undefined"
-	}
-}
 
 func GenerateKeys(kind KeyKind) []Key {
 	return defaultTheory.GenerateKeys(kind)

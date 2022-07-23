@@ -54,7 +54,7 @@ func (cmd *TransposeCmd) Run(cfg *Config) error {
 		}
 		interval = cfg.Theory.IntervalFromDiff(fromKey.Note, toKey.Note)
 	} else {
-		interval = cfg.Theory.IntervalFromStep(fromKey.Note, cmd.Interval, theory.EnharmonicSharp)
+		interval = cfg.Theory.IntervalFromStep(fromKey.Note, cmd.Interval, theory.Sharp)
 	}
 
 	transposer := songio.Transpose(cfg.Theory, song, interval)

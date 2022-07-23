@@ -8,6 +8,57 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestEnharmonicFromNote(t *testing.T) {
+	testCases := []struct {
+		note     theory.Note
+		expected theory.Enharmonic
+	}{
+		{
+			note:     theory.MustNote(theory.ParseNote("Ab")),
+			expected: theory.Flat,
+		},
+		{
+			note:     theory.MustNote(theory.ParseNote("A")),
+			expected: theory.Sharp,
+		},
+		{
+			note:     theory.MustNote(theory.ParseNote("A#")),
+			expected: theory.Sharp,
+		},
+		{
+			note:     theory.MustNote(theory.ParseNote("B")),
+			expected: theory.Sharp,
+		},
+		{
+			note:     theory.MustNote(theory.ParseNote("C")),
+			expected: theory.Flat,
+		},
+		{
+			note:     theory.MustNote(theory.ParseNote("D")),
+			expected: theory.Sharp,
+		},
+		{
+			note:     theory.MustNote(theory.ParseNote("E")),
+			expected: theory.Sharp,
+		},
+		{
+			note:     theory.MustNote(theory.ParseNote("F")),
+			expected: theory.Flat,
+		},
+		{
+			note:     theory.MustNote(theory.ParseNote("G")),
+			expected: theory.Sharp,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.note.Name, func(t *testing.T) {
+			actual := theory.EnharmonicFromNote(tc.note)
+			require.Equal(t, tc.expected, actual)
+		})
+	}
+}
+
 func TestParseNote(t *testing.T) {
 	testCases := []struct {
 		name           string
@@ -106,49 +157,49 @@ func TestTransposeNote(t *testing.T) {
 		{
 			from:               theory.MustNote(theory.ParseNote("C")),
 			pitchClassInterval: 2,
-			enharmonic:         theory.EnharmonicSharp,
+			enharmonic:         theory.Sharp,
 			expected:           theory.MustNote(theory.ParseNote("D")),
 		},
 		{
 			from:               theory.MustNote(theory.ParseNote("C")),
 			pitchClassInterval: 1,
-			enharmonic:         theory.EnharmonicSharp,
+			enharmonic:         theory.Sharp,
 			expected:           theory.MustNote(theory.ParseNote("C#")),
 		},
 		{
 			from:               theory.MustNote(theory.ParseNote("C")),
 			pitchClassInterval: 1,
-			enharmonic:         theory.EnharmonicFlat,
+			enharmonic:         theory.Flat,
 			expected:           theory.MustNote(theory.ParseNote("Db")),
 		},
 		{
 			from:               theory.MustNote(theory.ParseNote("C#")),
 			pitchClassInterval: 0,
-			enharmonic:         theory.EnharmonicFlat,
+			enharmonic:         theory.Flat,
 			expected:           theory.MustNote(theory.ParseNote("Db")),
 		},
 		{
 			from:               theory.MustNote(theory.ParseNote("Db")),
 			pitchClassInterval: 0,
-			enharmonic:         theory.EnharmonicSharp,
+			enharmonic:         theory.Sharp,
 			expected:           theory.MustNote(theory.ParseNote("C#")),
 		},
 		{
 			from:               theory.MustNote(theory.ParseNote("C")),
 			pitchClassInterval: -1,
-			enharmonic:         theory.EnharmonicSharp,
+			enharmonic:         theory.Sharp,
 			expected:           theory.MustNote(theory.ParseNote("B")),
 		},
 		{
 			from:               theory.MustNote(theory.ParseNote("C")),
 			pitchClassInterval: -1,
-			enharmonic:         theory.EnharmonicFlat,
+			enharmonic:         theory.Flat,
 			expected:           theory.MustNote(theory.ParseNote("B")),
 		},
 	}
 
 	for _, tc := range testCases {
-		t.Run(fmt.Sprintf("%s +- (%d, %d)", tc.from.Name, tc.pitchClassInterval, tc.enharmonic), func(t *testing.T) {
+		t.Run(fmt.Sprintf("%s +- (%d, %s)", tc.from.Name, tc.pitchClassInterval, tc.enharmonic), func(t *testing.T) {
 			actual := theory.TransposeNote(tc.from, theory.IntervalFromStep(tc.from, tc.pitchClassInterval, tc.enharmonic))
 			require.Equal(t, tc.expected, actual)
 		})

@@ -15,72 +15,72 @@ func TestConfig_DegreeClassFromPitchClass(t *testing.T) {
 	}{
 		{
 			pitchClass: 0,
-			enharmonic: EnharmonicSharp,
+			enharmonic: Sharp,
 			expected:   0,
 		},
 		{
 			pitchClass: 1,
-			enharmonic: EnharmonicSharp,
+			enharmonic: Sharp,
 			expected:   0,
 		},
 		{
 			pitchClass: 2,
-			enharmonic: EnharmonicSharp,
+			enharmonic: Sharp,
 			expected:   1,
 		},
 		{
 			pitchClass: 4,
-			enharmonic: EnharmonicSharp,
+			enharmonic: Sharp,
 			expected:   2,
 		},
 		{
 			pitchClass: 5,
-			enharmonic: EnharmonicSharp,
+			enharmonic: Sharp,
 			expected:   3,
 		},
 		{
 			pitchClass: 10,
-			enharmonic: EnharmonicSharp,
+			enharmonic: Sharp,
 			expected:   5,
 		},
 		{
 			pitchClass: 11,
-			enharmonic: EnharmonicSharp,
+			enharmonic: Sharp,
 			expected:   6,
 		},
 		{
 			pitchClass: 0,
-			enharmonic: EnharmonicFlat,
+			enharmonic: Flat,
 			expected:   0,
 		},
 		{
 			pitchClass: 1,
-			enharmonic: EnharmonicFlat,
+			enharmonic: Flat,
 			expected:   1,
 		},
 		{
 			pitchClass: 2,
-			enharmonic: EnharmonicFlat,
+			enharmonic: Flat,
 			expected:   1,
 		},
 		{
 			pitchClass: 4,
-			enharmonic: EnharmonicFlat,
+			enharmonic: Flat,
 			expected:   2,
 		},
 		{
 			pitchClass: 5,
-			enharmonic: EnharmonicFlat,
+			enharmonic: Flat,
 			expected:   3,
 		},
 		{
 			pitchClass: 10,
-			enharmonic: EnharmonicFlat,
+			enharmonic: Flat,
 			expected:   6,
 		},
 		{
 			pitchClass: 11,
-			enharmonic: EnharmonicFlat,
+			enharmonic: Flat,
 			expected:   6,
 		},
 	}
@@ -88,7 +88,7 @@ func TestConfig_DegreeClassFromPitchClass(t *testing.T) {
 	cfg := DefaultConfig()
 
 	for _, tc := range testCases {
-		t.Run(fmt.Sprintf("%d %d", tc.pitchClass, tc.enharmonic), func(t *testing.T) {
+		t.Run(fmt.Sprintf("%d %s", tc.pitchClass, tc.enharmonic), func(t *testing.T) {
 			actual := cfg.DegreeClassFromPitchClass(tc.pitchClass, tc.enharmonic)
 			require.Equal(t, tc.expected, actual)
 		})

@@ -18,7 +18,7 @@ func (t *Theory) GenerateScale(name string, root Note, intervals []int) Scale {
 	scale.Notes[0] = root
 	prevNote := root
 	for _, interval := range intervals {
-		nextNote := t.TransposeNote(prevNote, t.IntervalFromStep(prevNote, interval, EnharmonicSharp))
+		nextNote := t.TransposeNote(prevNote, t.IntervalFromStep(prevNote, interval, Sharp))
 		scale.Notes = append(scale.Notes, nextNote)
 		prevNote = nextNote
 	}

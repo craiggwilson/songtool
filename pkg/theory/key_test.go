@@ -208,7 +208,7 @@ func TestGenerateKeys(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.kind.String(), func(t *testing.T) {
+		t.Run(string(tc.kind), func(t *testing.T) {
 			actual := theory.GenerateKeys(tc.kind)
 			require.Equal(t, tc.expected, actual)
 		})

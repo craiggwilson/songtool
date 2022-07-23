@@ -20,12 +20,35 @@ func (n *Note) IsValid() bool {
 
 type DegreeClass int
 type PitchClass int
-type Enharmonic int
+type Enharmonic string
 
 const (
-	EnharmonicSharp Enharmonic = 1
-	EnharmonicFlat  Enharmonic = -1
+	Sharp Enharmonic = "#"
+	Flat  Enharmonic = "b"
 )
+
+func EnharmonicFromNote(note Note) Enharmonic {
+	return defaultTheory.EnharmonicFromNote(note)
+}
+
+func (t *Theory) EnharmonicFromNote(note Note) Enharmonic {
+	switch {
+	case note.Accidentals > 0:
+		return Sharp
+	case note.Accidentals < 0:
+		return Flat
+	default:
+		// If the note falls after a half-step, it's enharmonic is flat.
+		prevDegreeClass := t.Config.AdjustDegreeClass(note.DegreeClass, -1)
+		prevDegreeClassPitchClass := t.Config.DegreeClassToPitchClass[prevDegreeClass]
+		prevPitchClass := t.Config.AdjustPitchClass(note.PitchClass, -1)
+		if prevPitchClass == prevDegreeClassPitchClass {
+			return Flat
+		}
+
+		return Sharp
+	}
+}
 
 func MustNote(note Note, err error) Note {
 	if err != nil {

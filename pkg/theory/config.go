@@ -179,20 +179,20 @@ func (cfg *Config) DegreeClassFromNaturalNoteName(naturalNoteName string) Degree
 
 func (cfg *Config) DegreeClassFromPitchClass(pitchClass PitchClass, enharmonic Enharmonic) DegreeClass {
 	switch enharmonic {
-	case EnharmonicSharp:
+	case Sharp:
 		for i := len(cfg.DegreeClassToPitchClass) - 1; i >= 0; i-- {
 			if pitchClass >= cfg.DegreeClassToPitchClass[i] {
 				return DegreeClass(i)
 			}
 		}
-	case EnharmonicFlat:
+	case Flat:
 		for i := 0; i < len(cfg.DegreeClassToPitchClass); i++ {
 			if pitchClass <= cfg.DegreeClassToPitchClass[i] {
 				return DegreeClass(i)
 			}
 		}
 	default:
-		panic(fmt.Sprintf("invalid enharmonic %d", enharmonic))
+		panic(fmt.Sprintf("invalid enharmonic %s", enharmonic))
 	}
 
 	panic(fmt.Sprintf("invalid pitch class %d", pitchClass))
