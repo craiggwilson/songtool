@@ -28,6 +28,19 @@ const (
 	EnharmonicFlat  Enharmonic = -1
 )
 
+// func EnhmarmonicFromNote(note Note) Enharmonic {
+
+// }
+
+func MustParseNote(cfg *Config, text string) Note {
+	note, err := ParseNote(cfg, text)
+	if err != nil {
+		panic(err)
+	}
+
+	return note
+}
+
 func ParseNote(cfg *Config, text string) (Note, error) {
 	if cfg == nil {
 		cfg = &defaultConfig

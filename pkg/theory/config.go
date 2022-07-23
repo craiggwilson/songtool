@@ -135,6 +135,8 @@ func DefaultConfig() Config {
 		ChordModifiers:          modGroups,
 		PitchClassCount:         12,
 		DegreeClassToPitchClass: []PitchClass{0, 2, 4, 5, 7, 9, 11},
+		MajorScaleIntervals:     []string{"0", "2m", "2m", "1", "2", "2m", "2dim", "1"},
+		MinorScaleIntervals:     []string{"0m", "2dim", "1", "2m", "2m", "1", "2"},
 	}
 }
 
@@ -151,6 +153,9 @@ type Config struct {
 
 	PitchClassCount         int
 	DegreeClassToPitchClass []PitchClass
+
+	MajorScaleIntervals []string
+	MinorScaleIntervals []string
 }
 
 type ChordModifierGroup struct {

@@ -43,6 +43,9 @@ func (kk KeyKind) String() string {
 	}
 }
 
+// func AnalyzeKey(cfg *Config, chords []Chord) []Key {
+// }
+
 func GenerateKeys(cfg *Config, kind KeyKind) []Key {
 	if cfg == nil {
 		cfg = &defaultConfig

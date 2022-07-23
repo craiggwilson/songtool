@@ -104,46 +104,46 @@ func TestTransposeNote(t *testing.T) {
 		expected           theory.Note
 	}{
 		{
-			from:               mustParseNote(nil, "C"),
+			from:               theory.MustParseNote(nil, "C"),
 			pitchClassInterval: 2,
 			enharmonic:         theory.EnharmonicSharp,
-			expected:           mustParseNote(nil, "D"),
+			expected:           theory.MustParseNote(nil, "D"),
 		},
 		{
-			from:               mustParseNote(nil, "C"),
+			from:               theory.MustParseNote(nil, "C"),
 			pitchClassInterval: 1,
 			enharmonic:         theory.EnharmonicSharp,
-			expected:           mustParseNote(nil, "C#"),
+			expected:           theory.MustParseNote(nil, "C#"),
 		},
 		{
-			from:               mustParseNote(nil, "C"),
+			from:               theory.MustParseNote(nil, "C"),
 			pitchClassInterval: 1,
 			enharmonic:         theory.EnharmonicFlat,
-			expected:           mustParseNote(nil, "Db"),
+			expected:           theory.MustParseNote(nil, "Db"),
 		},
 		{
-			from:               mustParseNote(nil, "C#"),
+			from:               theory.MustParseNote(nil, "C#"),
 			pitchClassInterval: 0,
 			enharmonic:         theory.EnharmonicFlat,
-			expected:           mustParseNote(nil, "Db"),
+			expected:           theory.MustParseNote(nil, "Db"),
 		},
 		{
-			from:               mustParseNote(nil, "Db"),
+			from:               theory.MustParseNote(nil, "Db"),
 			pitchClassInterval: 0,
 			enharmonic:         theory.EnharmonicSharp,
-			expected:           mustParseNote(nil, "C#"),
+			expected:           theory.MustParseNote(nil, "C#"),
 		},
 		{
-			from:               mustParseNote(nil, "C"),
+			from:               theory.MustParseNote(nil, "C"),
 			pitchClassInterval: -1,
 			enharmonic:         theory.EnharmonicSharp,
-			expected:           mustParseNote(nil, "B"),
+			expected:           theory.MustParseNote(nil, "B"),
 		},
 		{
-			from:               mustParseNote(nil, "C"),
+			from:               theory.MustParseNote(nil, "C"),
 			pitchClassInterval: -1,
 			enharmonic:         theory.EnharmonicFlat,
-			expected:           mustParseNote(nil, "B"),
+			expected:           theory.MustParseNote(nil, "B"),
 		},
 	}
 
@@ -163,46 +163,46 @@ func TestTransposeNoteDirect(t *testing.T) {
 		expected            theory.Note
 	}{
 		{
-			from:                mustParseNote(nil, "C"),
+			from:                theory.MustParseNote(nil, "C"),
 			degreeClassInterval: 1,
 			pitchClassInterval:  2,
-			expected:            mustParseNote(nil, "D"),
+			expected:            theory.MustParseNote(nil, "D"),
 		},
 		{
-			from:                mustParseNote(nil, "C"),
+			from:                theory.MustParseNote(nil, "C"),
 			degreeClassInterval: 1,
 			pitchClassInterval:  1,
-			expected:            mustParseNote(nil, "Db"),
+			expected:            theory.MustParseNote(nil, "Db"),
 		},
 		{
-			from:                mustParseNote(nil, "C"),
+			from:                theory.MustParseNote(nil, "C"),
 			degreeClassInterval: 0,
 			pitchClassInterval:  1,
-			expected:            mustParseNote(nil, "C#"),
+			expected:            theory.MustParseNote(nil, "C#"),
 		},
 		{
-			from:                mustParseNote(nil, "C"),
+			from:                theory.MustParseNote(nil, "C"),
 			degreeClassInterval: 0,
 			pitchClassInterval:  -1,
-			expected:            mustParseNote(nil, "Cb"),
+			expected:            theory.MustParseNote(nil, "Cb"),
 		},
 		{
-			from:                mustParseNote(nil, "C"),
+			from:                theory.MustParseNote(nil, "C"),
 			degreeClassInterval: -1,
 			pitchClassInterval:  -1,
-			expected:            mustParseNote(nil, "B"),
+			expected:            theory.MustParseNote(nil, "B"),
 		},
 		{
-			from:                mustParseNote(nil, "C"),
+			from:                theory.MustParseNote(nil, "C"),
 			degreeClassInterval: -1,
 			pitchClassInterval:  -2,
-			expected:            mustParseNote(nil, "Bb"),
+			expected:            theory.MustParseNote(nil, "Bb"),
 		},
 		{
-			from:                mustParseNote(nil, "C"),
+			from:                theory.MustParseNote(nil, "C"),
 			degreeClassInterval: -2,
 			pitchClassInterval:  -2,
-			expected:            mustParseNote(nil, "A#"),
+			expected:            theory.MustParseNote(nil, "A#"),
 		},
 	}
 
@@ -212,13 +212,4 @@ func TestTransposeNoteDirect(t *testing.T) {
 			require.Equal(t, tc.expected, actual)
 		})
 	}
-}
-
-func mustParseNote(cfg *theory.Config, text string) theory.Note {
-	n, err := theory.ParseNote(cfg, text)
-	if err != nil {
-		panic(err)
-	}
-
-	return n
 }
