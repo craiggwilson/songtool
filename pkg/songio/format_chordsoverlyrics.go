@@ -1,17 +1,11 @@
 package songio
 
-import (
-	"io"
+// type ChordsOverLyricsFormat struct{}
 
-	"github.com/craiggwilson/songtool/pkg/theory"
-)
+// func (ChordsOverLyricsFormat) Read(t *theory.Theory, src io.Reader) (Song, error) {
+// 	return ReadChordsOverLyrics(t, src), nil
+// }
 
-type ChordsOverLyricsFormat struct{}
-
-func (ChordsOverLyricsFormat) Read(cfg *theory.Config, src io.Reader) (Song, error) {
-	return ReadChordsOverLyrics(cfg, src), nil
-}
-
-func (ChordsOverLyricsFormat) Write(_ *theory.Config, src Song, dst io.Writer) (int, error) {
-	return WriteChordsOverLyrics(src, dst)
-}
+// func (ChordsOverLyricsFormat) Write(_ *theory.Theory, src Song, dst io.Writer) (int, error) {
+// 	return WriteChordsOverLyrics(src, dst)
+// }

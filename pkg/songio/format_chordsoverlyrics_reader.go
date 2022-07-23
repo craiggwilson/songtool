@@ -10,7 +10,7 @@ import (
 )
 
 type ChordsOverLyricsReader struct {
-	cfg     *theory.Config
+	t       *theory.Theory
 	scanner *bufio.Scanner
 
 	blankLineCount     int
@@ -21,9 +21,9 @@ type ChordsOverLyricsReader struct {
 	err error
 }
 
-func ReadChordsOverLyrics(cfg *theory.Config, src io.Reader) *ChordsOverLyricsReader {
+func ReadChordsOverLyrics(t *theory.Theory, src io.Reader) *ChordsOverLyricsReader {
 	return &ChordsOverLyricsReader{
-		cfg:     cfg,
+		t:       t,
 		scanner: bufio.NewScanner(src),
 	}
 }
@@ -115,7 +115,7 @@ func (r *ChordsOverLyricsReader) parseContent(text string) Line {
 	for i, n := range text {
 		if unicode.IsSpace(n) {
 			if wordStartIdx > -1 {
-				chord, err := theory.ParseChord(r.cfg, text[wordStartIdx:i])
+				chord, err := r.t.ParseChord(text[wordStartIdx:i])
 				if err != nil {
 					return &TextLine{
 						Text: text,
@@ -134,7 +134,7 @@ func (r *ChordsOverLyricsReader) parseContent(text string) Line {
 	}
 
 	if wordStartIdx > -1 {
-		chord, err := theory.ParseChord(r.cfg, text[wordStartIdx:])
+		chord, err := r.t.ParseChord(text[wordStartIdx:])
 		if err != nil {
 			return &TextLine{
 				Text: text,
@@ -169,7 +169,7 @@ func (r *ChordsOverLyricsReader) parseDirective(text string) Line {
 			Title: value,
 		}
 	case "key":
-		if key, err := theory.ParseKey(r.cfg, value); err == nil {
+		if key, err := r.t.ParseKey(value); err == nil {
 			return &KeyDirectiveLine{
 				Key: key,
 			}

@@ -76,7 +76,7 @@ func TestParseChord(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			actual, err := theory.ParseChord(nil, tc.name)
+			actual, err := theory.ParseChord(tc.name)
 			require.Nil(t, err)
 			require.Equal(t, tc.expected, actual)
 		})

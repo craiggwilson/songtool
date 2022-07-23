@@ -9,11 +9,7 @@ type Meta struct {
 	Chords   []theory.Chord `json:"chords"`
 }
 
-func ReadMeta(cfg *theory.Config, src Song, full bool) (Meta, error) {
-	if cfg == nil {
-		defCfg := theory.DefaultConfig()
-		cfg = &defCfg
-	}
+func ReadMeta(t *theory.Theory, src Song, full bool) (Meta, error) {
 	var meta Meta
 
 	chordSet := make(map[string]struct{})
@@ -35,7 +31,7 @@ Loop:
 					suffix := ""
 					if chordOffset.Chord.IsMinor() {
 						kind = theory.KeyMinor
-						suffix = string(cfg.MinorKeySymbols[0])
+						suffix = string(t.Config.MinorKeySymbols[0])
 					}
 
 					meta.Key = theory.Key{

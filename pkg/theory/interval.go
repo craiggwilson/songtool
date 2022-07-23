@@ -5,12 +5,12 @@ type Interval struct {
 	PitchClass  int
 }
 
-func IntervalFromStep(cfg *Config, note Note, step int, enharmonic Enharmonic) Interval {
-	if cfg == nil {
-		cfg = &defaultConfig
-	}
+func IntervalFromStep(note Note, step int, enharmonic Enharmonic) Interval {
+	return defaultTheory.IntervalFromStep(note, step, enharmonic)
+}
 
-	newDegreeClass := degreeClassFromPitchClass(cfg, adjustPitchClass(cfg, note.PitchClass, step), enharmonic)
+func (t *Theory) IntervalFromStep(note Note, step int, enharmonic Enharmonic) Interval {
+	newDegreeClass := t.Config.DegreeClassFromPitchClass(t.Config.AdjustPitchClass(note.PitchClass, step), enharmonic)
 
 	return Interval{
 		DegreeClass: int(newDegreeClass) - int(note.DegreeClass),
@@ -19,6 +19,10 @@ func IntervalFromStep(cfg *Config, note Note, step int, enharmonic Enharmonic) I
 }
 
 func IntervalFromDiff(a, b Note) Interval {
+	return defaultTheory.IntervalFromDiff(a, b)
+}
+
+func (t *Theory) IntervalFromDiff(a, b Note) Interval {
 	return Interval{
 		DegreeClass: int(b.DegreeClass) - int(a.DegreeClass),
 		PitchClass:  int(b.PitchClass) - int(a.PitchClass),

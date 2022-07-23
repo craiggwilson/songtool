@@ -16,7 +16,7 @@ func TestGenerateScale(t *testing.T) {
 	}{
 		{
 			name:      "C Major",
-			root:      theory.MustParseNote(nil, "C"),
+			root:      theory.MustNote(theory.ParseNote("C")),
 			intervals: []int{2, 2, 1, 2, 2, 2, 1},
 			expected: theory.Scale{
 				Name: "C Major",
@@ -76,7 +76,7 @@ func TestGenerateScale(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			actual := theory.GenerateScale(nil, tc.name, tc.root, tc.intervals)
+			actual := theory.GenerateScale(tc.name, tc.root, tc.intervals)
 
 			require.Equal(t, tc.expected, actual)
 		})

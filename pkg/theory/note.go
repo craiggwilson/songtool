@@ -28,12 +28,7 @@ const (
 	EnharmonicFlat  Enharmonic = -1
 )
 
-// func EnhmarmonicFromNote(note Note) Enharmonic {
-
-// }
-
-func MustParseNote(cfg *Config, text string) Note {
-	note, err := ParseNote(cfg, text)
+func MustNote(note Note, err error) Note {
 	if err != nil {
 		panic(err)
 	}
@@ -41,12 +36,12 @@ func MustParseNote(cfg *Config, text string) Note {
 	return note
 }
 
-func ParseNote(cfg *Config, text string) (Note, error) {
-	if cfg == nil {
-		cfg = &defaultConfig
-	}
+func ParseNote(text string) (Note, error) {
+	return defaultTheory.ParseNote(text)
+}
 
-	n, pos, err := parseNote(cfg, text, 0)
+func (t *Theory) ParseNote(text string) (Note, error) {
+	n, pos, err := t.parseNote(text, 0)
 	if err != nil {
 		return Note{}, err
 	}
@@ -57,25 +52,25 @@ func ParseNote(cfg *Config, text string) (Note, error) {
 	return n, err
 }
 
-func TransposeNote(cfg *Config, n Note, interval Interval) Note {
-	if cfg == nil {
-		cfg = &defaultConfig
-	}
+func TransposeNote(n Note, interval Interval) Note {
+	return defaultTheory.TransposeNote(n, interval)
+}
 
-	newDegreeClass := adjustDegreeClass(cfg, n.DegreeClass, interval.DegreeClass)
-	newPitchClass := adjustPitchClass(cfg, n.PitchClass, interval.PitchClass)
+func (t *Theory) TransposeNote(n Note, interval Interval) Note {
+	newDegreeClass := t.Config.AdjustDegreeClass(n.DegreeClass, interval.DegreeClass)
+	newPitchClass := t.Config.AdjustPitchClass(n.PitchClass, interval.PitchClass)
 
-	pitchClassDeltaFromDegreeClasses := pitchClassDelta(cfg, pitchClassFromDegreeClass(cfg, n.DegreeClass), pitchClassFromDegreeClass(cfg, newDegreeClass))
-	pitchClassDeltaFromPitchClass := pitchClassDelta(cfg, n.PitchClass, newPitchClass)
+	pitchClassDeltaFromDegreeClasses := t.Config.PitchClassDelta(t.Config.PitchClassFromDegreeClass(n.DegreeClass), t.Config.PitchClassFromDegreeClass(newDegreeClass))
+	pitchClassDeltaFromPitchClass := t.Config.PitchClassDelta(n.PitchClass, newPitchClass)
 
-	newAccidentals := normalizeAccidentals(cfg, n.Accidentals+pitchClassDeltaFromPitchClass-pitchClassDeltaFromDegreeClasses)
+	newAccidentals := t.Config.NormalizeAccidentals(n.Accidentals + pitchClassDeltaFromPitchClass - pitchClassDeltaFromDegreeClasses)
 
-	naturalNoteName := cfg.NaturalNoteNames[newDegreeClass]
+	naturalNoteName := t.Config.NaturalNoteNames[newDegreeClass]
 	accidentalToken := ""
 	if newAccidentals > 0 {
-		accidentalToken = strings.Repeat(string(cfg.SharpSymbols[0]), newAccidentals)
+		accidentalToken = strings.Repeat(string(t.Config.SharpSymbols[0]), newAccidentals)
 	} else if newAccidentals < 0 {
-		accidentalToken = strings.Repeat(string(cfg.FlatSymbols[0]), int(math.Abs(float64(newAccidentals))))
+		accidentalToken = strings.Repeat(string(t.Config.FlatSymbols[0]), int(math.Abs(float64(newAccidentals))))
 	}
 
 	return Note{
@@ -86,55 +81,55 @@ func TransposeNote(cfg *Config, n Note, interval Interval) Note {
 	}
 }
 
-func parseNote(cfg *Config, text string, pos int) (Note, int, error) {
-	naturalNoteName, newPos, err := parseNaturalNoteName(cfg, text, pos)
+func (t *Theory) parseNote(text string, pos int) (Note, int, error) {
+	naturalNoteName, newPos, err := t.parseNaturalNoteName(text, pos)
 	if err != nil {
 		return Note{}, pos, fmt.Errorf("expected natural note name at position %d: %w", newPos, err)
 	}
 
-	degreeClass := degreeClassFromNaturalNoteName(cfg, naturalNoteName)
-	pitchClass := pitchClassFromDegreeClass(cfg, degreeClass)
+	degreeClass := t.Config.DegreeClassFromNaturalNoteName(naturalNoteName)
+	pitchClass := t.Config.PitchClassFromDegreeClass(degreeClass)
 
-	accidentals, newPos := parseAccidentals(cfg, text, newPos)
+	accidentals, newPos := t.parseAccidentals(text, newPos)
 
 	return Note{
 		Name:        text[pos:newPos],
 		DegreeClass: degreeClass,
-		PitchClass:  adjustPitchClass(cfg, pitchClass, accidentals),
+		PitchClass:  t.Config.AdjustPitchClass(pitchClass, accidentals),
 		Accidentals: accidentals,
 	}, newPos, nil
 }
 
-func parseNaturalNoteName(cfg *Config, text string, pos int) (rune, int, error) {
+func (t *Theory) parseNaturalNoteName(text string, pos int) (rune, int, error) {
 	if len(text) <= pos {
 		return 0, pos, io.ErrUnexpectedEOF
 	}
 
 	v, w := utf8.DecodeRuneInString(text[pos:])
 
-	for _, nn := range cfg.NaturalNoteNames {
+	for _, nn := range t.Config.NaturalNoteNames {
 		if v == nn {
 			return v, pos + w, nil
 		}
 	}
 
-	return 0, pos, fmt.Errorf("expected one of %q, but got %q", cfg.NaturalNoteNames, v)
+	return 0, pos, fmt.Errorf("expected one of %q, but got %q", t.Config.NaturalNoteNames, v)
 }
 
-func parseAccidentals(cfg *Config, text string, pos int) (int, int) {
+func (t *Theory) parseAccidentals(text string, pos int) (int, int) {
 	if len(text) <= pos {
 		return 0, pos
 	}
 
-	accidentals, pos := parseSharps(cfg, text, pos)
+	accidentals, pos := t.parseSharps(text, pos)
 	if accidentals != 0 {
 		return accidentals, pos
 	}
 
-	return parseFlats(cfg, text, pos)
+	return t.parseFlats(text, pos)
 }
 
-func parseSharps(cfg *Config, text string, pos int) (int, int) {
+func (t *Theory) parseSharps(text string, pos int) (int, int) {
 	if len(text) <= pos {
 		return 0, pos
 	}
@@ -145,7 +140,7 @@ func parseSharps(cfg *Config, text string, pos int) (int, int) {
 	v, w := utf8.DecodeRuneInString(text[pos:])
 	for changed {
 		changed = false
-		for _, ss := range cfg.SharpSymbols {
+		for _, ss := range t.Config.SharpSymbols {
 			if v == ss {
 				accidentals++
 				pos += w
@@ -159,7 +154,7 @@ func parseSharps(cfg *Config, text string, pos int) (int, int) {
 	return accidentals, pos
 }
 
-func parseFlats(cfg *Config, text string, pos int) (int, int) {
+func (t *Theory) parseFlats(text string, pos int) (int, int) {
 	if len(text) <= pos {
 		return 0, pos
 	}
@@ -170,7 +165,7 @@ func parseFlats(cfg *Config, text string, pos int) (int, int) {
 	v, w := utf8.DecodeRuneInString(text[pos:])
 	for changed {
 		changed = false
-		for _, ss := range cfg.FlatSymbols {
+		for _, ss := range t.Config.FlatSymbols {
 			if v == ss {
 				accidentals--
 				pos += w

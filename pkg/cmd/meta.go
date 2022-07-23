@@ -16,9 +16,9 @@ type MetaCmd struct {
 func (cmd *MetaCmd) Run(cfg *Config) error {
 	defer cmd.ensurePath().Close()
 
-	song := cmd.openSong()
+	song := cmd.openSong(cfg)
 
-	meta, err := songio.ReadMeta(&cfg.Theory, song, true)
+	meta, err := songio.ReadMeta(cfg.Theory, song, true)
 	if err != nil {
 		return err
 	}

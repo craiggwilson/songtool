@@ -18,6 +18,6 @@ func (cmd *songCmd) ensurePath() *os.File {
 	return cmd.Path
 }
 
-func (cmd *songCmd) openSong() songio.Song {
-	return songio.ReadChordsOverLyrics(nil, cmd.Path)
+func (cmd *songCmd) openSong(cfg *Config) songio.Song {
+	return songio.ReadChordsOverLyrics(cfg.Theory, cmd.Path)
 }

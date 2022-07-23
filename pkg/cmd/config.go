@@ -54,7 +54,7 @@ func LoadConfig(path string) (*Config, error) {
 
 	return &Config{
 		ConfigFile: configFile,
-		Theory:     theory.DefaultConfig(),
+		Theory:     theory.Default(),
 	}, nil
 }
 
@@ -155,5 +155,5 @@ func (s *Style) Renderf(format string, a ...interface{}) string {
 
 type Config struct {
 	ConfigFile
-	Theory theory.Config
+	Theory *theory.Theory
 }

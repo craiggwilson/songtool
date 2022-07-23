@@ -15,11 +15,11 @@ type KeysCmd struct {
 func (cmd *KeysCmd) Run(cfg *Config) error {
 	var keys []theory.Key
 	if cmd.Kind == "all" || cmd.Kind == "major" {
-		keys = append(keys, theory.GenerateKeys(&cfg.Theory, theory.KeyMajor)...)
+		keys = append(keys, cfg.Theory.GenerateKeys(theory.KeyMajor)...)
 	}
 
 	if cmd.Kind == "all" || cmd.Kind == "minor" {
-		keys = append(keys, theory.GenerateKeys(&cfg.Theory, theory.KeyMinor)...)
+		keys = append(keys, cfg.Theory.GenerateKeys(theory.KeyMinor)...)
 	}
 
 	theory.SortKeys(keys)

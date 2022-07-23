@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDegreeClassFromPitchClass(t *testing.T) {
+func TestConfig_DegreeClassFromPitchClass(t *testing.T) {
 	testCases := []struct {
 		pitchClass PitchClass
 		enharmonic Enharmonic
@@ -89,7 +89,7 @@ func TestDegreeClassFromPitchClass(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%d %d", tc.pitchClass, tc.enharmonic), func(t *testing.T) {
-			actual := degreeClassFromPitchClass(&cfg, tc.pitchClass, tc.enharmonic)
+			actual := cfg.DegreeClassFromPitchClass(tc.pitchClass, tc.enharmonic)
 			require.Equal(t, tc.expected, actual)
 		})
 	}

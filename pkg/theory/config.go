@@ -1,6 +1,8 @@
 package theory
 
 import (
+	"fmt"
+	"math"
 	"sort"
 )
 
@@ -135,8 +137,6 @@ func DefaultConfig() Config {
 		ChordModifiers:          modGroups,
 		PitchClassCount:         12,
 		DegreeClassToPitchClass: []PitchClass{0, 2, 4, 5, 7, 9, 11},
-		MajorScaleIntervals:     []string{"0", "2m", "2m", "1", "2", "2m", "2dim", "1"},
-		MinorScaleIntervals:     []string{"0m", "2dim", "1", "2m", "2m", "1", "2"},
 	}
 }
 
@@ -156,6 +156,86 @@ type Config struct {
 
 	MajorScaleIntervals []string
 	MinorScaleIntervals []string
+}
+
+func (cfg *Config) AdjustDegreeClass(degreeClass DegreeClass, by int) DegreeClass {
+	return (degreeClass + DegreeClass(by) + DegreeClass(len(cfg.NaturalNoteNames))) % DegreeClass(len(cfg.NaturalNoteNames))
+}
+
+func (cfg *Config) AdjustPitchClass(pitchClass PitchClass, by int) PitchClass {
+	return (pitchClass + PitchClass(by) + PitchClass(cfg.PitchClassCount)) % PitchClass(cfg.PitchClassCount)
+}
+
+func (cfg *Config) DegreeClassDelta(a, b DegreeClass) int {
+	return classDelta(int(a), int(b), len(cfg.NaturalNoteNames))
+}
+
+func (cfg *Config) DegreeClassFromNaturalNoteName(naturalNoteName rune) DegreeClass {
+	for i, nn := range cfg.NaturalNoteNames {
+		if nn == naturalNoteName {
+			return DegreeClass(i)
+		}
+	}
+
+	panic(fmt.Sprintf("natural note name %q does not map to a degree class", naturalNoteName))
+}
+
+func (cfg *Config) DegreeClassFromPitchClass(pitchClass PitchClass, enharmonic Enharmonic) DegreeClass {
+	switch enharmonic {
+	case EnharmonicSharp:
+		for i := len(cfg.DegreeClassToPitchClass) - 1; i >= 0; i-- {
+			if pitchClass >= cfg.DegreeClassToPitchClass[i] {
+				return DegreeClass(i)
+			}
+		}
+	case EnharmonicFlat:
+		for i := 0; i < len(cfg.DegreeClassToPitchClass); i++ {
+			if pitchClass <= cfg.DegreeClassToPitchClass[i] {
+				return DegreeClass(i)
+			}
+		}
+	default:
+		panic(fmt.Sprintf("invalid enharmonic %d", enharmonic))
+	}
+
+	panic(fmt.Sprintf("invalid pitch class %d", pitchClass))
+}
+
+func (cfg *Config) NormalizeAccidentals(accidentals int) int {
+	return normalize(accidentals, cfg.PitchClassCount)
+}
+
+func (cfg *Config) PitchClassFromDegreeClass(degreeClass DegreeClass) PitchClass {
+	if int(degreeClass) < len(cfg.DegreeClassToPitchClass) {
+		return cfg.DegreeClassToPitchClass[int(degreeClass)]
+	}
+
+	panic(fmt.Sprintf("degree class %d does not map to a pitch class", degreeClass))
+}
+
+func (cfg *Config) PitchClassDelta(a, b PitchClass) int {
+	return classDelta(int(a), int(b), cfg.PitchClassCount)
+}
+
+func classDelta(a, b, count int) int {
+	d1 := b - a
+	d2 := b - a + count
+	if math.Abs(float64(d1)) < math.Abs(float64(d2)) {
+		return d1
+	}
+
+	return d2
+}
+
+func normalize(v int, count int) int {
+	switch {
+	case v > count/2:
+		return -count + v
+	case v < -count/2:
+		return count + v
+	default:
+		return v
+	}
 }
 
 type ChordModifierGroup struct {

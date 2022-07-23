@@ -19,7 +19,7 @@ type CatCmd struct {
 func (cmd *CatCmd) Run(cfg *Config) error {
 	defer cmd.ensurePath().Close()
 
-	song := cmd.openSong()
+	song := cmd.openSong(cfg)
 
 	if cmd.NoChords {
 		song = songio.RemoveChords(song)

@@ -52,24 +52,32 @@ type BaseNote struct {
 	Delimiter rune `json:"delimiter"`
 }
 
-func ParseChord(cfg *Config, text string) (Chord, error) {
-	if cfg == nil {
-		cfg = &defaultConfig
+func MustChord(chord Chord, err error) Chord {
+	if err != nil {
+		panic(err)
 	}
 
-	root, pos, err := parseNote(cfg, text, 0)
+	return chord
+}
+
+func ParseChord(text string) (Chord, error) {
+	return defaultTheory.ParseChord(text)
+}
+
+func (t *Theory) ParseChord(text string) (Chord, error) {
+	root, pos, err := t.parseNote(text, 0)
 	if err != nil {
 		return Chord{}, fmt.Errorf("expected note at position 0: %w", err)
 	}
 
 	// Start with major chord intervals.
-	intervals := make([]int, len(cfg.MajorChordIntervals))
-	copy(intervals, cfg.MajorChordIntervals)
+	intervals := make([]int, len(t.Config.MajorChordIntervals))
+	copy(intervals, t.Config.MajorChordIntervals)
 
 	suffixPos := pos
 
 	// Each modifier group may have multiple applications, but once a group has passed, no more additions.
-	for _, modifierGroup := range cfg.ChordModifiers {
+	for _, modifierGroup := range t.Config.ChordModifiers {
 		changed := true
 		for changed {
 			changed = false
@@ -85,7 +93,7 @@ func ParseChord(cfg *Config, text string) (Chord, error) {
 
 	basePos := pos
 
-	base, pos, _ := parseBaseNote(cfg, text, pos)
+	base, pos, _ := t.parseBaseNote(text, pos)
 
 	if len(text) != pos {
 		return Chord{}, fmt.Errorf("expected EOF at position %d, but had %s", pos, text[pos:])
@@ -99,12 +107,16 @@ func ParseChord(cfg *Config, text string) (Chord, error) {
 	}, nil
 }
 
-func TransposeChord(cfg *Config, chord Chord, interval Interval) Chord {
-	newRoot := TransposeNote(cfg, chord.Root, interval)
+func TransposeChord(chord Chord, interval Interval) Chord {
+	return defaultTheory.TransposeChord(chord, interval)
+}
+
+func (t *Theory) TransposeChord(chord Chord, interval Interval) Chord {
+	newRoot := t.TransposeNote(chord.Root, interval)
 	newBase := chord.Base
 	if chord.Base != nil {
 		newBase = &BaseNote{
-			Note:      TransposeNote(cfg, chord.Base.Note, interval),
+			Note:      t.TransposeNote(chord.Base.Note, interval),
 			Delimiter: chord.Base.Delimiter,
 		}
 	}
@@ -155,15 +167,15 @@ func modifySemitones(intervals []int, modifiers []int) []int {
 	return intervals
 }
 
-func parseBaseNote(cfg *Config, text string, pos int) (*BaseNote, int, error) {
+func (t *Theory) parseBaseNote(text string, pos int) (*BaseNote, int, error) {
 	if len(text) <= pos {
 		return nil, pos, io.ErrUnexpectedEOF
 	}
 
 	v, w := utf8.DecodeRuneInString(text[pos:])
-	for _, r := range cfg.BaseNoteDelimiters {
+	for _, r := range t.Config.BaseNoteDelimiters {
 		if v == r {
-			note, pos, err := parseNote(cfg, text, pos+w)
+			note, pos, err := t.parseNote(text, pos+w)
 			return &BaseNote{
 				Note:      note,
 				Delimiter: v,
@@ -171,5 +183,5 @@ func parseBaseNote(cfg *Config, text string, pos int) (*BaseNote, int, error) {
 		}
 	}
 
-	return nil, pos, fmt.Errorf("expected one of %q, but got %q", cfg.BaseNoteDelimiters, v)
+	return nil, pos, fmt.Errorf("expected one of %q, but got %q", t.Config.BaseNoteDelimiters, v)
 }

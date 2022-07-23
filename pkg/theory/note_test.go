@@ -87,7 +87,7 @@ func TestParseNote(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			actual, err := theory.ParseNote(nil, tc.name)
+			actual, err := theory.ParseNote(tc.name)
 			if len(tc.expectedErrMsg) > 0 {
 				require.EqualError(t, err, tc.expectedErrMsg)
 			}
@@ -104,52 +104,52 @@ func TestTransposeNote(t *testing.T) {
 		expected           theory.Note
 	}{
 		{
-			from:               theory.MustParseNote(nil, "C"),
+			from:               theory.MustNote(theory.ParseNote("C")),
 			pitchClassInterval: 2,
 			enharmonic:         theory.EnharmonicSharp,
-			expected:           theory.MustParseNote(nil, "D"),
+			expected:           theory.MustNote(theory.ParseNote("D")),
 		},
 		{
-			from:               theory.MustParseNote(nil, "C"),
+			from:               theory.MustNote(theory.ParseNote("C")),
 			pitchClassInterval: 1,
 			enharmonic:         theory.EnharmonicSharp,
-			expected:           theory.MustParseNote(nil, "C#"),
+			expected:           theory.MustNote(theory.ParseNote("C#")),
 		},
 		{
-			from:               theory.MustParseNote(nil, "C"),
+			from:               theory.MustNote(theory.ParseNote("C")),
 			pitchClassInterval: 1,
 			enharmonic:         theory.EnharmonicFlat,
-			expected:           theory.MustParseNote(nil, "Db"),
+			expected:           theory.MustNote(theory.ParseNote("Db")),
 		},
 		{
-			from:               theory.MustParseNote(nil, "C#"),
+			from:               theory.MustNote(theory.ParseNote("C#")),
 			pitchClassInterval: 0,
 			enharmonic:         theory.EnharmonicFlat,
-			expected:           theory.MustParseNote(nil, "Db"),
+			expected:           theory.MustNote(theory.ParseNote("Db")),
 		},
 		{
-			from:               theory.MustParseNote(nil, "Db"),
+			from:               theory.MustNote(theory.ParseNote("Db")),
 			pitchClassInterval: 0,
 			enharmonic:         theory.EnharmonicSharp,
-			expected:           theory.MustParseNote(nil, "C#"),
+			expected:           theory.MustNote(theory.ParseNote("C#")),
 		},
 		{
-			from:               theory.MustParseNote(nil, "C"),
+			from:               theory.MustNote(theory.ParseNote("C")),
 			pitchClassInterval: -1,
 			enharmonic:         theory.EnharmonicSharp,
-			expected:           theory.MustParseNote(nil, "B"),
+			expected:           theory.MustNote(theory.ParseNote("B")),
 		},
 		{
-			from:               theory.MustParseNote(nil, "C"),
+			from:               theory.MustNote(theory.ParseNote("C")),
 			pitchClassInterval: -1,
 			enharmonic:         theory.EnharmonicFlat,
-			expected:           theory.MustParseNote(nil, "B"),
+			expected:           theory.MustNote(theory.ParseNote("B")),
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%s +- (%d, %d)", tc.from.Name, tc.pitchClassInterval, tc.enharmonic), func(t *testing.T) {
-			actual := theory.TransposeNote(nil, tc.from, theory.IntervalFromStep(nil, tc.from, tc.pitchClassInterval, tc.enharmonic))
+			actual := theory.TransposeNote(tc.from, theory.IntervalFromStep(tc.from, tc.pitchClassInterval, tc.enharmonic))
 			require.Equal(t, tc.expected, actual)
 		})
 	}
@@ -163,52 +163,52 @@ func TestTransposeNoteDirect(t *testing.T) {
 		expected            theory.Note
 	}{
 		{
-			from:                theory.MustParseNote(nil, "C"),
+			from:                theory.MustNote(theory.ParseNote("C")),
 			degreeClassInterval: 1,
 			pitchClassInterval:  2,
-			expected:            theory.MustParseNote(nil, "D"),
+			expected:            theory.MustNote(theory.ParseNote("D")),
 		},
 		{
-			from:                theory.MustParseNote(nil, "C"),
+			from:                theory.MustNote(theory.ParseNote("C")),
 			degreeClassInterval: 1,
 			pitchClassInterval:  1,
-			expected:            theory.MustParseNote(nil, "Db"),
+			expected:            theory.MustNote(theory.ParseNote("Db")),
 		},
 		{
-			from:                theory.MustParseNote(nil, "C"),
+			from:                theory.MustNote(theory.ParseNote("C")),
 			degreeClassInterval: 0,
 			pitchClassInterval:  1,
-			expected:            theory.MustParseNote(nil, "C#"),
+			expected:            theory.MustNote(theory.ParseNote("C#")),
 		},
 		{
-			from:                theory.MustParseNote(nil, "C"),
+			from:                theory.MustNote(theory.ParseNote("C")),
 			degreeClassInterval: 0,
 			pitchClassInterval:  -1,
-			expected:            theory.MustParseNote(nil, "Cb"),
+			expected:            theory.MustNote(theory.ParseNote("Cb")),
 		},
 		{
-			from:                theory.MustParseNote(nil, "C"),
+			from:                theory.MustNote(theory.ParseNote("C")),
 			degreeClassInterval: -1,
 			pitchClassInterval:  -1,
-			expected:            theory.MustParseNote(nil, "B"),
+			expected:            theory.MustNote(theory.ParseNote("B")),
 		},
 		{
-			from:                theory.MustParseNote(nil, "C"),
+			from:                theory.MustNote(theory.ParseNote("C")),
 			degreeClassInterval: -1,
 			pitchClassInterval:  -2,
-			expected:            theory.MustParseNote(nil, "Bb"),
+			expected:            theory.MustNote(theory.ParseNote("Bb")),
 		},
 		{
-			from:                theory.MustParseNote(nil, "C"),
+			from:                theory.MustNote(theory.ParseNote("C")),
 			degreeClassInterval: -2,
 			pitchClassInterval:  -2,
-			expected:            theory.MustParseNote(nil, "A#"),
+			expected:            theory.MustNote(theory.ParseNote("A#")),
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%s +- (%d, %d)", tc.from.Name, tc.degreeClassInterval, tc.pitchClassInterval), func(t *testing.T) {
-			actual := theory.TransposeNote(nil, tc.from, theory.Interval{tc.degreeClassInterval, tc.pitchClassInterval})
+			actual := theory.TransposeNote(tc.from, theory.Interval{tc.degreeClassInterval, tc.pitchClassInterval})
 			require.Equal(t, tc.expected, actual)
 		})
 	}

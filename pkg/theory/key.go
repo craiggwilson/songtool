@@ -43,25 +43,22 @@ func (kk KeyKind) String() string {
 	}
 }
 
-// func AnalyzeKey(cfg *Config, chords []Chord) []Key {
-// }
+func GenerateKeys(kind KeyKind) []Key {
+	return defaultTheory.GenerateKeys(kind)
+}
 
-func GenerateKeys(cfg *Config, kind KeyKind) []Key {
-	if cfg == nil {
-		cfg = &defaultConfig
-	}
-
-	keys := make([]Key, 0, len(cfg.NaturalNoteNames)*3)
+func (t *Theory) GenerateKeys(kind KeyKind) []Key {
+	keys := make([]Key, 0, len(t.Config.NaturalNoteNames)*3)
 
 	suffix := ""
 	if kind == KeyMinor {
-		suffix = string(cfg.MinorKeySymbols[0])
+		suffix = string(t.Config.MinorKeySymbols[0])
 	}
 
-	for i, nnn := range cfg.NaturalNoteNames {
+	for i, nnn := range t.Config.NaturalNoteNames {
 
 		degreeClass := DegreeClass(i)
-		pitchClass := pitchClassFromDegreeClass(cfg, degreeClass)
+		pitchClass := t.Config.PitchClassFromDegreeClass(degreeClass)
 
 		keys = append(keys, Key{
 			Note: Note{
@@ -76,9 +73,9 @@ func GenerateKeys(cfg *Config, kind KeyKind) []Key {
 
 		keys = append(keys, Key{
 			Note: Note{
-				Name:        string(nnn) + string(cfg.SharpSymbols[0]),
+				Name:        string(nnn) + string(t.Config.SharpSymbols[0]),
 				DegreeClass: degreeClass,
-				PitchClass:  adjustPitchClass(cfg, pitchClass, 1),
+				PitchClass:  t.Config.AdjustPitchClass(pitchClass, 1),
 				Accidentals: 1,
 			},
 			Suffix: suffix,
@@ -87,9 +84,9 @@ func GenerateKeys(cfg *Config, kind KeyKind) []Key {
 
 		keys = append(keys, Key{
 			Note: Note{
-				Name:        string(nnn) + string(cfg.FlatSymbols[0]),
+				Name:        string(nnn) + string(t.Config.FlatSymbols[0]),
 				DegreeClass: degreeClass,
-				PitchClass:  adjustPitchClass(cfg, pitchClass, -1),
+				PitchClass:  t.Config.AdjustPitchClass(pitchClass, -1),
 				Accidentals: -1,
 			},
 			Suffix: suffix,
@@ -102,23 +99,32 @@ func GenerateKeys(cfg *Config, kind KeyKind) []Key {
 	return keys
 }
 
-func ParseKey(cfg *Config, text string) (Key, error) {
-	if cfg == nil {
-		cfg = &defaultConfig
+func MustKey(key Key, err error) Key {
+	if err != nil {
+		panic(err)
 	}
 
-	n, pos, err := parseNote(cfg, text, 0)
+	return key
+}
+
+func ParseKey(text string) (Key, error) {
+	return defaultTheory.ParseKey(text)
+}
+
+func (t *Theory) ParseKey(text string) (Key, error) {
+	n, pos, err := t.parseNote(text, 0)
 	if err != nil {
 		return Key{}, fmt.Errorf("expected note at position 0: %w", err)
 	}
 
 	kind := KeyMajor
-
+	suffix := ""
 	if len(text) > pos {
 		v, w := utf8.DecodeRuneInString(text[pos:])
-		for _, r := range cfg.MinorKeySymbols {
+		for _, r := range t.Config.MinorKeySymbols {
 			if v == r {
 				kind = KeyMinor
+				suffix = string(r)
 				pos += w
 				break
 			}
@@ -130,8 +136,9 @@ func ParseKey(cfg *Config, text string) (Key, error) {
 	}
 
 	return Key{
-		Note: n,
-		Kind: kind,
+		Note:   n,
+		Suffix: suffix,
+		Kind:   kind,
 	}, nil
 }
 
@@ -156,8 +163,12 @@ func SortKeys(keys []Key) {
 	})
 }
 
-func TransposeKey(cfg *Config, key Key, interval Interval) Key {
-	newKeyNote := TransposeNote(cfg, key.Note, interval)
+func TransposeKey(key Key, interval Interval) Key {
+	return defaultTheory.TransposeKey(key, interval)
+}
+
+func (t *Theory) TransposeKey(key Key, interval Interval) Key {
+	newKeyNote := t.TransposeNote(key.Note, interval)
 	return Key{
 		Note: newKeyNote,
 		Kind: key.Kind,

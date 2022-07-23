@@ -4,16 +4,16 @@ import (
 	"github.com/craiggwilson/songtool/pkg/theory"
 )
 
-func Transpose(cfg *theory.Config, src Song, interval theory.Interval) *SongTransposer {
+func Transpose(t *theory.Theory, src Song, interval theory.Interval) *SongTransposer {
 	return &SongTransposer{
-		cfg:      cfg,
+		t:        t,
 		src:      src,
 		interval: interval,
 	}
 }
 
 type SongTransposer struct {
-	cfg      *theory.Config
+	t        *theory.Theory
 	src      Song
 	interval theory.Interval
 }
@@ -26,11 +26,11 @@ func (s *SongTransposer) Next() (Line, bool) {
 
 	switch tnl := nl.(type) {
 	case *KeyDirectiveLine:
-		newKey := theory.TransposeKey(s.cfg, tnl.Key, s.interval)
+		newKey := s.t.TransposeKey(tnl.Key, s.interval)
 		tnl.Key = newKey
 	case *ChordLine:
 		for _, seg := range tnl.Chords {
-			seg.Chord = theory.TransposeChord(s.cfg, seg.Chord, s.interval)
+			seg.Chord = s.t.TransposeChord(seg.Chord, s.interval)
 		}
 	}
 
