@@ -5,8 +5,6 @@ import (
 	"fmt"
 
 	"github.com/alecthomas/kong"
-	"github.com/fatih/color"
-	"github.com/jwalton/go-supportscolor"
 )
 
 var main struct {
@@ -35,8 +33,10 @@ func Run(versionInfo VersionInfo, args []string) int {
 		return 1
 	}
 
-	color.NoColor = !supportscolor.Stdout().SupportsColor
-	cfg := LoadConfig("")
+	cfg, err := LoadConfig("")
+	if err != nil {
+		fmt.Fprintln(parser.Stdout, err)
+	}
 
 	if err = ctx.Run(cfg); err != nil {
 		fmt.Fprintln(parser.Stdout, err)
