@@ -6,7 +6,6 @@ import (
 	"io"
 	"sort"
 	"strings"
-	"unicode/utf8"
 )
 
 type Chord struct {
@@ -49,7 +48,7 @@ func (c *Chord) Name() string {
 
 type BaseNote struct {
 	Note
-	Delimiter rune `json:"delimiter"`
+	Delimiter string `json:"delimiter"`
 }
 
 func MustChord(chord Chord, err error) Chord {
@@ -172,16 +171,15 @@ func (t *Theory) parseBaseNote(text string, pos int) (*BaseNote, int, error) {
 		return nil, pos, io.ErrUnexpectedEOF
 	}
 
-	v, w := utf8.DecodeRuneInString(text[pos:])
 	for _, r := range t.Config.BaseNoteDelimiters {
-		if v == r {
-			note, pos, err := t.parseNote(text, pos+w)
+		if strings.HasPrefix(text[pos:], r) {
+			note, pos, err := t.parseNote(text, pos+len(r))
 			return &BaseNote{
 				Note:      note,
-				Delimiter: v,
+				Delimiter: r,
 			}, pos, err
 		}
 	}
 
-	return nil, pos, fmt.Errorf("expected one of %q, but got %q", t.Config.BaseNoteDelimiters, v)
+	return nil, pos, fmt.Errorf("expected one of %q, but got %q", t.Config.BaseNoteDelimiters, text[pos:])
 }

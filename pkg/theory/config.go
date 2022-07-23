@@ -128,11 +128,11 @@ func DefaultConfig() Config {
 	}
 
 	return Config{
-		MinorKeySymbols:         []rune{'m'},
-		NaturalNoteNames:        []rune{'C', 'D', 'E', 'F', 'G', 'A', 'B'},
-		SharpSymbols:            []rune{'#'},
-		FlatSymbols:             []rune{'b'},
-		BaseNoteDelimiters:      []rune{'/'},
+		MinorKeySymbols:         []string{"m"},
+		NaturalNoteNames:        []string{"C", "D", "E", "F", "G", "A", "B"},
+		SharpSymbols:            []string{"#"},
+		FlatSymbols:             []string{"b"},
+		BaseNoteDelimiters:      []string{"/"},
 		MajorChordIntervals:     []int{1, 4, 7},
 		ChordModifiers:          modGroups,
 		PitchClassCount:         12,
@@ -141,11 +141,11 @@ func DefaultConfig() Config {
 }
 
 type Config struct {
-	MinorKeySymbols    []rune
-	NaturalNoteNames   []rune
-	SharpSymbols       []rune
-	FlatSymbols        []rune
-	BaseNoteDelimiters []rune
+	MinorKeySymbols    []string
+	NaturalNoteNames   []string
+	SharpSymbols       []string
+	FlatSymbols        []string
+	BaseNoteDelimiters []string
 
 	MajorChordIntervals []int
 
@@ -153,9 +153,6 @@ type Config struct {
 
 	PitchClassCount         int
 	DegreeClassToPitchClass []PitchClass
-
-	MajorScaleIntervals []string
-	MinorScaleIntervals []string
 }
 
 func (cfg *Config) AdjustDegreeClass(degreeClass DegreeClass, by int) DegreeClass {
@@ -170,7 +167,7 @@ func (cfg *Config) DegreeClassDelta(a, b DegreeClass) int {
 	return classDelta(int(a), int(b), len(cfg.NaturalNoteNames))
 }
 
-func (cfg *Config) DegreeClassFromNaturalNoteName(naturalNoteName rune) DegreeClass {
+func (cfg *Config) DegreeClassFromNaturalNoteName(naturalNoteName string) DegreeClass {
 	for i, nn := range cfg.NaturalNoteNames {
 		if nn == naturalNoteName {
 			return DegreeClass(i)

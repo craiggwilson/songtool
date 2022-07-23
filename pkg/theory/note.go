@@ -5,7 +5,6 @@ import (
 	"io"
 	"math"
 	"strings"
-	"unicode/utf8"
 )
 
 type Note struct {
@@ -100,20 +99,18 @@ func (t *Theory) parseNote(text string, pos int) (Note, int, error) {
 	}, newPos, nil
 }
 
-func (t *Theory) parseNaturalNoteName(text string, pos int) (rune, int, error) {
+func (t *Theory) parseNaturalNoteName(text string, pos int) (string, int, error) {
 	if len(text) <= pos {
-		return 0, pos, io.ErrUnexpectedEOF
+		return "", pos, io.ErrUnexpectedEOF
 	}
 
-	v, w := utf8.DecodeRuneInString(text[pos:])
-
 	for _, nn := range t.Config.NaturalNoteNames {
-		if v == nn {
-			return v, pos + w, nil
+		if strings.HasPrefix(text[pos:], nn) {
+			return nn, pos + len(nn), nil
 		}
 	}
 
-	return 0, pos, fmt.Errorf("expected one of %q, but got %q", t.Config.NaturalNoteNames, v)
+	return "", pos, fmt.Errorf("expected one of %q, but got %q", t.Config.NaturalNoteNames, text[pos:])
 }
 
 func (t *Theory) parseAccidentals(text string, pos int) (int, int) {
@@ -137,15 +134,13 @@ func (t *Theory) parseSharps(text string, pos int) (int, int) {
 	accidentals := 0
 
 	changed := true
-	v, w := utf8.DecodeRuneInString(text[pos:])
 	for changed {
 		changed = false
-		for _, ss := range t.Config.SharpSymbols {
-			if v == ss {
+		for _, sym := range t.Config.SharpSymbols {
+			if strings.HasPrefix(text[pos:], sym) {
 				accidentals++
-				pos += w
+				pos += len(sym)
 				changed = true
-				v, w = utf8.DecodeRuneInString(text[pos:])
 				break
 			}
 		}
@@ -162,15 +157,13 @@ func (t *Theory) parseFlats(text string, pos int) (int, int) {
 	accidentals := 0
 
 	changed := true
-	v, w := utf8.DecodeRuneInString(text[pos:])
 	for changed {
 		changed = false
-		for _, ss := range t.Config.FlatSymbols {
-			if v == ss {
+		for _, sym := range t.Config.FlatSymbols {
+			if strings.HasPrefix(text[pos:], sym) {
 				accidentals--
-				pos += w
+				pos += len(sym)
 				changed = true
-				v, w = utf8.DecodeRuneInString(text[pos:])
 				break
 			}
 		}

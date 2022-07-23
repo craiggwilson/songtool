@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
-	"unicode/utf8"
+	"strings"
 )
 
 type Key struct {
@@ -120,12 +120,11 @@ func (t *Theory) ParseKey(text string) (Key, error) {
 	kind := KeyMajor
 	suffix := ""
 	if len(text) > pos {
-		v, w := utf8.DecodeRuneInString(text[pos:])
-		for _, r := range t.Config.MinorKeySymbols {
-			if v == r {
+		for _, sym := range t.Config.MinorKeySymbols {
+			if strings.HasPrefix(text[pos:], sym) {
 				kind = KeyMinor
-				suffix = string(r)
-				pos += w
+				suffix = string(sym)
+				pos += len(sym)
 				break
 			}
 		}

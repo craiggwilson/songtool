@@ -265,7 +265,8 @@ func TestParseKey(t *testing.T) {
 					PitchClass:  9,
 					Accidentals: 0,
 				},
-				Kind: theory.KeyMinor,
+				Suffix: "m",
+				Kind:   theory.KeyMinor,
 			},
 		},
 		{
@@ -277,7 +278,8 @@ func TestParseKey(t *testing.T) {
 					PitchClass:  10,
 					Accidentals: 1,
 				},
-				Kind: theory.KeyMinor,
+				Suffix: "m",
+				Kind:   theory.KeyMinor,
 			},
 		},
 		{
@@ -289,7 +291,8 @@ func TestParseKey(t *testing.T) {
 					PitchClass:  7,
 					Accidentals: -2,
 				},
-				Kind: theory.KeyMinor,
+				Suffix: "m",
+				Kind:   theory.KeyMinor,
 			},
 		},
 	}

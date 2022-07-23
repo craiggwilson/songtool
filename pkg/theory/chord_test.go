@@ -68,7 +68,7 @@ func TestParseChord(t *testing.T) {
 						PitchClass:  8,
 						Accidentals: 1,
 					},
-					Delimiter: '/',
+					Delimiter: "/",
 				},
 			},
 		},

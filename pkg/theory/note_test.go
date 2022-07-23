@@ -81,7 +81,7 @@ func TestParseNote(t *testing.T) {
 		{
 			name:           "H",
 			expected:       theory.Note{},
-			expectedErrMsg: `expected natural note name at position 0: expected one of ['C' 'D' 'E' 'F' 'G' 'A' 'B'], but got 'H'`,
+			expectedErrMsg: `expected natural note name at position 0: expected one of ["C" "D" "E" "F" "G" "A" "B"], but got "H"`,
 		},
 	}
 
