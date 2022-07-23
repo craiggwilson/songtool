@@ -17,29 +17,25 @@ import (
 	"github.com/knadh/koanf/providers/rawbytes"
 )
 
-var defaultConfig = `{
-	"styles": {
-		"chord": {
-			"color": "#69b797",
-			"italic": true
-		},
-		"directive": {
-			"color": "#666666"
-		},
-		"section": {
-			"color": "#41829f",
-			"underline": true
-		},
-		"text": {
-			"color": "#AAAAAA"
-		}
-	}
-}
+var defaultConfigFile = `
+[styles.chord]
+color = "#69b797"
+italic = true
+
+[styles.directive]
+color = "#666666"
+
+[styles.section]
+color = "#41829f"
+underline = true
+
+[styles.text]
+color = "#AAAAAA"
 `
 
 func LoadConfig(path string) (*Config, error) {
 	k := koanf.New(".")
-	if err := k.Load(rawbytes.Provider([]byte(defaultConfig)), json.Parser()); err != nil {
+	if err := k.Load(rawbytes.Provider([]byte(defaultConfigFile)), toml.Parser()); err != nil {
 		return nil, fmt.Errorf("parsing default config: %w", err)
 	}
 
@@ -67,13 +63,13 @@ func loadDefaultConfig(k *koanf.Koanf) error {
 	if err := configdir.MakePath(configDir); err != nil {
 		return err
 	}
-	if err := loadConfig(k, filepath.Join(configDir, "config.json")); err != nil && !errors.Is(err, os.ErrNotExist) {
+	if err := loadConfig(k, filepath.Join(configDir, "config.json")); err == nil || !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
-	if err := loadConfig(k, filepath.Join(configDir, "config.yaml")); err != nil && !errors.Is(err, os.ErrNotExist) {
+	if err := loadConfig(k, filepath.Join(configDir, "config.yaml")); err == nil || !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
-	if err := loadConfig(k, filepath.Join(configDir, "config.toml")); err != nil && !errors.Is(err, os.ErrNotExist) {
+	if err := loadConfig(k, filepath.Join(configDir, "config.toml")); err == nil || !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
 

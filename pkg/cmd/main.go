@@ -36,11 +36,12 @@ func Run(versionInfo VersionInfo, args []string) int {
 	cfg, err := LoadConfig("")
 	if err != nil {
 		fmt.Fprintln(parser.Stdout, err)
+		return 2
 	}
 
 	if err = ctx.Run(cfg); err != nil {
 		fmt.Fprintln(parser.Stdout, err)
-		return 2
+		return 3
 	}
 
 	return 0

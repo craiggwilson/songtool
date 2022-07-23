@@ -43,6 +43,28 @@ func (cmd *MetaCmd) print(meta songio.Meta) error {
 		fmt.Println("Key:", "<none>")
 	}
 
+	if len(meta.Sections) > 0 {
+		fmt.Print("Sections: ")
+		for i, section := range meta.Sections {
+			if i != 0 {
+				fmt.Print(", ")
+			}
+			fmt.Print(section)
+		}
+		fmt.Println()
+	}
+
+	if len(meta.Chords) > 0 {
+		fmt.Print("Chords: ")
+		for i, chord := range meta.Chords {
+			if i != 0 {
+				fmt.Print(", ")
+			}
+			fmt.Print(chord.Name())
+		}
+		fmt.Println()
+	}
+
 	return nil
 }
 
