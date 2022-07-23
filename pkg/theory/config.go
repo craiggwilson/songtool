@@ -6,9 +6,7 @@ import (
 	"sort"
 )
 
-var defaultConfig Config = DefaultConfig()
-
-func DefaultConfig() Config {
+func DefaultConfig() *Config {
 	modGroups := []ChordModifierGroup{
 		{
 			Name: "Quality",
@@ -127,7 +125,7 @@ func DefaultConfig() Config {
 		})
 	}
 
-	return Config{
+	return &Config{
 		MinorKeySymbols:         []string{"m"},
 		NaturalNoteNames:        []string{"C", "D", "E", "F", "G", "A", "B"},
 		SharpSymbols:            []string{"#"},
@@ -137,7 +135,31 @@ func DefaultConfig() Config {
 		ChordModifiers:          modGroups,
 		PitchClassCount:         12,
 		DegreeClassToPitchClass: []PitchClass{0, 2, 4, 5, 7, 9, 11},
+		ScaleIntervals: map[string][]Interval{
+			"Major": {
+				{DegreeClass: 1, PitchClass: 2},
+				{DegreeClass: 1, PitchClass: 2},
+				{DegreeClass: 1, PitchClass: 1},
+				{DegreeClass: 1, PitchClass: 2},
+				{DegreeClass: 1, PitchClass: 2},
+				{DegreeClass: 1, PitchClass: 2},
+				{DegreeClass: 1, PitchClass: 1},
+			},
+			"Minor": {
+				{DegreeClass: 1, PitchClass: 2},
+				{DegreeClass: 1, PitchClass: 1},
+				{DegreeClass: 1, PitchClass: 2},
+				{DegreeClass: 1, PitchClass: 2},
+				{DegreeClass: 1, PitchClass: 1},
+				{DegreeClass: 1, PitchClass: 2},
+				{DegreeClass: 1, PitchClass: 2},
+			},
+		},
 	}
+}
+
+func SetConfig(cfg *Config) {
+	std.Config = cfg
 }
 
 type Config struct {
@@ -153,6 +175,8 @@ type Config struct {
 
 	PitchClassCount         int
 	DegreeClassToPitchClass []PitchClass
+
+	ScaleIntervals map[string][]Interval
 }
 
 func (cfg *Config) AdjustDegreeClass(degreeClass DegreeClass, by int) DegreeClass {

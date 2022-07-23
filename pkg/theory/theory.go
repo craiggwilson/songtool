@@ -1,13 +1,13 @@
 package theory
 
-var defaultTheory = New(&defaultConfig)
-
-func Default() *Theory {
-	return defaultTheory
-}
+var std = New(DefaultConfig())
 
 func New(cfg *Config) *Theory {
 	return &Theory{Config: cfg}
+}
+
+func NewDefault() *Theory {
+	return New(DefaultConfig())
 }
 
 type Theory struct {

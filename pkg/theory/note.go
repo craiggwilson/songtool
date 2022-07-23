@@ -28,7 +28,7 @@ const (
 )
 
 func EnharmonicFromNote(note Note) Enharmonic {
-	return defaultTheory.EnharmonicFromNote(note)
+	return std.EnharmonicFromNote(note)
 }
 
 func (t *Theory) EnharmonicFromNote(note Note) Enharmonic {
@@ -59,7 +59,7 @@ func MustNote(note Note, err error) Note {
 }
 
 func ParseNote(text string) (Note, error) {
-	return defaultTheory.ParseNote(text)
+	return std.ParseNote(text)
 }
 
 func (t *Theory) ParseNote(text string) (Note, error) {
@@ -75,7 +75,7 @@ func (t *Theory) ParseNote(text string) (Note, error) {
 }
 
 func TransposeNote(n Note, interval Interval) Note {
-	return defaultTheory.TransposeNote(n, interval)
+	return std.TransposeNote(n, interval)
 }
 
 func (t *Theory) TransposeNote(n Note, interval Interval) Note {

@@ -11,13 +11,13 @@ func TestGenerateScale(t *testing.T) {
 	testCases := []struct {
 		name      string
 		root      theory.Note
-		intervals []int
+		intervals []theory.Interval
 		expected  theory.Scale
 	}{
 		{
 			name:      "C Major",
 			root:      theory.MustNote(theory.ParseNote("C")),
-			intervals: []int{2, 2, 1, 2, 2, 2, 1},
+			intervals: theory.DefaultConfig().ScaleIntervals["Major"],
 			expected: theory.Scale{
 				Name: "C Major",
 				Notes: []theory.Note{
@@ -68,6 +68,64 @@ func TestGenerateScale(t *testing.T) {
 						DegreeClass: 0,
 						PitchClass:  0,
 						Accidentals: 0,
+					},
+				},
+			},
+		},
+		{
+			name:      "C# Major",
+			root:      theory.MustNote(theory.ParseNote("C#")),
+			intervals: theory.DefaultConfig().ScaleIntervals["Major"],
+			expected: theory.Scale{
+				Name: "C# Major",
+				Notes: []theory.Note{
+					{
+						Name:        "C#",
+						DegreeClass: 0,
+						PitchClass:  1,
+						Accidentals: 1,
+					},
+					{
+						Name:        "D#",
+						DegreeClass: 1,
+						PitchClass:  3,
+						Accidentals: 1,
+					},
+					{
+						Name:        "E#",
+						DegreeClass: 2,
+						PitchClass:  5,
+						Accidentals: 1,
+					},
+					{
+						Name:        "F#",
+						DegreeClass: 3,
+						PitchClass:  6,
+						Accidentals: 1,
+					},
+					{
+						Name:        "G#",
+						DegreeClass: 4,
+						PitchClass:  8,
+						Accidentals: 1,
+					},
+					{
+						Name:        "A#",
+						DegreeClass: 5,
+						PitchClass:  10,
+						Accidentals: 1,
+					},
+					{
+						Name:        "B#",
+						DegreeClass: 6,
+						PitchClass:  0,
+						Accidentals: 1,
+					},
+					{
+						Name:        "C#",
+						DegreeClass: 0,
+						PitchClass:  1,
+						Accidentals: 1,
 					},
 				},
 			},

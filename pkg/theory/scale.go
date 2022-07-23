@@ -5,11 +5,11 @@ type Scale struct {
 	Notes []Note
 }
 
-func GenerateScale(name string, root Note, intervals []int) Scale {
-	return defaultTheory.GenerateScale(name, root, intervals)
+func GenerateScale(name string, root Note, intervals []Interval) Scale {
+	return std.GenerateScale(name, root, intervals)
 }
 
-func (t *Theory) GenerateScale(name string, root Note, intervals []int) Scale {
+func (t *Theory) GenerateScale(name string, root Note, intervals []Interval) Scale {
 	scale := Scale{
 		Name:  name,
 		Notes: make([]Note, 1, len(intervals)+1),
@@ -18,7 +18,7 @@ func (t *Theory) GenerateScale(name string, root Note, intervals []int) Scale {
 	scale.Notes[0] = root
 	prevNote := root
 	for _, interval := range intervals {
-		nextNote := t.TransposeNote(prevNote, t.IntervalFromStep(prevNote, interval, Sharp))
+		nextNote := t.TransposeNote(prevNote, interval)
 		scale.Notes = append(scale.Notes, nextNote)
 		prevNote = nextNote
 	}

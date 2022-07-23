@@ -54,7 +54,7 @@ func LoadConfig(path string) (*Config, error) {
 
 	return &Config{
 		ConfigFile: configFile,
-		Theory:     theory.Default(),
+		Theory:     theory.NewDefault(),
 	}, nil
 }
 

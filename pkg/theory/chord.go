@@ -60,7 +60,7 @@ func MustChord(chord Chord, err error) Chord {
 }
 
 func ParseChord(text string) (Chord, error) {
-	return defaultTheory.ParseChord(text)
+	return std.ParseChord(text)
 }
 
 func (t *Theory) ParseChord(text string) (Chord, error) {
@@ -107,7 +107,7 @@ func (t *Theory) ParseChord(text string) (Chord, error) {
 }
 
 func TransposeChord(chord Chord, interval Interval) Chord {
-	return defaultTheory.TransposeChord(chord, interval)
+	return std.TransposeChord(chord, interval)
 }
 
 func (t *Theory) TransposeChord(chord Chord, interval Interval) Chord {

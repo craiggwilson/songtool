@@ -6,7 +6,7 @@ type Interval struct {
 }
 
 func IntervalFromStep(note Note, step int, enharmonic Enharmonic) Interval {
-	return defaultTheory.IntervalFromStep(note, step, enharmonic)
+	return std.IntervalFromStep(note, step, enharmonic)
 }
 
 func (t *Theory) IntervalFromStep(note Note, step int, enharmonic Enharmonic) Interval {
@@ -19,7 +19,7 @@ func (t *Theory) IntervalFromStep(note Note, step int, enharmonic Enharmonic) In
 }
 
 func IntervalFromDiff(a, b Note) Interval {
-	return defaultTheory.IntervalFromDiff(a, b)
+	return std.IntervalFromDiff(a, b)
 }
 
 func (t *Theory) IntervalFromDiff(a, b Note) Interval {

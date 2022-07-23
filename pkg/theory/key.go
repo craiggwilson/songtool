@@ -37,7 +37,7 @@ const (
 )
 
 func GenerateKeys(kind KeyKind) []Key {
-	return defaultTheory.GenerateKeys(kind)
+	return std.GenerateKeys(kind)
 }
 
 func (t *Theory) GenerateKeys(kind KeyKind) []Key {
@@ -92,6 +92,14 @@ func (t *Theory) GenerateKeys(kind KeyKind) []Key {
 	return keys
 }
 
+func InferKey(chords []Chord) []Key {
+	return std.InferKey(chords)
+}
+
+func (t *Theory) InferKey(chords []Chord) []Key {
+	panic("not implemented")
+}
+
 func MustKey(key Key, err error) Key {
 	if err != nil {
 		panic(err)
@@ -101,7 +109,7 @@ func MustKey(key Key, err error) Key {
 }
 
 func ParseKey(text string) (Key, error) {
-	return defaultTheory.ParseKey(text)
+	return std.ParseKey(text)
 }
 
 func (t *Theory) ParseKey(text string) (Key, error) {
@@ -156,7 +164,7 @@ func SortKeys(keys []Key) {
 }
 
 func TransposeKey(key Key, interval Interval) Key {
-	return defaultTheory.TransposeKey(key, interval)
+	return std.TransposeKey(key, interval)
 }
 
 func (t *Theory) TransposeKey(key Key, interval Interval) Key {
