@@ -27,6 +27,8 @@ var ChromaticIntervals = []Interval{
 	{6, 11},
 }
 
+type IntervalStr string
+
 type Interval struct {
 	DegreeClass int
 	PitchClass  int
