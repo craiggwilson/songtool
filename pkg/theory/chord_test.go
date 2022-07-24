@@ -7,6 +7,37 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestNotesInChord(t *testing.T) {
+	testCases := []struct {
+		chord    theory.Chord
+		expected []theory.Note
+	}{
+		{
+			chord: theory.MustChord(theory.ParseChord("C")),
+			expected: []theory.Note{
+				theory.MustNote(theory.ParseNote("C")),
+				theory.MustNote(theory.ParseNote("E")),
+				theory.MustNote(theory.ParseNote("G")),
+			},
+		},
+		{
+			chord: theory.MustChord(theory.ParseChord("C#")),
+			expected: []theory.Note{
+				theory.MustNote(theory.ParseNote("C#")),
+				theory.MustNote(theory.ParseNote("E#")),
+				theory.MustNote(theory.ParseNote("G#")),
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.chord.Name(), func(t *testing.T) {
+			actual := theory.NotesInChord(tc.chord)
+			require.Equal(t, tc.expected, actual)
+		})
+	}
+}
+
 func TestParseChord(t *testing.T) {
 	testCases := []struct {
 		name     string
@@ -21,7 +52,7 @@ func TestParseChord(t *testing.T) {
 					PitchClass:  9,
 					Accidentals: 0,
 				},
-				Semitones: []int{1, 4, 7},
+				Semitones: []int{0, 4, 7},
 			},
 		},
 		{
@@ -33,7 +64,7 @@ func TestParseChord(t *testing.T) {
 					PitchClass:  9,
 					Accidentals: 0,
 				},
-				Semitones: []int{1, 4, 7, 11, 14},
+				Semitones: []int{0, 4, 7, 11, 14},
 				Suffix:    "maj9",
 			},
 		},
@@ -46,7 +77,7 @@ func TestParseChord(t *testing.T) {
 					PitchClass:  5,
 					Accidentals: -2,
 				},
-				Semitones: []int{1, 2, 7, 9},
+				Semitones: []int{0, 2, 7, 9},
 				Suffix:    "msus2add6",
 			},
 		},
@@ -59,7 +90,7 @@ func TestParseChord(t *testing.T) {
 					PitchClass:  1,
 					Accidentals: 1,
 				},
-				Semitones: []int{1, 3, 7, 10},
+				Semitones: []int{0, 3, 7, 10},
 				Suffix:    "m7",
 				Base: &theory.BaseNote{
 					Note: theory.Note{

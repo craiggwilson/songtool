@@ -108,6 +108,15 @@ func MustKey(key Key, err error) Key {
 	return key
 }
 
+func NotesInKey(key Key) []Note {
+	return std.NotesInKey(key)
+}
+
+func (t *Theory) NotesInKey(key Key) []Note {
+	scale := t.GenerateScale("Major", key.Note, IonianIntervals)
+	return scale.Notes
+}
+
 func ParseKey(text string) (Key, error) {
 	return std.ParseKey(text)
 }

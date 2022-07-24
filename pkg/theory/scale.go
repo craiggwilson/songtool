@@ -1,5 +1,15 @@
 package theory
 
+var IonianIntervals = []Interval{
+	{DegreeClass: 1, PitchClass: 2},
+	{DegreeClass: 1, PitchClass: 2},
+	{DegreeClass: 1, PitchClass: 1},
+	{DegreeClass: 1, PitchClass: 2},
+	{DegreeClass: 1, PitchClass: 2},
+	{DegreeClass: 1, PitchClass: 2},
+	{DegreeClass: 1, PitchClass: 1},
+}
+
 type Scale struct {
 	Name  string
 	Notes []Note

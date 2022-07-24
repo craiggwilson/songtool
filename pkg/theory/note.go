@@ -40,7 +40,7 @@ func (t *Theory) EnharmonicFromNote(note Note) Enharmonic {
 	default:
 		// If the note falls after a half-step, it's enharmonic is flat.
 		prevDegreeClass := t.Config.AdjustDegreeClass(note.DegreeClass, -1)
-		prevDegreeClassPitchClass := t.Config.DegreeClassToPitchClass[prevDegreeClass]
+		prevDegreeClassPitchClass := degreeClassToPitchClass[prevDegreeClass]
 		prevPitchClass := t.Config.AdjustPitchClass(note.PitchClass, -1)
 		if prevPitchClass == prevDegreeClassPitchClass {
 			return Flat

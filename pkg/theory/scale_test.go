@@ -17,7 +17,7 @@ func TestGenerateScale(t *testing.T) {
 		{
 			name:      "C Major",
 			root:      theory.MustNote(theory.ParseNote("C")),
-			intervals: theory.DefaultConfig().ScaleIntervals["Major"],
+			intervals: theory.IonianIntervals,
 			expected: theory.Scale{
 				Name: "C Major",
 				Notes: []theory.Note{
@@ -75,7 +75,7 @@ func TestGenerateScale(t *testing.T) {
 		{
 			name:      "C# Major",
 			root:      theory.MustNote(theory.ParseNote("C#")),
-			intervals: theory.DefaultConfig().ScaleIntervals["Major"],
+			intervals: theory.IonianIntervals,
 			expected: theory.Scale{
 				Name: "C# Major",
 				Notes: []theory.Note{

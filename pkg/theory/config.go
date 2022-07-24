@@ -126,35 +126,12 @@ func DefaultConfig() *Config {
 	}
 
 	return &Config{
-		MinorKeySymbols:         []string{"m"},
-		NaturalNoteNames:        []string{"C", "D", "E", "F", "G", "A", "B"},
-		SharpSymbols:            []string{"#"},
-		FlatSymbols:             []string{"b"},
-		BaseNoteDelimiters:      []string{"/"},
-		MajorChordIntervals:     []int{1, 4, 7},
-		ChordModifiers:          modGroups,
-		PitchClassCount:         12,
-		DegreeClassToPitchClass: []PitchClass{0, 2, 4, 5, 7, 9, 11},
-		ScaleIntervals: map[string][]Interval{
-			"Major": {
-				{DegreeClass: 1, PitchClass: 2},
-				{DegreeClass: 1, PitchClass: 2},
-				{DegreeClass: 1, PitchClass: 1},
-				{DegreeClass: 1, PitchClass: 2},
-				{DegreeClass: 1, PitchClass: 2},
-				{DegreeClass: 1, PitchClass: 2},
-				{DegreeClass: 1, PitchClass: 1},
-			},
-			"Minor": {
-				{DegreeClass: 1, PitchClass: 2},
-				{DegreeClass: 1, PitchClass: 1},
-				{DegreeClass: 1, PitchClass: 2},
-				{DegreeClass: 1, PitchClass: 2},
-				{DegreeClass: 1, PitchClass: 1},
-				{DegreeClass: 1, PitchClass: 2},
-				{DegreeClass: 1, PitchClass: 2},
-			},
-		},
+		MinorKeySymbols:    []string{"m"},
+		NaturalNoteNames:   []string{"C", "D", "E", "F", "G", "A", "B"},
+		SharpSymbols:       []string{"#"},
+		FlatSymbols:        []string{"b"},
+		BaseNoteDelimiters: []string{"/"},
+		ChordModifiers:     modGroups,
 	}
 }
 
@@ -162,21 +139,21 @@ func SetConfig(cfg *Config) {
 	std.Config = cfg
 }
 
+const (
+	pitchClassCount = 12
+)
+
+var (
+	degreeClassToPitchClass = []PitchClass{0, 2, 4, 5, 7, 9, 11}
+)
+
 type Config struct {
 	MinorKeySymbols    []string
 	NaturalNoteNames   []string
 	SharpSymbols       []string
 	FlatSymbols        []string
 	BaseNoteDelimiters []string
-
-	MajorChordIntervals []int
-
-	ChordModifiers []ChordModifierGroup
-
-	PitchClassCount         int
-	DegreeClassToPitchClass []PitchClass
-
-	ScaleIntervals map[string][]Interval
+	ChordModifiers     []ChordModifierGroup
 }
 
 func (cfg *Config) AdjustDegreeClass(degreeClass DegreeClass, by int) DegreeClass {
@@ -184,7 +161,7 @@ func (cfg *Config) AdjustDegreeClass(degreeClass DegreeClass, by int) DegreeClas
 }
 
 func (cfg *Config) AdjustPitchClass(pitchClass PitchClass, by int) PitchClass {
-	return (pitchClass + PitchClass(by) + PitchClass(cfg.PitchClassCount)) % PitchClass(cfg.PitchClassCount)
+	return (pitchClass + PitchClass(by) + PitchClass(pitchClassCount)) % PitchClass(pitchClassCount)
 }
 
 func (cfg *Config) DegreeClassDelta(a, b DegreeClass) int {
@@ -204,14 +181,14 @@ func (cfg *Config) DegreeClassFromNaturalNoteName(naturalNoteName string) Degree
 func (cfg *Config) DegreeClassFromPitchClass(pitchClass PitchClass, enharmonic Enharmonic) DegreeClass {
 	switch enharmonic {
 	case Sharp:
-		for i := len(cfg.DegreeClassToPitchClass) - 1; i >= 0; i-- {
-			if pitchClass >= cfg.DegreeClassToPitchClass[i] {
+		for i := len(degreeClassToPitchClass) - 1; i >= 0; i-- {
+			if pitchClass >= degreeClassToPitchClass[i] {
 				return DegreeClass(i)
 			}
 		}
 	case Flat:
-		for i := 0; i < len(cfg.DegreeClassToPitchClass); i++ {
-			if pitchClass <= cfg.DegreeClassToPitchClass[i] {
+		for i := 0; i < len(degreeClassToPitchClass); i++ {
+			if pitchClass <= degreeClassToPitchClass[i] {
 				return DegreeClass(i)
 			}
 		}
@@ -223,19 +200,19 @@ func (cfg *Config) DegreeClassFromPitchClass(pitchClass PitchClass, enharmonic E
 }
 
 func (cfg *Config) NormalizeAccidentals(accidentals int) int {
-	return normalize(accidentals, cfg.PitchClassCount)
+	return normalize(accidentals, pitchClassCount)
 }
 
 func (cfg *Config) PitchClassFromDegreeClass(degreeClass DegreeClass) PitchClass {
-	if int(degreeClass) < len(cfg.DegreeClassToPitchClass) {
-		return cfg.DegreeClassToPitchClass[int(degreeClass)]
+	if int(degreeClass) < len(degreeClassToPitchClass) {
+		return degreeClassToPitchClass[int(degreeClass)]
 	}
 
 	panic(fmt.Sprintf("degree class %d does not map to a pitch class", degreeClass))
 }
 
 func (cfg *Config) PitchClassDelta(a, b PitchClass) int {
-	return classDelta(int(a), int(b), cfg.PitchClassCount)
+	return classDelta(int(a), int(b), pitchClassCount)
 }
 
 func classDelta(a, b, count int) int {

@@ -59,6 +59,22 @@ func MustChord(chord Chord, err error) Chord {
 	return chord
 }
 
+func NotesInChord(chord Chord) []Note {
+	return std.NotesInChord(chord)
+}
+
+func (t *Theory) NotesInChord(chord Chord) []Note {
+	enharmonic := t.EnharmonicFromNote(chord.Root)
+
+	notes := make([]Note, 0, len(chord.Semitones))
+	for _, semitone := range chord.Semitones {
+		interval := t.IntervalFromStep(chord.Root, semitone, enharmonic)
+		notes = append(notes, t.TransposeNote(chord.Root, interval))
+	}
+
+	return notes
+}
+
 func ParseChord(text string) (Chord, error) {
 	return std.ParseChord(text)
 }
@@ -69,10 +85,8 @@ func (t *Theory) ParseChord(text string) (Chord, error) {
 		return Chord{}, fmt.Errorf("expected note at position 0: %w", err)
 	}
 
-	// Start with major chord intervals.
-	intervals := make([]int, len(t.Config.MajorChordIntervals))
-	copy(intervals, t.Config.MajorChordIntervals)
-
+	// Start with major chord semitones.
+	semitones := []int{0, 4, 7}
 	suffixPos := pos
 
 	// Each modifier group may have multiple applications, but once a group has passed, no more additions.
@@ -82,7 +96,7 @@ func (t *Theory) ParseChord(text string) (Chord, error) {
 			changed = false
 			for _, mod := range modifierGroup.Modifiers {
 				if strings.HasPrefix(text[pos:], mod.Match) && (len(mod.Except) == 0 || !strings.HasPrefix(text[pos:], mod.Except)) {
-					intervals = modifySemitones(intervals, mod.Semitones)
+					semitones = modifySemitones(semitones, mod.Semitones)
 					pos += len(mod.Match)
 					changed = true
 				}
@@ -100,7 +114,7 @@ func (t *Theory) ParseChord(text string) (Chord, error) {
 
 	return Chord{
 		Root:      root,
-		Semitones: intervals,
+		Semitones: semitones,
 		Suffix:    text[suffixPos:basePos],
 		Base:      base,
 	}, nil
