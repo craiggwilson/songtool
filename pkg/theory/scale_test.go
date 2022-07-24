@@ -63,12 +63,6 @@ func TestGenerateScale(t *testing.T) {
 						PitchClass:  11,
 						Accidentals: 0,
 					},
-					{
-						Name:        "C",
-						DegreeClass: 0,
-						PitchClass:  0,
-						Accidentals: 0,
-					},
 				},
 			},
 		},
@@ -121,12 +115,6 @@ func TestGenerateScale(t *testing.T) {
 						PitchClass:  0,
 						Accidentals: 1,
 					},
-					{
-						Name:        "C#",
-						DegreeClass: 0,
-						PitchClass:  1,
-						Accidentals: 1,
-					},
 				},
 			},
 		},
@@ -134,7 +122,7 @@ func TestGenerateScale(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			actual := theory.GenerateScale(tc.name, tc.root, tc.intervals)
+			actual := theory.GenerateDiatonicScale(tc.name, tc.root, tc.intervals)
 
 			require.Equal(t, tc.expected, actual)
 		})

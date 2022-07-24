@@ -127,7 +127,7 @@ func DefaultConfig() *Config {
 
 	return &Config{
 		MinorKeySymbols:    []string{"m"},
-		NaturalNoteNames:   []string{"C", "D", "E", "F", "G", "A", "B"},
+		NaturalNoteNames:   [7]string{"C", "D", "E", "F", "G", "A", "B"},
 		SharpSymbols:       []string{"#"},
 		FlatSymbols:        []string{"b"},
 		BaseNoteDelimiters: []string{"/"},
@@ -144,12 +144,12 @@ const (
 )
 
 var (
-	degreeClassToPitchClass = []PitchClass{0, 2, 4, 5, 7, 9, 11}
+	degreeClassToPitchClass = [7]PitchClass{0, 2, 4, 5, 7, 9, 11}
 )
 
 type Config struct {
 	MinorKeySymbols    []string
-	NaturalNoteNames   []string
+	NaturalNoteNames   [7]string
 	SharpSymbols       []string
 	FlatSymbols        []string
 	BaseNoteDelimiters []string

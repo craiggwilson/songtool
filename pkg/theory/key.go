@@ -113,7 +113,7 @@ func NotesInKey(key Key) []Note {
 }
 
 func (t *Theory) NotesInKey(key Key) []Note {
-	scale := t.GenerateScale("Major", key.Note, IonianIntervals)
+	scale := t.GenerateDiatonicScale("Major", key.Note, IonianIntervals)
 	return scale.Notes
 }
 
