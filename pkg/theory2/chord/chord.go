@@ -1,45 +1,37 @@
 package chord
 
 import (
-	"github.com/craiggwilson/songtool/pkg/theory/interval"
+	"github.com/craiggwilson/songtool/pkg/theory2/interval"
 )
 
 func New(intervals ...interval.Interval) Chord {
-	return Chord{intervals, determineQuality(intervals)}
+	return Chord{intervals}
 }
 
 type Chord struct {
 	intervals []interval.Interval
-	quality   Quality
 }
 
 func (c Chord) Quality() Quality {
-	return c.quality
-}
-
-func (c Chord) Intervals() []interval.Interval {
-	return c.intervals
-}
-
-func determineQuality(intervals []interval.Interval) Quality {
 	major3rd := false
 	minor3rd := false
 	diminished5th := false
 	perfect5th := false
 	augmented5th := false
 
-	for _, interval := range intervals {
-		switch interval.Chromatic() {
-		case 3:
-			minor3rd = true
-		case 4:
-			major3rd = true
-		case 5:
-			diminished5th = true
-		case 7:
-			perfect5th = true
-		case 8:
-			augmented5th = true
+	for _, ival := range c.intervals {
+		q := ival.Quality()
+		switch q.Kind() {
+		case interval.QualityKindAugmented:
+			augmented5th = augmented5th || (ival.Diatonic() == 4 && q.Size() == 1)
+		case interval.QualityKindDiminished:
+			diminished5th = diminished5th || (ival.Diatonic() == 4 && q.Size() == 1)
+		case interval.QualityKindMajor:
+			major3rd = major3rd || ival.Diatonic() == 2
+		case interval.QualityKindMinor:
+			minor3rd = minor3rd || ival.Diatonic() == 2
+		case interval.QualityKindPerfect:
+			perfect5th = perfect5th || ival.Diatonic() == 4
 		}
 	}
 
@@ -63,4 +55,8 @@ func determineQuality(intervals []interval.Interval) Quality {
 	}
 
 	return quality
+}
+
+func (c Chord) Intervals() []interval.Interval {
+	return c.intervals
 }

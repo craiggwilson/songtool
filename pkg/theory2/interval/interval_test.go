@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/craiggwilson/songtool/pkg/theory/interval"
+	"github.com/craiggwilson/songtool/pkg/theory2/interval"
 	"github.com/stretchr/testify/require"
 )
 
@@ -15,19 +15,19 @@ func TestInterval_Transpose(t *testing.T) {
 		expected interval.Interval
 	}{
 		{
-			input:    interval.New(0, 0),
-			by:       interval.New(0, 0),
-			expected: interval.New(0, 0),
+			input:    interval.Perfect(0),
+			by:       interval.Perfect(0),
+			expected: interval.Perfect(0),
 		},
 		{
-			input:    interval.New(0, 0),
-			by:       interval.New(4, 7),
-			expected: interval.New(4, 7),
+			input:    interval.Perfect(0),
+			by:       interval.Perfect(4),
+			expected: interval.Perfect(4),
 		},
 		{
-			input:    interval.New(0, 0),
-			by:       interval.New(-1, -1),
-			expected: interval.New(6, 11),
+			input:    interval.Perfect(0),
+			by:       interval.NewWithChromatic(-1, -1),
+			expected: interval.Major(6),
 		},
 	}
 
@@ -46,63 +46,63 @@ func TestFromStep(t *testing.T) {
 	}{
 		{
 			step:     -7,
-			expected: interval.New(3, 5),
+			expected: interval.NewWithChromatic(3, 5),
 		},
 		{
 			step:     -1,
-			expected: interval.New(6, 11),
+			expected: interval.NewWithChromatic(6, 11),
 		},
 		{
 			step:     0,
-			expected: interval.New(0, 0),
+			expected: interval.NewWithChromatic(0, 0),
 		},
 		{
 			step:     1,
-			expected: interval.New(1, 1),
+			expected: interval.NewWithChromatic(1, 1),
 		},
 		{
 			step:     2,
-			expected: interval.New(1, 2),
+			expected: interval.NewWithChromatic(1, 2),
 		},
 		{
 			step:     3,
-			expected: interval.New(2, 3),
+			expected: interval.NewWithChromatic(2, 3),
 		},
 		{
 			step:     4,
-			expected: interval.New(2, 4),
+			expected: interval.NewWithChromatic(2, 4),
 		},
 		{
 			step:     5,
-			expected: interval.New(3, 5),
+			expected: interval.NewWithChromatic(3, 5),
 		},
 		{
 			step:     6,
-			expected: interval.New(4, 6),
+			expected: interval.NewWithChromatic(4, 6),
 		},
 		{
 			step:     7,
-			expected: interval.New(4, 7),
+			expected: interval.NewWithChromatic(4, 7),
 		},
 		{
 			step:     8,
-			expected: interval.New(5, 8),
+			expected: interval.NewWithChromatic(5, 8),
 		},
 		{
 			step:     9,
-			expected: interval.New(5, 9),
+			expected: interval.NewWithChromatic(5, 9),
 		},
 		{
 			step:     10,
-			expected: interval.New(6, 10),
+			expected: interval.NewWithChromatic(6, 10),
 		},
 		{
 			step:     11,
-			expected: interval.New(6, 11),
+			expected: interval.NewWithChromatic(6, 11),
 		},
 		{
 			step:     12,
-			expected: interval.New(0, 0),
+			expected: interval.NewWithChromatic(0, 0),
 		},
 	}
 
@@ -122,63 +122,63 @@ func TestParseRoundTrip(t *testing.T) {
 	}{
 		{
 			text:     "1P",
-			expected: interval.New(0, 0),
+			expected: interval.NewWithChromatic(0, 0),
 		},
 		{
 			text:     "2m",
-			expected: interval.New(1, 1),
+			expected: interval.NewWithChromatic(1, 1),
 		},
 		{
 			text:     "2M",
-			expected: interval.New(1, 2),
+			expected: interval.NewWithChromatic(1, 2),
 		},
 		{
 			text:     "3m",
-			expected: interval.New(2, 3),
+			expected: interval.NewWithChromatic(2, 3),
 		},
 		{
 			text:     "3M",
-			expected: interval.New(2, 4),
+			expected: interval.NewWithChromatic(2, 4),
 		},
 		{
 			text:     "4P",
-			expected: interval.New(3, 5),
+			expected: interval.NewWithChromatic(3, 5),
 		},
 		{
 			text:     "4a",
-			expected: interval.New(3, 6),
+			expected: interval.NewWithChromatic(3, 6),
 		},
 		{
 			text:     "5d",
-			expected: interval.New(4, 6),
+			expected: interval.NewWithChromatic(4, 6),
 		},
 		{
 			text:     "5P",
-			expected: interval.New(4, 7),
+			expected: interval.NewWithChromatic(4, 7),
 		},
 		{
 			text:     "6m",
-			expected: interval.New(5, 8),
+			expected: interval.NewWithChromatic(5, 8),
 		},
 		{
 			text:     "6M",
-			expected: interval.New(5, 9),
+			expected: interval.NewWithChromatic(5, 9),
 		},
 		{
 			text:     "7m",
-			expected: interval.New(6, 10),
+			expected: interval.NewWithChromatic(6, 10),
 		},
 		{
 			text:     "7M",
-			expected: interval.New(6, 11),
+			expected: interval.NewWithChromatic(6, 11),
 		},
 		{
 			text:     "6ddd",
-			expected: interval.New(5, 6),
+			expected: interval.NewWithChromatic(5, 6),
 		},
 		{
 			text:     "6aaa",
-			expected: interval.New(5, 0),
+			expected: interval.NewWithChromatic(5, 0),
 		},
 		{
 			text:           "1",
