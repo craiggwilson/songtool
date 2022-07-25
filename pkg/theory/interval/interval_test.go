@@ -1,11 +1,118 @@
 package interval_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/craiggwilson/songtool/pkg/theory/interval"
 	"github.com/stretchr/testify/require"
 )
+
+func TestInterval_Transpose(t *testing.T) {
+	testCases := []struct {
+		input    interval.Interval
+		by       interval.Interval
+		expected interval.Interval
+	}{
+		{
+			input:    interval.New(0, 0),
+			by:       interval.New(0, 0),
+			expected: interval.New(0, 0),
+		},
+		{
+			input:    interval.New(0, 0),
+			by:       interval.New(4, 7),
+			expected: interval.New(4, 7),
+		},
+		{
+			input:    interval.New(0, 0),
+			by:       interval.New(-1, -1),
+			expected: interval.New(6, 11),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.input.String()+" by "+tc.by.String(), func(t *testing.T) {
+			actual := tc.input.Transpose(tc.by)
+			require.Equal(t, tc.expected, actual)
+		})
+	}
+}
+
+func TestFromStep(t *testing.T) {
+	testCases := []struct {
+		step     int
+		expected interval.Interval
+	}{
+		{
+			step:     -7,
+			expected: interval.New(3, 5),
+		},
+		{
+			step:     -1,
+			expected: interval.New(6, 11),
+		},
+		{
+			step:     0,
+			expected: interval.New(0, 0),
+		},
+		{
+			step:     1,
+			expected: interval.New(1, 1),
+		},
+		{
+			step:     2,
+			expected: interval.New(1, 2),
+		},
+		{
+			step:     3,
+			expected: interval.New(2, 3),
+		},
+		{
+			step:     4,
+			expected: interval.New(2, 4),
+		},
+		{
+			step:     5,
+			expected: interval.New(3, 5),
+		},
+		{
+			step:     6,
+			expected: interval.New(4, 6),
+		},
+		{
+			step:     7,
+			expected: interval.New(4, 7),
+		},
+		{
+			step:     8,
+			expected: interval.New(5, 8),
+		},
+		{
+			step:     9,
+			expected: interval.New(5, 9),
+		},
+		{
+			step:     10,
+			expected: interval.New(6, 10),
+		},
+		{
+			step:     11,
+			expected: interval.New(6, 11),
+		},
+		{
+			step:     12,
+			expected: interval.New(0, 0),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("step %d", tc.step), func(t *testing.T) {
+			actual := interval.FromStep(tc.step)
+			require.Equal(t, tc.expected, actual)
+		})
+	}
+}
 
 func TestParseRoundTrip(t *testing.T) {
 	testCases := []struct {
@@ -15,63 +122,63 @@ func TestParseRoundTrip(t *testing.T) {
 	}{
 		{
 			text:     "1P",
-			expected: interval.Interval{0, 0},
+			expected: interval.New(0, 0),
 		},
 		{
 			text:     "2m",
-			expected: interval.Interval{1, 1},
+			expected: interval.New(1, 1),
 		},
 		{
 			text:     "2M",
-			expected: interval.Interval{1, 2},
+			expected: interval.New(1, 2),
 		},
 		{
 			text:     "3m",
-			expected: interval.Interval{2, 3},
+			expected: interval.New(2, 3),
 		},
 		{
 			text:     "3M",
-			expected: interval.Interval{2, 4},
+			expected: interval.New(2, 4),
 		},
 		{
 			text:     "4P",
-			expected: interval.Interval{3, 5},
+			expected: interval.New(3, 5),
 		},
 		{
 			text:     "4a",
-			expected: interval.Interval{3, 6},
+			expected: interval.New(3, 6),
 		},
 		{
 			text:     "5d",
-			expected: interval.Interval{4, 6},
+			expected: interval.New(4, 6),
 		},
 		{
 			text:     "5P",
-			expected: interval.Interval{4, 7},
+			expected: interval.New(4, 7),
 		},
 		{
 			text:     "6m",
-			expected: interval.Interval{5, 8},
+			expected: interval.New(5, 8),
 		},
 		{
 			text:     "6M",
-			expected: interval.Interval{5, 9},
+			expected: interval.New(5, 9),
 		},
 		{
 			text:     "7m",
-			expected: interval.Interval{6, 10},
+			expected: interval.New(6, 10),
 		},
 		{
 			text:     "7M",
-			expected: interval.Interval{6, 11},
+			expected: interval.New(6, 11),
 		},
 		{
 			text:     "6ddd",
-			expected: interval.Interval{5, 6},
+			expected: interval.New(5, 6),
 		},
 		{
 			text:     "6aaa",
-			expected: interval.Interval{5, 0},
+			expected: interval.New(5, 0),
 		},
 		{
 			text:           "1",

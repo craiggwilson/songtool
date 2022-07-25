@@ -2,6 +2,7 @@ package interval
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"unicode"
 
@@ -9,14 +10,22 @@ import (
 )
 
 type Interval struct {
-	Diatonic  int
-	Chromatic int
+	diatonic  int
+	chromatic int
+}
+
+func (i Interval) Chromatic() int {
+	return i.chromatic
+}
+
+func (i Interval) Diatonic() int {
+	return i.diatonic
 }
 
 func (i Interval) Quality() intervalquality.IntervalQuality {
-	diff := i.Chromatic - diatonicToChromatic[i.Diatonic]
+	diff := i.chromatic - diatonicToChromatic[i.diatonic]
 
-	switch i.Diatonic {
+	switch i.diatonic {
 	case 0:
 		fallthrough
 	case 3:
@@ -49,7 +58,25 @@ func (i Interval) Quality() intervalquality.IntervalQuality {
 }
 
 func (i Interval) String() string {
-	return fmt.Sprintf("%d%s", i.Diatonic+1, i.Quality())
+	return fmt.Sprintf("%d%s", i.diatonic+1, i.Quality())
+}
+
+func (i Interval) Transpose(other Interval) Interval {
+	newDiatonic := normalizeDiatonic(i.diatonic + other.diatonic)
+	newChromatic := normalizeChromatic(i.chromatic + other.chromatic)
+
+	return Interval{newDiatonic, newChromatic}
+}
+
+func FromStep(step int) Interval {
+	step = normalizeChromatic(step)
+	for i := 0; i < len(diatonicToChromatic); i++ {
+		if step <= diatonicToChromatic[i] {
+			return Interval{i, step}
+		}
+	}
+
+	panic(fmt.Sprintf("impossible step %d", step))
 }
 
 func Must(interval Interval, err error) Interval {
@@ -58,6 +85,16 @@ func Must(interval Interval, err error) Interval {
 	}
 
 	return interval
+}
+
+func New(diatonic, chromatic int) Interval {
+	if diatonic < 0 || diatonic > 6 {
+		diatonic = normalizeDiatonic(diatonic)
+	}
+	if chromatic < 0 || chromatic > 11 {
+		chromatic = normalizeChromatic(chromatic)
+	}
+	return Interval{diatonic, chromatic}
 }
 
 func Parse(text string) (Interval, error) {
@@ -130,6 +167,16 @@ func Parse(text string) (Interval, error) {
 	return Interval{diatonic, chromatic}, nil
 }
 
+func Sort(intervals []Interval) {
+	sort.Slice(intervals, func(i, j int) bool {
+		if intervals[i].diatonic < intervals[j].diatonic {
+			return true
+		}
+
+		return intervals[i].chromatic < intervals[j].chromatic
+	})
+}
+
 var (
 	diatonicToChromatic = [7]int{0, 2, 4, 5, 7, 9, 11}
 )
@@ -149,6 +196,10 @@ func chromaticFromDiatonicAndQuality(diatonic int, q intervalquality.IntervalQua
 	default:
 		panic(fmt.Sprintf("unknown interval quality kind, %d", q.Kind))
 	}
+}
+
+func normalizeDiatonic(diatonic int) int {
+	return (diatonic + 7) % 7
 }
 
 func normalizeChromatic(chromatic int) int {
