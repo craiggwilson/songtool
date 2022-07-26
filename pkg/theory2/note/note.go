@@ -2,6 +2,7 @@ package note
 
 import (
 	"encoding/json"
+	"sync"
 
 	"github.com/craiggwilson/songtool/pkg/theory2/interval"
 )
@@ -28,7 +29,27 @@ var (
 	BFlat  = New(6, 10)
 	B      = New(6, 11)
 	BSharp = New(6, 0)
+
+	degreeClassToPitchClass = [7]int{0, 2, 4, 5, 7, 9, 11}
+	notes                   []Note
+	initOnce                sync.Once
 )
+
+func List() []Note {
+	initOnce.Do(func() {
+		notes = make([]Note, 0, 21)
+		for i := 0; i < 7; i++ {
+			pc := degreeClassToPitchClass[i]
+			notes = append(notes, New(i, pc-1))
+			notes = append(notes, New(i, pc))
+			notes = append(notes, New(i, pc+1))
+		}
+	})
+
+	localNotes := make([]Note, len(notes))
+	copy(localNotes, notes)
+	return localNotes
+}
 
 func New(degreeClass, pitchClass int) Note {
 	return Note{normalizeDegreeClass(degreeClass), normalizePitchClass(pitchClass)}
@@ -37,6 +58,24 @@ func New(degreeClass, pitchClass int) Note {
 type Note struct {
 	degreeClass int
 	pitchClass  int
+}
+
+func (n Note) CompareTo(o Note) int {
+	if n.degreeClass < o.degreeClass {
+		return -1
+	}
+	if n.degreeClass > o.degreeClass {
+		return 1
+	}
+
+	if n.pitchClass < o.pitchClass {
+		return -1
+	}
+	if n.pitchClass > o.pitchClass {
+		return 1
+	}
+
+	return 0
 }
 
 func (n Note) DegreeClass() int {

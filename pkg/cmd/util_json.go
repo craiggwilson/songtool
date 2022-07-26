@@ -3,6 +3,8 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/craiggwilson/songtool/pkg/theory2/key"
 )
 
 func marshalJSON(v interface{}) ([]byte, error) {
@@ -19,9 +21,11 @@ func printJSON(v interface{}) error {
 	return nil
 }
 
-type scaleSurrogate struct {
-	Name  string          `json:"name"`
-	Notes []noteSurrogate `json:"notes"`
+type keySurrogate struct {
+	Name        string   `json:"name"`
+	DegreeClass int      `json:"degreeClass"`
+	PitchClass  int      `json:"pitchClass"`
+	Kind        key.Kind `json:"kind"`
 }
 
 type noteSurrogate struct {
@@ -29,4 +33,9 @@ type noteSurrogate struct {
 	Interval    string `json:"interval"`
 	DegreeClass int    `json:"degreeClass"`
 	PitchClass  int    `json:"pitchClass"`
+}
+
+type scaleSurrogate struct {
+	Name  string          `json:"name"`
+	Notes []noteSurrogate `json:"notes"`
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/craiggwilson/songtool/pkg/theory2/key"
 	"github.com/craiggwilson/songtool/pkg/theory2/note"
 	"github.com/craiggwilson/songtool/pkg/theory2/scale"
 )
@@ -11,15 +12,17 @@ import (
 var std = func() *Theory {
 	cfg := DefaultConfig()
 
-	return New(cfg, cfg, cfg)
+	return New(cfg, cfg, cfg, cfg, cfg)
 }()
 
 func Default() *Theory {
 	return std
 }
 
-func New(noteNamer NoteNamer, noteParser NoteParser, scaleProvider ScaleProvider) *Theory {
+func New(keyNamer KeyNamer, keyParser KeyParser, noteNamer NoteNamer, noteParser NoteParser, scaleProvider ScaleProvider) *Theory {
 	return &Theory{
+		keyNamer:      keyNamer,
+		keyParser:     keyParser,
 		noteNamer:     noteNamer,
 		noteParser:    noteParser,
 		scaleProvider: scaleProvider,
@@ -27,6 +30,8 @@ func New(noteNamer NoteNamer, noteParser NoteParser, scaleProvider ScaleProvider
 }
 
 type Theory struct {
+	keyNamer      KeyNamer
+	keyParser     KeyParser
 	noteNamer     NoteNamer
 	noteParser    NoteParser
 	scaleProvider ScaleProvider
@@ -40,8 +45,16 @@ func (t *Theory) LookupScale(name string) (ScaleMeta, bool) {
 	return t.scaleProvider.LookupScale(name)
 }
 
+func (t *Theory) NameKey(k key.Key) string {
+	return t.keyNamer.NameKey(k)
+}
+
 func (t *Theory) NameNote(n note.Note) string {
 	return t.noteNamer.NameNote(n)
+}
+
+func (t *Theory) ParseKey(text string) (key.Key, error) {
+	return t.keyParser.ParseKey(text)
 }
 
 func (t *Theory) ParseNote(text string) (note.Note, error) {

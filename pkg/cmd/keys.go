@@ -1,10 +1,9 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 
-	"github.com/craiggwilson/songtool/pkg/theory"
+	"github.com/craiggwilson/songtool/pkg/theory2/key"
 )
 
 type KeysCmd struct {
@@ -13,38 +12,55 @@ type KeysCmd struct {
 }
 
 func (cmd *KeysCmd) Run(cfg *Config) error {
-	var keys []theory.Key
-	if cmd.Kind == "all" || cmd.Kind == "major" {
-		keys = append(keys, cfg.Theory.GenerateKeys(theory.KeyMajor)...)
+	keys := key.List()
+
+	if cmd.Kind == "major" {
+		majorKeys := make([]key.Key, 0, len(keys)/2)
+		for _, k := range keys {
+			if k.Kind() == key.Major {
+				majorKeys = append(majorKeys, k)
+			}
+		}
+		keys = majorKeys
 	}
 
-	if cmd.Kind == "all" || cmd.Kind == "minor" {
-		keys = append(keys, cfg.Theory.GenerateKeys(theory.KeyMinor)...)
+	if cmd.Kind == "minor" {
+		minorKeys := make([]key.Key, 0, len(keys)/2)
+		for _, k := range keys {
+			if k.Kind() == key.Major {
+				minorKeys = append(minorKeys, k)
+			}
+		}
+		keys = minorKeys
 	}
 
-	theory.SortKeys(keys)
+	key.Sort(keys)
 
 	if cmd.JSON {
-		return cmd.printJSON(keys)
+		return cmd.printJSON(cfg, keys)
 	}
 
-	return cmd.print(keys)
+	return cmd.print(cfg, keys)
 }
 
-func (cmd *KeysCmd) print(keys []theory.Key) error {
+func (cmd *KeysCmd) print(cfg *Config, keys []key.Key) error {
 	for _, k := range keys {
-		fmt.Println(k.Name())
+		fmt.Println(cfg.Theory2.NameKey(k))
 	}
 
 	return nil
 }
 
-func (cmd *KeysCmd) printJSON(keys []theory.Key) error {
-	out, err := json.MarshalIndent(keys, "", "  ")
-	if err != nil {
-		return err
+func (cmd *KeysCmd) printJSON(cfg *Config, keys []key.Key) error {
+	keySurs := make([]keySurrogate, 0, len(keys))
+	for _, k := range keys {
+		keySurs = append(keySurs, keySurrogate{
+			Name:        cfg.Theory2.NameKey(k),
+			DegreeClass: k.Note().DegreeClass(),
+			PitchClass:  k.Note().PitchClass(),
+			Kind:        k.Kind(),
+		})
 	}
 
-	fmt.Println(string(out))
-	return nil
+	return printJSON(keySurs)
 }

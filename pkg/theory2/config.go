@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/craiggwilson/songtool/pkg/theory2/interval"
+	"github.com/craiggwilson/songtool/pkg/theory2/key"
 	"github.com/craiggwilson/songtool/pkg/theory2/note"
 )
 
@@ -14,6 +15,7 @@ func DefaultConfig() *Config {
 		NaturalNoteNames: [7]string{"C", "D", "E", "F", "G", "A", "B"},
 		SharpSymbols:     []string{"#"},
 		FlatSymbols:      []string{"b"},
+		MinorKeySymbols:  []string{"m"},
 		Scales: map[string][]interval.Interval{
 			"Major":     interval.Scales.Ionian,
 			"Ionian":    interval.Scales.Ionian,
@@ -26,6 +28,8 @@ type Config struct {
 	NaturalNoteNames [7]string
 	SharpSymbols     []string
 	FlatSymbols      []string
+	MajorKeySymbols  []string
+	MinorKeySymbols  []string
 
 	Scales map[string][]interval.Interval
 }
@@ -48,6 +52,18 @@ func (c *Config) LookupScale(name string) (ScaleMeta, bool) {
 	return ScaleMeta{name, intervals}, true
 }
 
+func (c *Config) NameKey(k key.Key) string {
+	name := c.NameNote(k.Note())
+	if k.Kind() == key.Major && len(c.MajorKeySymbols) > 0 {
+		name += c.MajorKeySymbols[0]
+	}
+	if k.Kind() == key.Minor && len(c.MinorKeySymbols) > 0 {
+		name += c.MinorKeySymbols[0]
+	}
+
+	return name
+}
+
 func (c *Config) NameNote(n note.Note) string {
 	degreeClass := n.DegreeClass()
 	pitchClass := degreeClassToPitchClass[degreeClass]
@@ -68,6 +84,10 @@ func (c *Config) NameNote(n note.Note) string {
 
 	natural := c.NaturalNoteNames[degreeClass]
 	return natural + accidentalStr
+}
+
+func (c *Config) ParseKey(text string) (key.Key, error) {
+	return key.Key{}, fmt.Errorf("not implemented")
 }
 
 func (c *Config) ParseNote(text string) (note.Note, error) {
