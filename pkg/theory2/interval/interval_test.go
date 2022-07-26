@@ -29,6 +29,11 @@ func TestInterval_Transpose(t *testing.T) {
 			by:       interval.NewWithChromatic(-1, -1),
 			expected: interval.Major(6),
 		},
+		{
+			input:    interval.NewWithChromatic(3, 5),
+			by:       interval.Diminished(4, 1),
+			expected: interval.Diminished(0, 1),
+		},
 	}
 
 	for _, tc := range testCases {

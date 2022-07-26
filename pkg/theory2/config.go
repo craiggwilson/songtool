@@ -7,7 +7,6 @@ import (
 
 	"github.com/craiggwilson/songtool/pkg/theory2/interval"
 	"github.com/craiggwilson/songtool/pkg/theory2/note"
-	"github.com/craiggwilson/songtool/pkg/theory2/scale"
 )
 
 func DefaultConfig() *Config {
@@ -29,6 +28,24 @@ type Config struct {
 	FlatSymbols      []string
 
 	Scales map[string][]interval.Interval
+}
+
+func (c *Config) ListScales() []ScaleMeta {
+	result := make([]ScaleMeta, 0, len(c.Scales))
+	for k, v := range c.Scales {
+		result = append(result, ScaleMeta{k, v})
+	}
+
+	return result
+}
+
+func (c *Config) LookupScale(name string) (ScaleMeta, bool) {
+	intervals, ok := c.Scales[name]
+	if !ok {
+		return ScaleMeta{}, false
+	}
+
+	return ScaleMeta{name, intervals}, true
 }
 
 func (c *Config) NameNote(n note.Note) string {
@@ -64,27 +81,6 @@ func (c *Config) ParseNote(text string) (note.Note, error) {
 	}
 
 	return n, err
-}
-
-func (c *Config) ParseScale(text string) (scale.Scale, error) {
-	parts := strings.SplitN(text, " ", 2)
-
-	root, err := c.ParseNote(parts[0])
-	if err != nil {
-		return scale.Scale{}, err
-	}
-
-	scaleName := "Major"
-	if len(parts) == 2 {
-		scaleName = parts[1]
-	}
-
-	intervals, ok := c.Scales[scaleName]
-	if !ok {
-		return scale.Scale{}, fmt.Errorf("unknown scale name %q", scaleName)
-	}
-
-	return scale.Generate(fmt.Sprintf("%s %s", parts[0], scaleName), root, intervals...), nil
 }
 
 func (c *Config) degreeClassFromNaturalNoteName(naturalNoteName string) int {

@@ -9,7 +9,6 @@ import (
 )
 
 func WriteChordsOverLyricsWithHighlighter(styles *Styles, src songio.Song, w io.Writer) (int, error) {
-
 	n := 0
 	i := 0
 	var sb strings.Builder

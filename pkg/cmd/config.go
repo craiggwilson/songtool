@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/craiggwilson/songtool/pkg/theory"
+	"github.com/craiggwilson/songtool/pkg/theory2"
 	"github.com/jwalton/gchalk"
 	"github.com/kirsle/configdir"
 	"github.com/knadh/koanf"
@@ -55,6 +56,7 @@ func LoadConfig(path string) (*Config, error) {
 	return &Config{
 		ConfigFile: configFile,
 		Theory:     theory.NewDefault(),
+		Theory2:    theory2.Default(),
 	}, nil
 }
 
@@ -155,5 +157,6 @@ func (s *Style) Renderf(format string, a ...interface{}) string {
 
 type Config struct {
 	ConfigFile
-	Theory *theory.Theory
+	Theory  *theory.Theory
+	Theory2 *theory2.Theory
 }

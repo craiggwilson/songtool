@@ -1,6 +1,10 @@
 package note
 
-import "github.com/craiggwilson/songtool/pkg/theory2/interval"
+import (
+	"encoding/json"
+
+	"github.com/craiggwilson/songtool/pkg/theory2/interval"
+)
 
 var (
 	CFlat  = New(0, 11)
@@ -37,6 +41,13 @@ type Note struct {
 
 func (n Note) DegreeClass() int {
 	return n.degreeClass
+}
+
+func (n Note) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		DegreeClass int `json:"degreeClass"`
+		PitchClass  int `json:"pitchClass"`
+	}{n.degreeClass, n.pitchClass})
 }
 
 func (n Note) PitchClass() int {

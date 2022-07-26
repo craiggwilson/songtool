@@ -82,6 +82,25 @@ func TestGenerateScale(t *testing.T) {
 				note.BSharp,
 			),
 		},
+		{
+			name:      "F Chromatic",
+			root:      note.F,
+			intervals: interval.Scales.Chromatic,
+			expected: scale.New("F Chromatic",
+				note.F,
+				note.GFlat, //note.FSharp,
+				note.G,
+				note.AFlat, //note.GSharp,
+				note.A,
+				note.BFlat, //note.ASharp,
+				note.CFlat,
+				note.C,
+				note.DFlat, // note.DFlat,
+				note.D,
+				note.EFlat, //note.EFlat,
+				note.E,
+			),
+		},
 	}
 
 	for _, tc := range testCases {
