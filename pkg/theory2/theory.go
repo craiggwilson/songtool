@@ -1,21 +1,42 @@
 package theory2
 
+import (
+	"github.com/craiggwilson/songtool/pkg/theory2/note"
+	"github.com/craiggwilson/songtool/pkg/theory2/scale"
+)
+
 var std = func() *Theory {
 	cfg := DefaultConfig()
 
-	return New(cfg)
+	return New(cfg, cfg, cfg)
 }()
 
-func New(noteNamer NoteNamer) *Theory {
+func Default() *Theory {
+	return std
+}
+
+func New(noteNamer NoteNamer, noteParser NoteParser, scaleParser ScaleParser) *Theory {
 	return &Theory{
-		NoteNamer: noteNamer,
+		noteNamer:   noteNamer,
+		noteParser:  noteParser,
+		scaleParser: scaleParser,
 	}
 }
 
-func NewDefault() *Theory {
-	return New(DefaultConfig())
+type Theory struct {
+	noteNamer   NoteNamer
+	noteParser  NoteParser
+	scaleParser ScaleParser
 }
 
-type Theory struct {
-	NoteNamer
+func (t *Theory) NameNote(n note.Note) string {
+	return t.noteNamer.NameNote(n)
+}
+
+func (t *Theory) ParseNote(text string) (note.Note, error) {
+	return t.noteParser.ParseNote(text)
+}
+
+func (t *Theory) ParseScale(text string) (scale.Scale, error) {
+	return t.scaleParser.ParseScale(text)
 }

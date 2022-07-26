@@ -2,42 +2,35 @@ package scale
 
 import (
 	"github.com/craiggwilson/songtool/pkg/theory2/interval"
+	"github.com/craiggwilson/songtool/pkg/theory2/note"
 )
 
-var (
-	Chromatic = Scale{
-		intervals: []interval.Interval{
-			interval.Perfect(0),
-			interval.Minor(1),
-			interval.Major(1),
-			interval.Minor(2),
-			interval.Major(2),
-			interval.Perfect(3),
-			interval.Diminished(5, 1),
-			interval.Perfect(4),
-			interval.Minor(5),
-			interval.Major(5),
-			interval.Minor(6),
-			interval.Major(6),
-		},
+func Generate(name string, root note.Note, intervals ...interval.Interval) Scale {
+	scale := Scale{
+		name:  name,
+		notes: make([]note.Note, len(intervals)),
 	}
-	Ionian = Scale{
-		intervals: []interval.Interval{
-			interval.Perfect(0),
-			interval.Major(1),
-			interval.Major(2),
-			interval.Perfect(3),
-			interval.Perfect(4),
-			interval.Major(5),
-			interval.Major(6),
-		},
-	}
-)
 
-type Scale struct {
-	intervals []interval.Interval
+	for i, interval := range intervals {
+		scale.notes[i] = root.Transpose(interval)
+	}
+
+	return scale
 }
 
-func (s Scale) Intervals() []interval.Interval {
-	return s.intervals
+func New(name string, notes ...note.Note) Scale {
+	return Scale{name, notes}
+}
+
+type Scale struct {
+	name  string
+	notes []note.Note
+}
+
+func (s Scale) Name() string {
+	return s.name
+}
+
+func (s Scale) Notes() []note.Note {
+	return s.notes
 }
