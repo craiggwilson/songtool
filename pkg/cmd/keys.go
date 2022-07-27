@@ -17,7 +17,7 @@ func (cmd *KeysCmd) Run(cfg *Config) error {
 	if cmd.Kind == "major" {
 		majorKeys := make([]key.Key, 0, len(keys)/2)
 		for _, k := range keys {
-			if k.Kind() == key.Major {
+			if k.Kind() == key.KindMajor {
 				majorKeys = append(majorKeys, k)
 			}
 		}
@@ -27,7 +27,7 @@ func (cmd *KeysCmd) Run(cfg *Config) error {
 	if cmd.Kind == "minor" {
 		minorKeys := make([]key.Key, 0, len(keys)/2)
 		for _, k := range keys {
-			if k.Kind() == key.Major {
+			if k.Kind() == key.KindMajor {
 				minorKeys = append(minorKeys, k)
 			}
 		}

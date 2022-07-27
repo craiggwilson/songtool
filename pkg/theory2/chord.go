@@ -2,14 +2,20 @@ package theory2
 
 import (
 	"github.com/craiggwilson/songtool/pkg/theory2/chord"
-	"github.com/craiggwilson/songtool/pkg/theory2/note"
 )
 
-type Chord struct {
-	root   note.Note
-	suffix string
+type ChordNamer interface {
+	NameChord(chord.Chord) string
+}
 
-	base note.Note
+func NameChord(c chord.Chord) string {
+	return std.NameChord(c)
+}
 
-	chord chord.Chord
+type ChordParser interface {
+	ParseChord(string) (chord.Chord, error)
+}
+
+func ParseChord(text string) (chord.Chord, error) {
+	return std.ParseChord(text)
 }

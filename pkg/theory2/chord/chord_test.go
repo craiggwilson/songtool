@@ -5,6 +5,7 @@ import (
 
 	"github.com/craiggwilson/songtool/pkg/theory2/chord"
 	"github.com/craiggwilson/songtool/pkg/theory2/interval"
+	"github.com/craiggwilson/songtool/pkg/theory2/note"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,81 +18,97 @@ func TestChord_Quality(t *testing.T) {
 		{
 			name:     "no intervals",
 			chord:    chord.Chord{},
-			expected: chord.IndeterminateQuality,
+			expected: chord.QualityIndeterminate,
 		},
 		{
 			name: "major triad",
 			chord: chord.New(
+				note.C,
+				nil,
 				interval.Perfect(0),
 				interval.Major(2),
 				interval.Perfect(4),
 			),
-			expected: chord.MajorQuality,
+			expected: chord.QualityMajor,
 		},
 		{
 			name: "augmented triad",
 			chord: chord.New(
+				note.C,
+				nil,
 				interval.Perfect(0),
 				interval.Major(2),
 				interval.Augmented(4, 1),
 			),
-			expected: chord.AugmentedQuality,
+			expected: chord.QualityAugmented,
 		},
 		{
 			name: "minor triad",
 			chord: chord.New(
+				note.C,
+				nil,
 				interval.Perfect(0),
 				interval.Minor(2),
 				interval.Perfect(4),
 			),
-			expected: chord.MinorQuality,
+			expected: chord.QualityMinor,
 		},
 		{
 			name: "diminished triad",
 			chord: chord.New(
+				note.C,
+				nil,
 				interval.Perfect(0),
 				interval.Minor(2),
 				interval.Diminished(4, 1),
 			),
-			expected: chord.DiminishedQuality,
+			expected: chord.QualityDiminished,
 		},
 		{
 			name: "no 3rd",
 			chord: chord.New(
+				note.C,
+				nil,
 				interval.Perfect(0),
 				interval.Perfect(4),
 			),
-			expected: chord.IndeterminateQuality,
+			expected: chord.QualityIndeterminate,
 		},
 		{
 			name: "major 7th",
 			chord: chord.New(
+				note.C,
+				nil,
 				interval.Perfect(0),
 				interval.Major(2),
 				interval.Perfect(4),
 				interval.Major(6),
 			),
-			expected: chord.MajorQuality,
+			expected: chord.QualityMajor,
 		},
 		{
 			name: "minor 7th",
 			chord: chord.New(
+				note.C,
+				nil,
 				interval.Perfect(0),
 				interval.Minor(2),
 				interval.Perfect(4),
 				interval.Minor(6),
 			),
-			expected: chord.MinorQuality,
+			expected: chord.QualityMinor,
 		},
 		{
 			name: "7th",
 			chord: chord.New(
+				note.C,
+				nil,
 				interval.Perfect(0),
 				interval.Major(2),
 				interval.Perfect(4),
 				interval.Minor(6),
 			),
-			expected: chord.MajorQuality,
+			expected: chord.QualityMajor,
 		},
 	}
 

@@ -2,14 +2,25 @@ package chord
 
 import (
 	"github.com/craiggwilson/songtool/pkg/theory2/interval"
+	"github.com/craiggwilson/songtool/pkg/theory2/note"
 )
 
-func New(intervals ...interval.Interval) Chord {
-	return Chord{intervals}
+func New(root note.Note, base *note.Note, intervals ...interval.Interval) Chord {
+	return Chord{root, intervals, base}
 }
 
 type Chord struct {
+	root      note.Note
 	intervals []interval.Interval
+	base      *note.Note
+}
+
+func (c Chord) Base() *note.Note {
+	return c.base
+}
+
+func (c Chord) Intervals() []interval.Interval {
+	return c.intervals
 }
 
 func (c Chord) Quality() Quality {
@@ -37,19 +48,19 @@ func (c Chord) Quality() Quality {
 
 	var qualities []Quality
 	if major3rd && perfect5th {
-		qualities = append(qualities, MajorQuality)
+		qualities = append(qualities, QualityMajor)
 	}
 	if major3rd && augmented5th {
-		qualities = append(qualities, AugmentedQuality)
+		qualities = append(qualities, QualityAugmented)
 	}
 	if minor3rd && perfect5th {
-		qualities = append(qualities, MinorQuality)
+		qualities = append(qualities, QualityMinor)
 	}
 	if minor3rd && diminished5th {
-		qualities = append(qualities, DiminishedQuality)
+		qualities = append(qualities, QualityDiminished)
 	}
 
-	quality := IndeterminateQuality
+	quality := QualityIndeterminate
 	if len(qualities) == 1 {
 		quality = qualities[0]
 	}
@@ -57,6 +68,6 @@ func (c Chord) Quality() Quality {
 	return quality
 }
 
-func (c Chord) Intervals() []interval.Interval {
-	return c.intervals
+func (c Chord) Root() note.Note {
+	return c.root
 }

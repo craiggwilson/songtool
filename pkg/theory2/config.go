@@ -1,13 +1,7 @@
 package theory2
 
 import (
-	"fmt"
-	"io"
-	"strings"
-
 	"github.com/craiggwilson/songtool/pkg/theory2/interval"
-	"github.com/craiggwilson/songtool/pkg/theory2/key"
-	"github.com/craiggwilson/songtool/pkg/theory2/note"
 )
 
 func DefaultConfig() *Config {
@@ -25,176 +19,11 @@ func DefaultConfig() *Config {
 }
 
 type Config struct {
-	NaturalNoteNames [7]string
-	SharpSymbols     []string
-	FlatSymbols      []string
-	MajorKeySymbols  []string
-	MinorKeySymbols  []string
+	NaturalNoteNames [7]string `json:"naturalNoteNames"`
+	SharpSymbols     []string  `json:"sharpSymbols"`
+	FlatSymbols      []string  `json:"flatSymbols"`
+	MajorKeySymbols  []string  `json:"majorKeySymbols"`
+	MinorKeySymbols  []string  `json:"minorKeySymbols"`
 
-	Scales map[string][]interval.Interval
-}
-
-func (c *Config) ListScales() []ScaleMeta {
-	result := make([]ScaleMeta, 0, len(c.Scales))
-	for k, v := range c.Scales {
-		result = append(result, ScaleMeta{k, v})
-	}
-
-	return result
-}
-
-func (c *Config) LookupScale(name string) (ScaleMeta, bool) {
-	intervals, ok := c.Scales[name]
-	if !ok {
-		return ScaleMeta{}, false
-	}
-
-	return ScaleMeta{name, intervals}, true
-}
-
-func (c *Config) NameKey(k key.Key) string {
-	name := c.NameNote(k.Note())
-	if k.Kind() == key.Major && len(c.MajorKeySymbols) > 0 {
-		name += c.MajorKeySymbols[0]
-	}
-	if k.Kind() == key.Minor && len(c.MinorKeySymbols) > 0 {
-		name += c.MinorKeySymbols[0]
-	}
-
-	return name
-}
-
-func (c *Config) NameNote(n note.Note) string {
-	degreeClass := n.DegreeClass()
-	pitchClass := degreeClassToPitchClass[degreeClass]
-	accidentals := n.PitchClass() - pitchClass
-
-	if accidentals > 6 {
-		accidentals -= 12
-	} else if accidentals < -6 {
-		accidentals += 12
-	}
-
-	accidentalStr := ""
-	if accidentals > 0 {
-		accidentalStr = strings.Repeat(c.SharpSymbols[0], accidentals)
-	} else if accidentals < 0 {
-		accidentalStr = strings.Repeat(c.FlatSymbols[0], -accidentals)
-	}
-
-	natural := c.NaturalNoteNames[degreeClass]
-	return natural + accidentalStr
-}
-
-func (c *Config) ParseKey(text string) (key.Key, error) {
-	return key.Key{}, fmt.Errorf("not implemented")
-}
-
-func (c *Config) ParseNote(text string) (note.Note, error) {
-	n, pos, err := c.parseNote(text, 0)
-	if err != nil {
-		return note.Note{}, err
-	}
-
-	if len(text) != pos {
-		return note.Note{}, fmt.Errorf("expected EOF at position %d, but had %q", pos, text[pos:])
-	}
-
-	return n, err
-}
-
-func (c *Config) degreeClassFromNaturalNoteName(naturalNoteName string) int {
-	for i, nn := range c.NaturalNoteNames {
-		if nn == naturalNoteName {
-			return i
-		}
-	}
-
-	panic(fmt.Sprintf("natural note name %q does not map to a degree class", naturalNoteName))
-}
-
-func (c *Config) parseAccidentals(text string, pos int) (int, int) {
-	if len(text) <= pos {
-		return 0, pos
-	}
-
-	accidentals, pos := c.parseSharps(text, pos)
-	if accidentals != 0 {
-		return accidentals, pos
-	}
-
-	return c.parseFlats(text, pos)
-}
-
-func (c *Config) parseNote(text string, pos int) (note.Note, int, error) {
-	naturalNoteName, newPos, err := c.parseNaturalNoteName(text, pos)
-	if err != nil {
-		return note.Note{}, pos, fmt.Errorf("expected natural note name at position %d: %w", newPos, err)
-	}
-
-	degreeClass := c.degreeClassFromNaturalNoteName(naturalNoteName)
-	pitchClass := degreeClassToPitchClass[degreeClass]
-	accidentals, newPos := c.parseAccidentals(text, newPos)
-
-	return note.New(degreeClass, pitchClass+accidentals), newPos, nil
-}
-
-func (c *Config) parseNaturalNoteName(text string, pos int) (string, int, error) {
-	if len(text) <= pos {
-		return "", pos, io.ErrUnexpectedEOF
-	}
-
-	for _, nn := range c.NaturalNoteNames {
-		if strings.HasPrefix(text[pos:], nn) {
-			return nn, pos + len(nn), nil
-		}
-	}
-
-	return "", pos, fmt.Errorf("expected one of %q, but got %q", c.NaturalNoteNames, text[pos:])
-}
-
-func (c *Config) parseSharps(text string, pos int) (int, int) {
-	if len(text) <= pos {
-		return 0, pos
-	}
-
-	accidentals := 0
-
-	changed := true
-	for changed {
-		changed = false
-		for _, sym := range c.SharpSymbols {
-			if strings.HasPrefix(text[pos:], sym) {
-				accidentals++
-				pos += len(sym)
-				changed = true
-				break
-			}
-		}
-	}
-
-	return accidentals, pos
-}
-
-func (c *Config) parseFlats(text string, pos int) (int, int) {
-	if len(text) <= pos {
-		return 0, pos
-	}
-
-	accidentals := 0
-
-	changed := true
-	for changed {
-		changed = false
-		for _, sym := range c.FlatSymbols {
-			if strings.HasPrefix(text[pos:], sym) {
-				accidentals--
-				pos += len(sym)
-				changed = true
-				break
-			}
-		}
-	}
-
-	return accidentals, pos
+	Scales map[string][]interval.Interval `json:"scales"`
 }
