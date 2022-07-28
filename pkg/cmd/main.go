@@ -9,7 +9,8 @@ import (
 
 var main struct {
 	Cat       CatCmd       `cmd:"" help:"Displays a song."`
-	Keys      KeysCmd      `cmd:"" help:"Lists the keys that can be used in songs."`
+	Chords    ChordsCmd    `cmd:"" help:"Tools for working with chords."`
+	Keys      KeysCmd      `cmd:"" help:"Tools for working with keys."`
 	Meta      MetaCmd      `cmd:"" help:"Displays the meta information about a song."`
 	Scales    ScalesCmd    `cmd:"" help:"Tools for working with scales."`
 	Transpose TransposeCmd `cmd:"" help:"Transposes a song."`

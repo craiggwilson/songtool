@@ -1,6 +1,8 @@
 package chord
 
 import (
+	"encoding/json"
+
 	"github.com/craiggwilson/songtool/pkg/theory2/interval"
 	"github.com/craiggwilson/songtool/pkg/theory2/note"
 )
@@ -21,6 +23,18 @@ func (c Chord) Base() *note.Note {
 
 func (c Chord) Intervals() []interval.Interval {
 	return c.intervals
+}
+
+func (c Chord) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Root      note.Note           `json:"root"`
+		Intervals []interval.Interval `json:"intervals"`
+		Base      *note.Note          `json:"base"`
+	}{c.root, c.intervals, c.base})
+}
+
+func (c Chord) Name(namer Namer) string {
+	return namer.NameChord(c)
 }
 
 func (c Chord) Quality() Quality {

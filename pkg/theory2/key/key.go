@@ -79,6 +79,10 @@ func (k Key) MarshalJSON() ([]byte, error) {
 	}{k.note, k.kind})
 }
 
+func (k Key) Name(namer Namer) string {
+	return namer.NameKey(k)
+}
+
 func (k Key) Note() note.Note {
 	return k.note
 }

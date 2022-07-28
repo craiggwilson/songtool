@@ -89,6 +89,10 @@ func (n Note) MarshalJSON() ([]byte, error) {
 	}{n.degreeClass, n.pitchClass})
 }
 
+func (n Note) Name(namer Namer) string {
+	return namer.NameNote(n)
+}
+
 func (n Note) PitchClass() int {
 	return n.pitchClass
 }

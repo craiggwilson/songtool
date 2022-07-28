@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/craiggwilson/songtool/pkg/theory2/chord"
+	"github.com/craiggwilson/songtool/pkg/theory2/interval"
 	"github.com/craiggwilson/songtool/pkg/theory2/key"
 	"github.com/craiggwilson/songtool/pkg/theory2/note"
 	"github.com/craiggwilson/songtool/pkg/theory2/scale"
@@ -85,19 +86,41 @@ func (t *Theory) NameNote(n note.Note) string {
 	return natural + accidentalStr
 }
 
-func (t *Theory) ParseChord(text string) (chord.Chord, error) {
-	panic("not implemented")
+func (t *Theory) ParseChord(text string) (chord.Parsed, error) {
+	root, pos, err := t.parseNote(text, 0)
+	if err != nil {
+		return chord.Parsed{}, err
+	}
+
+	intervals := []interval.Interval{
+		interval.Perfect(0),
+		interval.Perfect(3),
+		interval.Perfect(4),
+	}
+
+	base, delim, pos, _ := t.parseBaseNote(text, pos)
+
+	if len(text) != pos {
+		return chord.Parsed{}, fmt.Errorf("expected EOF at position %d, but had %s", pos, text[pos:])
+	}
+
+	return chord.Parsed{
+		Chord:             chord.New(root, base, intervals...),
+		Suffix:            "",
+		BaseNoteDelimiter: delim,
+	}, nil
 }
 
-func (t *Theory) ParseKey(text string) (key.Key, error) {
+func (t *Theory) ParseKey(text string) (key.Parsed, error) {
 	found := false
 	kind := key.KindMajor
+	suffix := ""
 	for _, sym := range t.cfg.MajorKeySymbols {
 		idx := strings.Index(text, sym)
 		if idx > 0 {
 			text = text[:idx]
 			kind = key.KindMajor
-
+			suffix = sym
 			found = true
 			break
 		}
@@ -109,6 +132,7 @@ func (t *Theory) ParseKey(text string) (key.Key, error) {
 			if idx > 0 {
 				text = text[:idx]
 				kind = key.KindMinor
+				suffix = sym
 				break
 			}
 		}
@@ -116,10 +140,13 @@ func (t *Theory) ParseKey(text string) (key.Key, error) {
 
 	n, err := t.ParseNote(text)
 	if err != nil {
-		return key.Key{}, err
+		return key.Parsed{}, err
 	}
 
-	return key.New(n, kind), nil
+	return key.Parsed{
+		Key:    key.New(n, kind),
+		Suffix: suffix,
+	}, nil
 }
 
 func (t *Theory) ParseNote(text string) (note.Note, error) {
@@ -177,6 +204,21 @@ func (t *Theory) parseAccidentals(text string, pos int) (int, int) {
 	}
 
 	return t.parseFlats(text, pos)
+}
+
+func (t *Theory) parseBaseNote(text string, pos int) (*note.Note, string, int, error) {
+	if len(text) <= pos {
+		return nil, "", pos, io.ErrUnexpectedEOF
+	}
+
+	for _, r := range t.cfg.BaseNoteDelimiters {
+		if strings.HasPrefix(text[pos:], r) {
+			note, pos, err := t.parseNote(text, pos+len(r))
+			return &note, r, pos, err
+		}
+	}
+
+	return nil, "", pos, fmt.Errorf("expected one of %q, but got %q", t.cfg.BaseNoteDelimiters, text[pos:])
 }
 
 func (t *Theory) parseNote(text string, pos int) (note.Note, int, error) {
