@@ -25,7 +25,6 @@ func Run(versionInfo VersionInfo, args []string) int {
 	ctx, err := parser.Parse(args)
 	if err != nil {
 		fmt.Fprintln(parser.Stdout, err)
-		fmt.Fprintln(parser.Stdout)
 
 		var parseErr *kong.ParseError
 		if errors.As(err, &parseErr) {

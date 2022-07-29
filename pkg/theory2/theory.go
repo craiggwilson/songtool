@@ -92,21 +92,46 @@ func (t *Theory) ParseChord(text string) (chord.Parsed, error) {
 		return chord.Parsed{}, err
 	}
 
-	intervals := []interval.Interval{
-		interval.Perfect(0),
-		interval.Perfect(3),
-		interval.Perfect(4),
+	intervalMap := make(map[interval.Interval]struct{})
+
+	suffix := text[pos:]
+	for _, m := range t.cfg.ChordModifiers {
+		matched := false
+		if m.Match == nil {
+			matched = true
+		} else {
+			match := m.Match.FindString(suffix)
+			if len(match) > 0 && (m.Except == nil || !m.Except.MatchString(suffix)) {
+				matched = true
+				pos += len(match)
+			}
+		}
+		if matched {
+			for _, add := range m.Add {
+				intervalMap[add] = struct{}{}
+			}
+			for _, rm := range m.Remove {
+				delete(intervalMap, rm)
+			}
+		}
 	}
+
+	intervals := make([]interval.Interval, 0, len(intervalMap))
+	for k := range intervalMap {
+		intervals = append(intervals, k)
+	}
+
+	interval.Sort(intervals)
 
 	base, delim, pos, _ := t.parseBaseNote(text, pos)
 
-	if len(text) != pos {
+	if len(text) > pos {
 		return chord.Parsed{}, fmt.Errorf("expected EOF at position %d, but had %s", pos, text[pos:])
 	}
 
 	return chord.Parsed{
 		Chord:             chord.New(root, base, intervals...),
-		Suffix:            "",
+		Suffix:            suffix,
 		BaseNoteDelimiter: delim,
 	}, nil
 }

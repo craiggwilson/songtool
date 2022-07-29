@@ -1,6 +1,8 @@
 package theory2
 
 import (
+	"regexp"
+
 	"github.com/craiggwilson/songtool/pkg/theory2/interval"
 )
 
@@ -16,16 +18,157 @@ func DefaultConfig() *Config {
 			"Ionian":    interval.Scales.Ionian,
 			"Chromatic": interval.Scales.Chromatic,
 		},
+		ChordModifiers: []ChordModifier{
+			{
+				Name: "Base",
+				Add:  []interval.Interval{interval.Perfect(0), interval.Major(2), interval.Perfect(4)},
+			},
+			// {
+			// 	Name:  "Major",
+			// 	Match: regexp.MustCompile("^maj"),
+			// 	Add:   []interval.Interval{interval.Major(2), interval.Perfect(4)},
+			// },
+			{
+				Name:   "Minor",
+				Match:  regexp.MustCompile("^m"),
+				Except: regexp.MustCompile("^maj"),
+				Add:    []interval.Interval{interval.Minor(2)},
+				Remove: []interval.Interval{interval.Major(2)},
+			},
+			{
+				Name:   "Augmented",
+				Match:  regexp.MustCompile("^aug"),
+				Add:    []interval.Interval{interval.Augmented(4, 1)},
+				Remove: []interval.Interval{interval.Perfect(4)},
+			},
+			{
+				Name:   "Diminished",
+				Match:  regexp.MustCompile("^dim"),
+				Add:    []interval.Interval{interval.Minor(2), interval.Diminished(4, 1)},
+				Remove: []interval.Interval{interval.Major(2), interval.Perfect(4)},
+			},
+			{
+				Name:   "2nd (alt for sus2)",
+				Match:  regexp.MustCompile("^2"),
+				Add:    []interval.Interval{interval.Major(1)},
+				Remove: []interval.Interval{interval.Major(2)},
+			},
+			{
+				Name:   "4th (alt for sus)",
+				Match:  regexp.MustCompile("^4"),
+				Add:    []interval.Interval{interval.Major(1)},
+				Remove: []interval.Interval{interval.Major(2)},
+			},
+			{
+				Name:   "5th (no 3rd)",
+				Match:  regexp.MustCompile("^5"),
+				Remove: []interval.Interval{interval.Major(2)},
+			},
+			{
+				Name:  "7th",
+				Match: regexp.MustCompile("^m?7"),
+				Add:   []interval.Interval{interval.Minor(6)},
+			},
+			{
+				Name:  "9th",
+				Match: regexp.MustCompile("^m?9"),
+				Add:   []interval.Interval{interval.Minor(6), interval.Major(1)},
+			},
+			{
+				Name:  "11th",
+				Match: regexp.MustCompile("^m?11"),
+				Add:   []interval.Interval{interval.Minor(6), interval.Major(1), interval.Perfect(3)},
+			},
+			{
+				Name:  "13th",
+				Match: regexp.MustCompile("^m?13"),
+				Add:   []interval.Interval{interval.Minor(6), interval.Major(1), interval.Perfect(3), interval.Major(5)},
+			},
+			{
+				Name:  "Major 7th",
+				Match: regexp.MustCompile("^maj7"),
+				Add:   []interval.Interval{interval.Major(6)},
+			},
+			{
+				Name:  "Major 9th",
+				Match: regexp.MustCompile("^maj9"),
+				Add:   []interval.Interval{interval.Major(6), interval.Major(1)},
+			},
+			{
+				Name:  "Major 11th",
+				Match: regexp.MustCompile("^maj11"),
+				Add:   []interval.Interval{interval.Major(6), interval.Major(1), interval.Perfect(3)},
+			},
+			{
+				Name:  "Major 13th",
+				Match: regexp.MustCompile("^maj13"),
+				Add:   []interval.Interval{interval.Major(6), interval.Major(1), interval.Perfect(3), interval.Major(5)},
+			},
+			{
+				Name:   "Suspended 2nd",
+				Match:  regexp.MustCompile("sus2"),
+				Add:    []interval.Interval{interval.Major(1)},
+				Remove: []interval.Interval{interval.Major(2)},
+			},
+			{
+				Name:   "Suspended 4th",
+				Match:  regexp.MustCompile("sus4?"),
+				Except: regexp.MustCompile("sus2"),
+				Add:    []interval.Interval{interval.Perfect(3)},
+				Remove: []interval.Interval{interval.Minor(2), interval.Major(2)},
+			},
+			{
+				Name:  "Added 2nd/9th",
+				Match: regexp.MustCompile("add(2|9)"),
+				Add:   []interval.Interval{interval.Major(1)},
+			},
+			{
+				Name:  "Added 4th/11th",
+				Match: regexp.MustCompile("add(4|11)"),
+				Add:   []interval.Interval{interval.Perfect(3)},
+			},
+			{
+				Name:  "Added 6th/13th",
+				Match: regexp.MustCompile("add(6|13)"),
+				Add:   []interval.Interval{interval.Major(5)},
+			},
+			{
+				Name:   "Flat 5th",
+				Match:  regexp.MustCompile(`(b5)|b5`),
+				Add:    []interval.Interval{interval.Diminished(4, 1)},
+				Remove: []interval.Interval{interval.Perfect(4)},
+			},
+			{
+				Name:  "Flat 6th",
+				Match: regexp.MustCompile(`(b6)|b6`),
+				Add:   []interval.Interval{interval.Diminished(5, 1)},
+			},
+			{
+				Name:   "Sharp 5th",
+				Match:  regexp.MustCompile(`(#5)|#5`),
+				Add:    []interval.Interval{interval.Augmented(4, 1)},
+				Remove: []interval.Interval{interval.Perfect(4)},
+			},
+		},
 	}
 }
 
 type Config struct {
-	NaturalNoteNames   [7]string `json:"naturalNoteNames"`
-	SharpSymbols       []string  `json:"sharpSymbols"`
-	FlatSymbols        []string  `json:"flatSymbols"`
-	MajorKeySymbols    []string  `json:"majorKeySymbols"`
-	MinorKeySymbols    []string  `json:"minorKeySymbols"`
-	BaseNoteDelimiters []string  `json:"baseNoteDelimiters"`
+	NaturalNoteNames   [7]string                      `json:"naturalNoteNames"`
+	SharpSymbols       []string                       `json:"sharpSymbols"`
+	FlatSymbols        []string                       `json:"flatSymbols"`
+	MajorKeySymbols    []string                       `json:"majorKeySymbols"`
+	MinorKeySymbols    []string                       `json:"minorKeySymbols"`
+	BaseNoteDelimiters []string                       `json:"baseNoteDelimiters"`
+	Scales             map[string][]interval.Interval `json:"scales"`
 
-	Scales map[string][]interval.Interval `json:"scales"`
+	ChordModifiers []ChordModifier `json:"chordMofifiers"`
+}
+
+type ChordModifier struct {
+	Name   string
+	Match  *regexp.Regexp
+	Except *regexp.Regexp
+	Add    []interval.Interval
+	Remove []interval.Interval
 }

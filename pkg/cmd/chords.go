@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/craiggwilson/songtool/pkg/theory2/chord"
+	"github.com/craiggwilson/songtool/pkg/theory2/interval"
+	"github.com/craiggwilson/songtool/pkg/theory2/note"
 )
 
 type ChordsCmd struct {
@@ -36,5 +38,12 @@ func (cmd *ChordsParseCmd) print(cfg *Config, c chord.Parsed) error {
 }
 
 func (cmd *ChordsParseCmd) printJSON(cfg *Config, c chord.Parsed) error {
-	return printJSON(c)
+	return printJSON(struct {
+		Name              string              `json:"name"`
+		Root              note.Note           `json:"root"`
+		Suffix            string              `json:"suffix"`
+		BaseNoteDelimiter string              `json:"baseNoteDelimiter,omitempty"`
+		Base              *note.Note          `json:"base"`
+		Intervals         []interval.Interval `json:"intervals"`
+	}{c.Name(cfg.Theory2), c.Root(), c.Suffix, c.BaseNoteDelimiter, c.Base(), c.Intervals()})
 }
