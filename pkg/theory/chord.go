@@ -8,6 +8,6 @@ func NameChord(c chord.Chord) string {
 	return std.NameChord(c)
 }
 
-func ParseChord(text string) (chord.Parsed, error) {
+func ParseChord(text string) (chord.Named, error) {
 	return std.ParseChord(text)
 }

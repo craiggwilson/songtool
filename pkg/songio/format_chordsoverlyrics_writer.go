@@ -21,7 +21,7 @@ func WriteChordsOverLyrics(noteNamer note.Namer, src Song, w io.Writer) (int, er
 			sb.WriteString("]")
 		case *KeyDirectiveLine:
 			sb.WriteString("#key=")
-			sb.WriteString(tl.Key.Name(noteNamer))
+			sb.WriteString(tl.Key.Name)
 		case *TitleDirectiveLine:
 			sb.WriteString("#title=")
 			sb.WriteString(tl.Title)
@@ -43,7 +43,7 @@ func WriteChordsOverLyrics(noteNamer note.Namer, src Song, w io.Writer) (int, er
 					currentOffset += offsetDiff
 				}
 
-				chordName := chordOffset.Chord.Name(noteNamer)
+				chordName := chordOffset.Chord.Name
 				sb.WriteString(chordName)
 				currentOffset += len(chordName)
 			}

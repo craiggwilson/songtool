@@ -4,8 +4,6 @@ import (
 	"fmt"
 
 	"github.com/craiggwilson/songtool/pkg/theory/chord"
-	"github.com/craiggwilson/songtool/pkg/theory/interval"
-	"github.com/craiggwilson/songtool/pkg/theory/note"
 )
 
 type ChordsParseCmd struct {
@@ -28,18 +26,11 @@ func (cmd *ChordsParseCmd) Run(cfg *Config) error {
 	return cmd.print(cfg, c)
 }
 
-func (cmd *ChordsParseCmd) print(cfg *Config, c chord.Parsed) error {
-	fmt.Println(c.Name(cfg.Theory))
+func (cmd *ChordsParseCmd) print(cfg *Config, c chord.Named) error {
+	fmt.Println(c.Name)
 	return nil
 }
 
-func (cmd *ChordsParseCmd) printJSON(cfg *Config, c chord.Parsed) error {
-	return printJSON(struct {
-		Name              string              `json:"name"`
-		Root              note.Note           `json:"root"`
-		Suffix            string              `json:"suffix"`
-		BaseNoteDelimiter string              `json:"baseNoteDelimiter,omitempty"`
-		Base              *note.Note          `json:"base"`
-		Intervals         []interval.Interval `json:"intervals"`
-	}{c.Name(cfg.Theory), c.Root(), c.Suffix, c.BaseNoteDelimiter, c.Base(), c.Intervals()})
+func (cmd *ChordsParseCmd) printJSON(cfg *Config, c chord.Named) error {
+	return printJSON(c)
 }

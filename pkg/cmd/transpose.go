@@ -22,7 +22,7 @@ func (cmd *TransposeCmd) Run(cfg *Config) error {
 
 	song := cmd.openSong(cfg)
 
-	var fromKey *key.Parsed
+	var fromKey *key.Named
 	if len(cmd.FromKey) == 0 {
 		rewinder := songio.NewRewinder(song)
 		meta, err := songio.ReadMeta(cfg.Theory, rewinder, false)
@@ -58,7 +58,7 @@ func (cmd *TransposeCmd) Run(cfg *Config) error {
 		intval = interval.FromStep(fromKey.Note().PitchClass() + cmd.Interval)
 	}
 
-	transposer := songio.Transpose(song, intval)
+	transposer := songio.Transpose(cfg.Theory, song, intval)
 
 	_, err := songio.WriteChordsOverLyrics(cfg.Theory, transposer, os.Stdout)
 	return err

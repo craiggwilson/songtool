@@ -38,7 +38,7 @@ func (cmd *MetaCmd) print(cfg *Config, meta songio.Meta) error {
 	}
 
 	if meta.Key != nil {
-		fmt.Println("Key:", meta.Key.Name(cfg.Theory))
+		fmt.Println("Key:", meta.Key.Name)
 	} else {
 		fmt.Println("Key:", "<none>")
 	}
@@ -60,7 +60,7 @@ func (cmd *MetaCmd) print(cfg *Config, meta songio.Meta) error {
 			if i != 0 {
 				fmt.Print(", ")
 			}
-			fmt.Print(chord.Name(cfg.Theory))
+			fmt.Print(chord.Name)
 		}
 		fmt.Println()
 	}

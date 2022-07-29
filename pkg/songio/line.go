@@ -17,8 +17,8 @@ type ChordLine struct {
 func (l *ChordLine) line() {}
 
 type ChordOffset struct {
-	Chord  chord.Parsed `json:"chord"`
-	Offset int          `json:"offset"`
+	Chord  chord.Named `json:"chord"`
+	Offset int         `json:"offset"`
 }
 
 type TextLine struct {

@@ -33,7 +33,7 @@ func (cmd *CatCmd) Run(cfg *Config) error {
 }
 
 func (cmd *CatCmd) print(cfg *Config, song songio.Song) error {
-	_, err := WriteChordsOverLyricsWithHighlighter(&cfg.Styles, cfg.Theory, song, os.Stdout)
+	_, err := WriteChordsOverLyricsWithHighlighter(&cfg.Styles, song, os.Stdout)
 	return err
 }
 

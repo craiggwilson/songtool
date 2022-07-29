@@ -8,6 +8,6 @@ func NameKey(k key.Key) string {
 	return std.NameKey(k)
 }
 
-func ParseKey(text string) (key.Parsed, error) {
+func ParseKey(text string) (key.Named, error) {
 	return std.ParseKey(text)
 }

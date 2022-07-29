@@ -86,10 +86,10 @@ func (t *Theory) NameNote(n note.Note) string {
 	return natural + accidentalStr
 }
 
-func (t *Theory) ParseChord(text string) (chord.Parsed, error) {
+func (t *Theory) ParseChord(text string) (chord.Named, error) {
 	root, pos, err := t.parseNote(text, 0)
 	if err != nil {
-		return chord.Parsed{}, err
+		return chord.Named{}, err
 	}
 
 	intervalMap := make(map[interval.Interval]struct{})
@@ -145,17 +145,20 @@ func (t *Theory) ParseChord(text string) (chord.Parsed, error) {
 	base, delim, pos, _ := t.parseBaseNote(text, pos)
 
 	if len(text) > pos {
-		return chord.Parsed{}, fmt.Errorf("expected EOF at position %d, but had %s", pos, text[pos:])
+		return chord.Named{}, fmt.Errorf("expected EOF at position %d, but had %s", pos, text[pos:])
 	}
 
-	return chord.Parsed{
-		Chord:             chord.New(root, base, intervals...),
-		Suffix:            text[suffixPos:delimiterPos],
-		BaseNoteDelimiter: delim,
+	return chord.Named{
+		Parsed: chord.Parsed{
+			Chord:             chord.New(root, base, intervals...),
+			Suffix:            text[suffixPos:delimiterPos],
+			BaseNoteDelimiter: delim,
+		},
+		Name: text,
 	}, nil
 }
 
-func (t *Theory) ParseKey(text string) (key.Parsed, error) {
+func (t *Theory) ParseKey(text string) (key.Named, error) {
 	found := false
 	kind := key.KindMajor
 	suffix := ""
@@ -184,12 +187,15 @@ func (t *Theory) ParseKey(text string) (key.Parsed, error) {
 
 	n, err := t.ParseNote(text)
 	if err != nil {
-		return key.Parsed{}, err
+		return key.Named{}, err
 	}
 
-	return key.Parsed{
-		Key:    key.New(n, kind),
-		Suffix: suffix,
+	return key.Named{
+		Parsed: key.Parsed{
+			Key:    key.New(n, kind),
+			Suffix: suffix,
+		},
+		Name: text,
 	}, nil
 }
 

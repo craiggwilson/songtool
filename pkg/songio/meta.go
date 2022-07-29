@@ -7,10 +7,10 @@ import (
 )
 
 type Meta struct {
-	Title    string         `json:"title"`
-	Key      *key.Parsed    `json:"key"`
-	Sections []string       `json:"sections"`
-	Chords   []chord.Parsed `json:"chords"`
+	Title    string        `json:"title"`
+	Key      *key.Named    `json:"key"`
+	Sections []string      `json:"sections"`
+	Chords   []chord.Named `json:"chords"`
 }
 
 func ReadMeta(noteNamer note.Namer, src Song, full bool) (Meta, error) {
@@ -40,16 +40,21 @@ Loop:
 						suffix = chordOffset.Chord.Suffix[:1]
 					}
 
-					meta.Key = &key.Parsed{
+					metaKey := key.Parsed{
 						Key:    key.New(chordOffset.Chord.Root(), kind),
 						Suffix: suffix,
+					}
+
+					meta.Key = &key.Named{
+						Parsed: metaKey,
+						Name:   metaKey.Name(noteNamer),
 					}
 					if !full {
 						break Loop
 					}
 				}
 
-				name := chordOffset.Chord.Name(noteNamer)
+				name := chordOffset.Chord.Name
 				if _, ok := chordSet[name]; !ok {
 					meta.Chords = append(meta.Chords, chordOffset.Chord)
 					chordSet[name] = struct{}{}

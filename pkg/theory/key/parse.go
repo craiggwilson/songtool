@@ -8,7 +8,7 @@ import (
 )
 
 type Parser interface {
-	ParseKey(string) (Parsed, error)
+	ParseKey(string) (Named, error)
 }
 
 type Parsed struct {

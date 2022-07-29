@@ -7,13 +7,13 @@ import (
 )
 
 type KeyDirectiveLine struct {
-	Key key.Parsed `json:"key"`
+	Key key.Named `json:"key"`
 }
 
 func (d *KeyDirectiveLine) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		Directive string     `json:"directive"`
-		Value     key.Parsed `json:"value"`
+		Directive string    `json:"directive"`
+		Value     key.Named `json:"value"`
 	}{
 		Directive: "key",
 		Value:     d.Key,
