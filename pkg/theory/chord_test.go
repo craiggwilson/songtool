@@ -3,112 +3,93 @@ package theory_test
 import (
 	"testing"
 
-	"github.com/craiggwilson/songtool/pkg/theory"
+	theory2 "github.com/craiggwilson/songtool/pkg/theory"
+	"github.com/craiggwilson/songtool/pkg/theory/chord"
+	"github.com/craiggwilson/songtool/pkg/theory/interval"
+	"github.com/craiggwilson/songtool/pkg/theory/note"
 	"github.com/stretchr/testify/require"
 )
 
-func TestNotesInChord(t *testing.T) {
-	testCases := []struct {
-		chord    theory.Chord
-		expected []theory.Note
-	}{
-		{
-			chord: theory.MustChord(theory.ParseChord("C")),
-			expected: []theory.Note{
-				theory.MustNote(theory.ParseNote("C")),
-				theory.MustNote(theory.ParseNote("E")),
-				theory.MustNote(theory.ParseNote("G")),
-			},
-		},
-		{
-			chord: theory.MustChord(theory.ParseChord("C#")),
-			expected: []theory.Note{
-				theory.MustNote(theory.ParseNote("C#")),
-				theory.MustNote(theory.ParseNote("E#")),
-				theory.MustNote(theory.ParseNote("G#")),
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.chord.Name(), func(t *testing.T) {
-			actual := theory.NotesInChord(tc.chord)
-			require.Equal(t, tc.expected, actual)
-		})
-	}
-}
-
 func TestParseChord(t *testing.T) {
 	testCases := []struct {
-		name     string
-		expected theory.Chord
+		name           string
+		expected       chord.Parsed
+		expectedErrMsg string
 	}{
 		{
 			name: "A",
-			expected: theory.Chord{
-				Root: theory.Note{
-					Name:        "A",
-					DegreeClass: 5,
-					PitchClass:  9,
-					Accidentals: 0,
-				},
-				Semitones: []int{0, 4, 7},
+			expected: chord.Parsed{
+				Chord: chord.New(note.A, nil, interval.Perfect(0), interval.Major(2), interval.Perfect(4)),
 			},
 		},
 		{
-			name: "Amaj9",
-			expected: theory.Chord{
-				Root: theory.Note{
-					Name:        "A",
-					DegreeClass: 5,
-					PitchClass:  9,
-					Accidentals: 0,
-				},
-				Semitones: []int{0, 4, 7, 11, 14},
-				Suffix:    "maj9",
+			name: "Am",
+			expected: chord.Parsed{
+				Chord:  chord.New(note.A, nil, interval.Perfect(0), interval.Minor(2), interval.Perfect(4)),
+				Suffix: "m",
 			},
 		},
 		{
-			name: "Gbbmsus2add6",
-			expected: theory.Chord{
-				Root: theory.Note{
-					Name:        "Gbb",
-					DegreeClass: 4,
-					PitchClass:  5,
-					Accidentals: -2,
-				},
-				Semitones: []int{0, 2, 7, 9},
-				Suffix:    "msus2add6",
+			name: "Aaug",
+			expected: chord.Parsed{
+				Chord:  chord.New(note.A, nil, interval.Perfect(0), interval.Major(2), interval.Augmented(4, 1)),
+				Suffix: "aug",
 			},
 		},
 		{
-			name: "C#m7/G#",
-			expected: theory.Chord{
-				Root: theory.Note{
-					Name:        "C#",
-					DegreeClass: 0,
-					PitchClass:  1,
-					Accidentals: 1,
-				},
-				Semitones: []int{0, 3, 7, 10},
-				Suffix:    "m7",
-				Base: &theory.BaseNote{
-					Note: theory.Note{
-						Name:        "G#",
-						DegreeClass: 4,
-						PitchClass:  8,
-						Accidentals: 1,
-					},
-					Delimiter: "/",
-				},
+			name: "Adim",
+			expected: chord.Parsed{
+				Chord:  chord.New(note.A, nil, interval.Perfect(0), interval.Minor(2), interval.Diminished(4, 1)),
+				Suffix: "dim",
+			},
+		},
+		{
+			name: "Asus",
+			expected: chord.Parsed{
+				Chord:  chord.New(note.A, nil, interval.Perfect(0), interval.Perfect(3), interval.Perfect(4)),
+				Suffix: "sus",
+			},
+		},
+		{
+			name: "Asus2",
+			expected: chord.Parsed{
+				Chord:  chord.New(note.A, nil, interval.Perfect(0), interval.Major(1), interval.Perfect(4)),
+				Suffix: "sus2",
+			},
+		},
+		{
+			name: "Asus4",
+			expected: chord.Parsed{
+				Chord:  chord.New(note.A, nil, interval.Perfect(0), interval.Perfect(3), interval.Perfect(4)),
+				Suffix: "sus4",
+			},
+		},
+		{
+			name: "A/B",
+			expected: chord.Parsed{
+				Chord:             chord.New(note.A, &note.B, interval.Perfect(0), interval.Major(2), interval.Perfect(4)),
+				BaseNoteDelimiter: "/",
+			},
+		},
+		{
+			name: "Am7/B",
+			expected: chord.Parsed{
+				Chord:             chord.New(note.A, &note.B, interval.Perfect(0), interval.Minor(2), interval.Perfect(4), interval.Minor(6)),
+				Suffix:            "m7",
+				BaseNoteDelimiter: "/",
 			},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			actual, err := theory.ParseChord(tc.name)
-			require.Nil(t, err)
+			actual, err := theory2.ParseChord(tc.name)
+			if len(tc.expectedErrMsg) > 0 {
+				require.EqualError(t, err, tc.expectedErrMsg)
+			} else {
+				require.Nil(t, err)
+			}
+
 			require.Equal(t, tc.expected, actual)
 		})
 	}

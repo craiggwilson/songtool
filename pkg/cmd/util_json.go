@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/craiggwilson/songtool/pkg/theory2/key"
+	"github.com/craiggwilson/songtool/pkg/theory/key"
 )
 
 func marshalJSON(v interface{}) ([]byte, error) {

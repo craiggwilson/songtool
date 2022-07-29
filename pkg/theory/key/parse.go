@@ -3,10 +3,11 @@ package key
 import (
 	"encoding/json"
 
-	"github.com/craiggwilson/songtool/pkg/theory2/note"
+	"github.com/craiggwilson/songtool/pkg/theory/interval"
+	"github.com/craiggwilson/songtool/pkg/theory/note"
 )
 
-type KeyParser interface {
+type Parser interface {
 	ParseKey(string) (Parsed, error)
 }
 
@@ -26,4 +27,11 @@ func (k Parsed) MarshalJSON() ([]byte, error) {
 func (k Parsed) Name(noteNamer note.Namer) string {
 	nn := noteNamer.NameNote(k.Note())
 	return nn + k.Suffix
+}
+
+func (k Parsed) Transpose(by interval.Interval) Parsed {
+	return Parsed{
+		Key:    k.Key.Transpose(by),
+		Suffix: k.Suffix,
+	}
 }

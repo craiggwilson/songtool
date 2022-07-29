@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/craiggwilson/songtool/pkg/theory2/interval"
+	"github.com/craiggwilson/songtool/pkg/theory/interval"
 	"github.com/stretchr/testify/require"
 )
 

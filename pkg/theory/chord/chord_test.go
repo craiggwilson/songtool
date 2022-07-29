@@ -3,9 +3,9 @@ package chord_test
 import (
 	"testing"
 
-	"github.com/craiggwilson/songtool/pkg/theory2/chord"
-	"github.com/craiggwilson/songtool/pkg/theory2/interval"
-	"github.com/craiggwilson/songtool/pkg/theory2/note"
+	"github.com/craiggwilson/songtool/pkg/theory/chord"
+	"github.com/craiggwilson/songtool/pkg/theory/interval"
+	"github.com/craiggwilson/songtool/pkg/theory/note"
 	"github.com/stretchr/testify/require"
 )
 

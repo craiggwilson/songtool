@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/craiggwilson/songtool/pkg/theory2"
+	"github.com/craiggwilson/songtool/pkg/theory"
 )
 
 type ScalesLsCmd struct {
@@ -11,8 +11,8 @@ type ScalesLsCmd struct {
 }
 
 func (cmd *ScalesLsCmd) Run(cfg *Config) error {
-	scales := cfg.Theory2.ListScales()
-	theory2.SortScaleMetas(scales)
+	scales := cfg.Theory.ListScales()
+	theory.SortScaleMetas(scales)
 
 	if cmd.JSON {
 		return cmd.printJSON(scales)
@@ -21,7 +21,7 @@ func (cmd *ScalesLsCmd) Run(cfg *Config) error {
 	return cmd.print(scales)
 }
 
-func (cmd *ScalesLsCmd) print(scales []theory2.ScaleMeta) error {
+func (cmd *ScalesLsCmd) print(scales []theory.ScaleMeta) error {
 	for _, scale := range scales {
 		fmt.Println(scale.Name, scale.Intervals)
 	}
@@ -29,6 +29,6 @@ func (cmd *ScalesLsCmd) print(scales []theory2.ScaleMeta) error {
 	return nil
 }
 
-func (cmd *ScalesLsCmd) printJSON(scales []theory2.ScaleMeta) error {
+func (cmd *ScalesLsCmd) printJSON(scales []theory.ScaleMeta) error {
 	return printJSON(scales)
 }

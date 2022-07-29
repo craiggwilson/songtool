@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"io"
 	"strings"
+
+	"github.com/craiggwilson/songtool/pkg/theory/note"
 )
 
-func WriteChordsOverLyrics(src Song, w io.Writer) (int, error) {
+func WriteChordsOverLyrics(noteNamer note.Namer, src Song, w io.Writer) (int, error) {
 	n := 0
 	i := 0
 	var sb strings.Builder
@@ -19,7 +21,7 @@ func WriteChordsOverLyrics(src Song, w io.Writer) (int, error) {
 			sb.WriteString("]")
 		case *KeyDirectiveLine:
 			sb.WriteString("#key=")
-			sb.WriteString(tl.Key.Name())
+			sb.WriteString(tl.Key.Name(noteNamer))
 		case *TitleDirectiveLine:
 			sb.WriteString("#title=")
 			sb.WriteString(tl.Title)
@@ -41,7 +43,7 @@ func WriteChordsOverLyrics(src Song, w io.Writer) (int, error) {
 					currentOffset += offsetDiff
 				}
 
-				chordName := chordOffset.Chord.Name()
+				chordName := chordOffset.Chord.Name(noteNamer)
 				sb.WriteString(chordName)
 				currentOffset += len(chordName)
 			}

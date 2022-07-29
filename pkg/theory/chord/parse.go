@@ -3,8 +3,8 @@ package chord
 import (
 	"encoding/json"
 
-	"github.com/craiggwilson/songtool/pkg/theory2/interval"
-	"github.com/craiggwilson/songtool/pkg/theory2/note"
+	"github.com/craiggwilson/songtool/pkg/theory/interval"
+	"github.com/craiggwilson/songtool/pkg/theory/note"
 )
 
 type Parser interface {
@@ -37,4 +37,12 @@ func (p Parsed) Name(noteNamer note.Namer) string {
 	}
 
 	return name
+}
+
+func (p Parsed) Transpose(by interval.Interval) Parsed {
+	return Parsed{
+		Chord:             p.Chord.Transpose(by),
+		Suffix:            p.Suffix,
+		BaseNoteDelimiter: p.BaseNoteDelimiter,
+	}
 }

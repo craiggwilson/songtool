@@ -6,8 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/craiggwilson/songtool/pkg/theory"
-	"github.com/craiggwilson/songtool/pkg/theory2"
 	"github.com/jwalton/gchalk"
 	"github.com/kirsle/configdir"
 	"github.com/knadh/koanf"
@@ -16,6 +14,8 @@ import (
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/file"
 	"github.com/knadh/koanf/providers/rawbytes"
+
+	"github.com/craiggwilson/songtool/pkg/theory"
 )
 
 var defaultConfigFile = `
@@ -55,8 +55,7 @@ func LoadConfig(path string) (*Config, error) {
 
 	return &Config{
 		ConfigFile: configFile,
-		Theory:     theory.NewDefault(),
-		Theory2:    theory2.Default(),
+		Theory:     theory.Default(),
 	}, nil
 }
 
@@ -157,6 +156,5 @@ func (s *Style) Renderf(format string, a ...interface{}) string {
 
 type Config struct {
 	ConfigFile
-	Theory  *theory.Theory
-	Theory2 *theory2.Theory
+	Theory *theory.Theory
 }

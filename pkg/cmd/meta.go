@@ -27,18 +27,18 @@ func (cmd *MetaCmd) Run(cfg *Config) error {
 		return cmd.printJSON(meta)
 	}
 
-	return cmd.print(meta)
+	return cmd.print(cfg, meta)
 }
 
-func (cmd *MetaCmd) print(meta songio.Meta) error {
+func (cmd *MetaCmd) print(cfg *Config, meta songio.Meta) error {
 	if len(meta.Title) > 0 {
 		fmt.Println("Title:", meta.Title)
 	} else {
 		fmt.Println("Title:", "<none>")
 	}
 
-	if meta.Key.Note.IsValid() {
-		fmt.Println("Key:", meta.Key.Name())
+	if meta.Key != nil {
+		fmt.Println("Key:", meta.Key.Name(cfg.Theory))
 	} else {
 		fmt.Println("Key:", "<none>")
 	}
@@ -60,7 +60,7 @@ func (cmd *MetaCmd) print(meta songio.Meta) error {
 			if i != 0 {
 				fmt.Print(", ")
 			}
-			fmt.Print(chord.Name())
+			fmt.Print(chord.Name(cfg.Theory))
 		}
 		fmt.Println()
 	}

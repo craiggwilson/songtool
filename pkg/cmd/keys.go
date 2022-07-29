@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/craiggwilson/songtool/pkg/theory2/key"
+	"github.com/craiggwilson/songtool/pkg/theory/key"
 )
 
 type KeysCmd struct {
@@ -45,7 +45,7 @@ func (cmd *KeysCmd) Run(cfg *Config) error {
 
 func (cmd *KeysCmd) print(cfg *Config, keys []key.Key) error {
 	for _, k := range keys {
-		fmt.Println(cfg.Theory2.NameKey(k))
+		fmt.Println(cfg.Theory.NameKey(k))
 	}
 
 	return nil
@@ -55,7 +55,7 @@ func (cmd *KeysCmd) printJSON(cfg *Config, keys []key.Key) error {
 	keySurs := make([]keySurrogate, 0, len(keys))
 	for _, k := range keys {
 		keySurs = append(keySurs, keySurrogate{
-			Name:        cfg.Theory2.NameKey(k),
+			Name:        cfg.Theory.NameKey(k),
 			DegreeClass: k.Note().DegreeClass(),
 			PitchClass:  k.Note().PitchClass(),
 			Kind:        k.Kind(),

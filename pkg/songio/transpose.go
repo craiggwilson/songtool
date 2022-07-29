@@ -1,21 +1,19 @@
 package songio
 
 import (
-	"github.com/craiggwilson/songtool/pkg/theory"
+	"github.com/craiggwilson/songtool/pkg/theory/interval"
 )
 
-func Transpose(t *theory.Theory, src Song, interval theory.Interval) *SongTransposer {
+func Transpose(src Song, interval interval.Interval) *SongTransposer {
 	return &SongTransposer{
-		t:        t,
 		src:      src,
 		interval: interval,
 	}
 }
 
 type SongTransposer struct {
-	t        *theory.Theory
 	src      Song
-	interval theory.Interval
+	interval interval.Interval
 }
 
 func (s *SongTransposer) Next() (Line, bool) {
@@ -26,11 +24,10 @@ func (s *SongTransposer) Next() (Line, bool) {
 
 	switch tnl := nl.(type) {
 	case *KeyDirectiveLine:
-		newKey := s.t.TransposeKey(tnl.Key, s.interval)
-		tnl.Key = newKey
+		tnl.Key = tnl.Key.Transpose(s.interval)
 	case *ChordLine:
 		for _, seg := range tnl.Chords {
-			seg.Chord = s.t.TransposeChord(seg.Chord, s.interval)
+			seg.Chord = seg.Chord.Transpose(s.interval)
 		}
 	}
 

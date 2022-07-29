@@ -6,7 +6,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/craiggwilson/songtool/pkg/theory2/note"
+	"github.com/craiggwilson/songtool/pkg/theory/interval"
+	"github.com/craiggwilson/songtool/pkg/theory/note"
 )
 
 type Kind string
@@ -85,4 +86,11 @@ func (k Key) Name(namer Namer) string {
 
 func (k Key) Note() note.Note {
 	return k.note
+}
+
+func (k Key) Transpose(by interval.Interval) Key {
+	return New(
+		k.note.Transpose(by),
+		k.kind,
+	)
 }

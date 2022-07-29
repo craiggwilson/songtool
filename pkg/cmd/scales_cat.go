@@ -3,8 +3,8 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/craiggwilson/songtool/pkg/theory2/interval"
-	"github.com/craiggwilson/songtool/pkg/theory2/scale"
+	"github.com/craiggwilson/songtool/pkg/theory/interval"
+	"github.com/craiggwilson/songtool/pkg/theory/scale"
 )
 
 type ScalesCatCmd struct {
@@ -15,17 +15,17 @@ type ScalesCatCmd struct {
 }
 
 func (cmd *ScalesCatCmd) Run(cfg *Config) error {
-	meta, ok := cfg.Theory2.LookupScale(cmd.Name)
+	meta, ok := cfg.Theory.LookupScale(cmd.Name)
 	if !ok {
 		return fmt.Errorf("unknown scale %q", cmd.Name)
 	}
 
-	root, err := cfg.Theory2.ParseNote(cmd.Root)
+	root, err := cfg.Theory.ParseNote(cmd.Root)
 	if err != nil {
 		return fmt.Errorf("parsing note: %w", err)
 	}
 
-	scale := scale.Generate(cfg.Theory2.NameNote(root)+" "+meta.Name, root, meta.Intervals...)
+	scale := scale.Generate(cfg.Theory.NameNote(root)+" "+meta.Name, root, meta.Intervals...)
 
 	if cmd.JSON {
 		return cmd.printJSON(cfg, scale)
@@ -38,7 +38,7 @@ func (cmd *ScalesCatCmd) print(cfg *Config, scale scale.Scale) error {
 	notes := scale.Notes()
 	noteNames := make([]string, 0, len(notes))
 	for _, n := range notes {
-		noteNames = append(noteNames, cfg.Theory2.NameNote(n))
+		noteNames = append(noteNames, cfg.Theory.NameNote(n))
 	}
 
 	fmt.Println(noteNames)
@@ -51,7 +51,7 @@ func (cmd *ScalesCatCmd) printJSON(cfg *Config, scale scale.Scale) error {
 	pitchClassOffset := notes[0].PitchClass()
 	for _, n := range notes {
 		noteSurs = append(noteSurs, noteSurrogate{
-			Name:        cfg.Theory2.NameNote(n),
+			Name:        cfg.Theory.NameNote(n),
 			Interval:    interval.FromStep(n.PitchClass() - pitchClassOffset).String(),
 			DegreeClass: n.DegreeClass(),
 			PitchClass:  n.PitchClass(),

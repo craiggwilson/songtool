@@ -6,9 +6,10 @@ import (
 	"strings"
 
 	"github.com/craiggwilson/songtool/pkg/songio"
+	"github.com/craiggwilson/songtool/pkg/theory/note"
 )
 
-func WriteChordsOverLyricsWithHighlighter(styles *Styles, src songio.Song, w io.Writer) (int, error) {
+func WriteChordsOverLyricsWithHighlighter(styles *Styles, noteNamer note.Namer, src songio.Song, w io.Writer) (int, error) {
 	n := 0
 	i := 0
 	var sb strings.Builder
@@ -19,7 +20,7 @@ func WriteChordsOverLyricsWithHighlighter(styles *Styles, src songio.Song, w io.
 			sb.WriteString(styles.Section.Renderf("[%s]", tl.Name))
 		case *songio.KeyDirectiveLine:
 			sb.WriteString(styles.Directive.Render("#key="))
-			sb.WriteString(styles.Chord.Render(tl.Key.Name()))
+			sb.WriteString(styles.Chord.Render(tl.Key.Name(noteNamer)))
 		case *songio.TitleDirectiveLine:
 			sb.WriteString(styles.Directive.Renderf("#title=%s", tl.Title))
 		case *songio.UnknownDirectiveLine:
@@ -38,7 +39,7 @@ func WriteChordsOverLyricsWithHighlighter(styles *Styles, src songio.Song, w io.
 					currentOffset += offsetDiff
 				}
 
-				chordName := chordOffset.Chord.Name()
+				chordName := chordOffset.Chord.Name(noteNamer)
 				sb.WriteString(styles.Chord.Render(chordName))
 				currentOffset += len(chordName)
 			}

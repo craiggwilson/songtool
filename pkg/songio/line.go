@@ -1,6 +1,6 @@
 package songio
 
-import "github.com/craiggwilson/songtool/pkg/theory"
+import "github.com/craiggwilson/songtool/pkg/theory/chord"
 
 type Line interface {
 	line()
@@ -17,7 +17,7 @@ type ChordLine struct {
 func (l *ChordLine) line() {}
 
 type ChordOffset struct {
-	Chord  theory.Chord `json:"chord"`
+	Chord  chord.Parsed `json:"chord"`
 	Offset int          `json:"offset"`
 }
 

@@ -3,8 +3,8 @@ package scale
 import (
 	"encoding/json"
 
-	"github.com/craiggwilson/songtool/pkg/theory2/interval"
-	"github.com/craiggwilson/songtool/pkg/theory2/note"
+	"github.com/craiggwilson/songtool/pkg/theory/interval"
+	"github.com/craiggwilson/songtool/pkg/theory/note"
 )
 
 func Generate(name string, root note.Note, intervals ...interval.Interval) Scale {

@@ -3,126 +3,75 @@ package theory_test
 import (
 	"testing"
 
-	"github.com/craiggwilson/songtool/pkg/theory"
+	theory2 "github.com/craiggwilson/songtool/pkg/theory"
+	"github.com/craiggwilson/songtool/pkg/theory/interval"
+	"github.com/craiggwilson/songtool/pkg/theory/note"
+	"github.com/craiggwilson/songtool/pkg/theory/scale"
 	"github.com/stretchr/testify/require"
 )
 
-func TestGenerateScale(t *testing.T) {
+func TestParseScale(t *testing.T) {
 	testCases := []struct {
-		name      string
-		root      theory.Note
-		intervals []theory.Interval
-		expected  theory.Scale
+		name           string
+		expected       scale.Scale
+		expectedErrMsg string
 	}{
 		{
-			name:      "C Major",
-			root:      theory.MustNote(theory.ParseNote("C")),
-			intervals: theory.IonianIntervals,
-			expected: theory.Scale{
-				Name: "C Major",
-				Notes: []theory.Note{
-					{
-						Name:        "C",
-						DegreeClass: 0,
-						PitchClass:  0,
-						Accidentals: 0,
-					},
-					{
-						Name:        "D",
-						DegreeClass: 1,
-						PitchClass:  2,
-						Accidentals: 0,
-					},
-					{
-						Name:        "E",
-						DegreeClass: 2,
-						PitchClass:  4,
-						Accidentals: 0,
-					},
-					{
-						Name:        "F",
-						DegreeClass: 3,
-						PitchClass:  5,
-						Accidentals: 0,
-					},
-					{
-						Name:        "G",
-						DegreeClass: 4,
-						PitchClass:  7,
-						Accidentals: 0,
-					},
-					{
-						Name:        "A",
-						DegreeClass: 5,
-						PitchClass:  9,
-						Accidentals: 0,
-					},
-					{
-						Name:        "B",
-						DegreeClass: 6,
-						PitchClass:  11,
-						Accidentals: 0,
-					},
-				},
-			},
+			name:     "Cb",
+			expected: scale.Generate("Cb Major", note.CFlat, interval.Scales.Ionian...),
 		},
 		{
-			name:      "C# Major",
-			root:      theory.MustNote(theory.ParseNote("C#")),
-			intervals: theory.IonianIntervals,
-			expected: theory.Scale{
-				Name: "C# Major",
-				Notes: []theory.Note{
-					{
-						Name:        "C#",
-						DegreeClass: 0,
-						PitchClass:  1,
-						Accidentals: 1,
-					},
-					{
-						Name:        "D#",
-						DegreeClass: 1,
-						PitchClass:  3,
-						Accidentals: 1,
-					},
-					{
-						Name:        "E#",
-						DegreeClass: 2,
-						PitchClass:  5,
-						Accidentals: 1,
-					},
-					{
-						Name:        "F#",
-						DegreeClass: 3,
-						PitchClass:  6,
-						Accidentals: 1,
-					},
-					{
-						Name:        "G#",
-						DegreeClass: 4,
-						PitchClass:  8,
-						Accidentals: 1,
-					},
-					{
-						Name:        "A#",
-						DegreeClass: 5,
-						PitchClass:  10,
-						Accidentals: 1,
-					},
-					{
-						Name:        "B#",
-						DegreeClass: 6,
-						PitchClass:  0,
-						Accidentals: 1,
-					},
-				},
-			},
+			name:     "Cb Major",
+			expected: scale.Generate("Cb Major", note.CFlat, interval.Scales.Ionian...),
+		},
+		{
+			name:     "Cb Chromatic",
+			expected: scale.Generate("Cb Chromatic", note.CFlat, interval.Scales.Chromatic...),
+		},
+		{
+			name:     "C",
+			expected: scale.Generate("C Major", note.C, interval.Scales.Ionian...),
+		},
+		{
+			name:     "C Major",
+			expected: scale.Generate("C Major", note.C, interval.Scales.Ionian...),
+		},
+		{
+			name:     "C Chromatic",
+			expected: scale.Generate("C Chromatic", note.C, interval.Scales.Chromatic...),
+		},
+		{
+			name:     "C#",
+			expected: scale.Generate("C# Major", note.CSharp, interval.Scales.Ionian...),
+		},
+		{
+			name:     "C# Major",
+			expected: scale.Generate("C# Major", note.CSharp, interval.Scales.Ionian...),
+		},
+		{
+			name:     "C# Chromatic",
+			expected: scale.Generate("C# Chromatic", note.CSharp, interval.Scales.Chromatic...),
+		},
+		{
+			name:           "H Major",
+			expected:       scale.Scale{},
+			expectedErrMsg: `expected natural note name at position 0: expected one of ["C" "D" "E" "F" "G" "A" "B"], but got "H"`,
+		},
+		{
+			name:           "C# Unknown",
+			expected:       scale.Scale{},
+			expectedErrMsg: `unknown scale name "Unknown"`,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			actual := theory.GenerateDiatonicScale(tc.name, tc.root, tc.intervals)
+			actual, err := theory2.ParseScale(tc.name)
+			if len(tc.expectedErrMsg) > 0 {
+				require.EqualError(t, err, tc.expectedErrMsg)
+			} else {
+				require.Nil(t, err)
+			}
 
 			require.Equal(t, tc.expected, actual)
 		})

@@ -1,23 +1,40 @@
 package theory
 
-type Scale struct {
-	Name  string
-	Notes []Note
+import (
+	"sort"
+
+	"github.com/craiggwilson/songtool/pkg/theory/interval"
+	"github.com/craiggwilson/songtool/pkg/theory/scale"
+)
+
+type ScaleMeta struct {
+	Name      string              `json:"name"`
+	Intervals []interval.Interval `json:"intervals"`
 }
 
-func GenerateDiatonicScale(name string, root Note, intervals []Interval) Scale {
-	return std.GenerateDiatonicScale(name, root, intervals)
+type ScaleParser interface {
+	ParseScale(string) (scale.Scale, error)
 }
 
-func (t *Theory) GenerateDiatonicScale(name string, root Note, intervals []Interval) Scale {
-	scale := Scale{
-		Name:  name,
-		Notes: make([]Note, len(intervals)),
-	}
+func ParseScale(name string) (scale.Scale, error) {
+	return std.ParseScale(name)
+}
 
-	for i, interval := range intervals {
-		scale.Notes[i] = t.TransposeNote(root, interval)
-	}
+type ScaleProvider interface {
+	LookupScale(string) (ScaleMeta, bool)
+	ListScales() []ScaleMeta
+}
 
-	return scale
+func ListScales() []ScaleMeta {
+	return std.ListScales()
+}
+
+func LookupScale(name string) (ScaleMeta, bool) {
+	return std.LookupScale(name)
+}
+
+func SortScaleMetas(scaleMetas []ScaleMeta) {
+	sort.Slice(scaleMetas, func(i, j int) bool {
+		return scaleMetas[i].Name < scaleMetas[j].Name
+	})
 }

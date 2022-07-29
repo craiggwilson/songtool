@@ -1,15 +1,19 @@
 package songio
 
-import "github.com/craiggwilson/songtool/pkg/theory"
+import (
+	"github.com/craiggwilson/songtool/pkg/theory/chord"
+	"github.com/craiggwilson/songtool/pkg/theory/key"
+	"github.com/craiggwilson/songtool/pkg/theory/note"
+)
 
 type Meta struct {
 	Title    string         `json:"title"`
-	Key      theory.Key     `json:"key"`
+	Key      *key.Parsed    `json:"key"`
 	Sections []string       `json:"sections"`
-	Chords   []theory.Chord `json:"chords"`
+	Chords   []chord.Parsed `json:"chords"`
 }
 
-func ReadMeta(t *theory.Theory, src Song, full bool) (Meta, error) {
+func ReadMeta(noteNamer note.Namer, src Song, full bool) (Meta, error) {
 	var meta Meta
 
 	chordSet := make(map[string]struct{})
@@ -17,47 +21,48 @@ Loop:
 	for line, ok := src.Next(); ok; line, ok = src.Next() {
 		switch tl := line.(type) {
 		case *KeyDirectiveLine:
-			meta.Key = tl.Key
+			meta.Key = &tl.Key
 		case *TitleDirectiveLine:
 			meta.Title = tl.Title
 		case *ChordLine:
-			if !full && meta.Key.Note.IsValid() {
+			if !full && meta.Key != nil {
 				break Loop
 			}
 
 			for _, chordOffset := range tl.Chords {
-				if !meta.Key.Note.IsValid() {
-					kind := theory.KeyMajor
+				if meta.Key == nil {
+					kind := key.KindMajor
 					suffix := ""
-					if chordOffset.Chord.IsMinor() {
-						kind = theory.KeyMinor
-						suffix = string(t.Config.MinorKeySymbols[0])
+					if chordOffset.Chord.Quality() == chord.QualityMinor {
+						kind = key.KindMinor
+						// TODO: minor kinda has to happen first in the name, so...?
+						// I think we need a ParseKey that doesn't error if the full text isn't a key...
+						suffix = chordOffset.Chord.Suffix[:1]
 					}
 
-					meta.Key = theory.Key{
-						Note:   chordOffset.Chord.Root,
+					meta.Key = &key.Parsed{
+						Key:    key.New(chordOffset.Chord.Root(), kind),
 						Suffix: suffix,
-						Kind:   kind,
 					}
 					if !full {
 						break Loop
 					}
 				}
 
-				name := chordOffset.Chord.Name()
+				name := chordOffset.Chord.Name(noteNamer)
 				if _, ok := chordSet[name]; !ok {
 					meta.Chords = append(meta.Chords, chordOffset.Chord)
 					chordSet[name] = struct{}{}
 				}
 			}
 		case *SectionStartDirectiveLine:
-			if !full && meta.Key.Note.IsValid() {
+			if !full && meta.Key != nil {
 				break Loop
 			}
 
 			meta.Sections = append(meta.Sections, tl.Name)
 		case *TextLine, *SectionEndDirectiveLine:
-			if !full && meta.Key.Note.IsValid() {
+			if !full && meta.Key != nil {
 				break Loop
 			}
 		}

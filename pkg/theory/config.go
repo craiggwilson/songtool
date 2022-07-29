@@ -1,248 +1,179 @@
 package theory
 
 import (
-	"fmt"
-	"math"
-	"sort"
+	"regexp"
+
+	"github.com/craiggwilson/songtool/pkg/theory/interval"
 )
 
 func DefaultConfig() *Config {
-	modGroups := []ChordModifierGroup{
-		{
-			Name: "Quality",
-			Modifiers: []ChordModifier{
-				{
-					Match:     "m",
-					Except:    "maj",
-					Semitones: []int{-4, 3},
-				},
-				{
-					Match:     "dim",
-					Semitones: []int{-4, 3, -7, 6},
-				},
-				{
-					Match:     "aug",
-					Semitones: []int{-7, 8},
-				},
-			},
-		},
-		{
-			Name: "Numbered",
-			Modifiers: []ChordModifier{
-				{
-					Match:     "maj7",
-					Semitones: []int{11},
-				},
-				{
-					Match:     "maj9",
-					Semitones: []int{11, 14},
-				},
-				{
-					Match:     "maj11",
-					Semitones: []int{11, 14, 17},
-				},
-				{
-					Match:     "maj13",
-					Semitones: []int{11, 14, 17, 21},
-				},
-				{
-					Match:     "maj13",
-					Semitones: []int{11, 14, 17, 21},
-				},
-				{
-					Match:     "2",
-					Semitones: []int{2, -3, -4},
-				},
-				{
-					Match:     "5",
-					Semitones: []int{-3, -4},
-				},
-				{
-					Match:     "6",
-					Semitones: []int{9},
-				},
-				{
-					Match:     "7",
-					Semitones: []int{10},
-				},
-				{
-					Match:     "9",
-					Semitones: []int{10, 14},
-				},
-				{
-					Match:     "11",
-					Semitones: []int{10, 14, 17},
-				},
-				{
-					Match:     "13",
-					Semitones: []int{10, 14, 17, 21},
-				},
-			},
-		},
-		{
-			Name: "Suspensions",
-			Modifiers: []ChordModifier{
-				{
-					Match:     "sus2",
-					Semitones: []int{2, -3, -4},
-				},
-				{
-					Match:     "sus4",
-					Semitones: []int{5, -3, -4},
-				},
-				{
-					Match:     "sus",
-					Semitones: []int{5, -3, -4},
-				},
-			},
-		},
-		{
-			Name: "Added Tones",
-			Modifiers: []ChordModifier{
-				{
-					Match:     "add2",
-					Semitones: []int{2},
-				},
-				{
-					Match:     "add4",
-					Semitones: []int{5},
-				},
-				{
-					Match:     "add6",
-					Semitones: []int{9},
-				},
-				{
-					Match:     "add9",
-					Semitones: []int{14},
-				},
-			},
-		},
-	}
-
-	for _, grp := range modGroups {
-		sort.Slice(grp.Modifiers, func(i, j int) bool {
-			return len(grp.Modifiers[i].Match) > len(grp.Modifiers[j].Match)
-		})
-	}
-
 	return &Config{
-		MinorKeySymbols:    []string{"m"},
 		NaturalNoteNames:   [7]string{"C", "D", "E", "F", "G", "A", "B"},
 		SharpSymbols:       []string{"#"},
 		FlatSymbols:        []string{"b"},
+		MinorKeySymbols:    []string{"m"},
 		BaseNoteDelimiters: []string{"/"},
-		ChordModifiers:     modGroups,
+		Scales: map[string][]interval.Interval{
+			"Major":     interval.Scales.Ionian,
+			"Ionian":    interval.Scales.Ionian,
+			"Chromatic": interval.Scales.Chromatic,
+		},
+		ChordModifiers: []ChordModifier{
+			{
+				Name: "Base",
+				Add:  []interval.Interval{interval.Perfect(0), interval.Major(2), interval.Perfect(4)},
+			},
+			{
+				Name:   "Minor",
+				Match:  regexp.MustCompile("^m"),
+				Except: regexp.MustCompile("^maj"),
+				Add:    []interval.Interval{interval.Minor(2)},
+				Remove: []interval.Interval{interval.Major(2)},
+			},
+			{
+				Name:   "Augmented",
+				Match:  regexp.MustCompile("^aug"),
+				Add:    []interval.Interval{interval.Augmented(4, 1)},
+				Remove: []interval.Interval{interval.Perfect(4)},
+			},
+			{
+				Name:   "Diminished",
+				Match:  regexp.MustCompile("^dim"),
+				Add:    []interval.Interval{interval.Minor(2), interval.Diminished(4, 1)},
+				Remove: []interval.Interval{interval.Major(2), interval.Perfect(4)},
+			},
+			{
+				Name:   "2nd (alt for sus2)",
+				Match:  regexp.MustCompile("^2"),
+				Add:    []interval.Interval{interval.Major(1)},
+				Remove: []interval.Interval{interval.Major(2)},
+			},
+			{
+				Name:   "4th (alt for sus)",
+				Match:  regexp.MustCompile("^4"),
+				Add:    []interval.Interval{interval.Major(1)},
+				Remove: []interval.Interval{interval.Major(2)},
+			},
+			{
+				Name:   "5th (no 3rd)",
+				Match:  regexp.MustCompile("^5"),
+				Remove: []interval.Interval{interval.Major(2)},
+			},
+			{
+				Name:  "6th",
+				Match: regexp.MustCompile("^m?(6)"),
+				Add:   []interval.Interval{interval.Major(5)},
+			},
+			{
+				Name:  "7th",
+				Match: regexp.MustCompile("^m?(7)"),
+				Add:   []interval.Interval{interval.Minor(6)},
+			},
+			{
+				Name:  "9th",
+				Match: regexp.MustCompile("^m?(9)"),
+				Add:   []interval.Interval{interval.Minor(6), interval.Major(1)},
+			},
+			{
+				Name:  "11th",
+				Match: regexp.MustCompile("^m?(11)"),
+				Add:   []interval.Interval{interval.Minor(6), interval.Major(1), interval.Perfect(3)},
+			},
+			{
+				Name:  "13th",
+				Match: regexp.MustCompile("^m?(13)"),
+				Add:   []interval.Interval{interval.Minor(6), interval.Major(1), interval.Perfect(3), interval.Major(5)},
+			},
+			{
+				Name:  "Major 7th",
+				Match: regexp.MustCompile("^maj7"),
+				Add:   []interval.Interval{interval.Major(6)},
+			},
+			{
+				Name:  "Major 9th",
+				Match: regexp.MustCompile("^maj9"),
+				Add:   []interval.Interval{interval.Major(6), interval.Major(1)},
+			},
+			{
+				Name:  "Major 11th",
+				Match: regexp.MustCompile("^maj11"),
+				Add:   []interval.Interval{interval.Major(6), interval.Major(1), interval.Perfect(3)},
+			},
+			{
+				Name:  "Major 13th",
+				Match: regexp.MustCompile("^maj13"),
+				Add:   []interval.Interval{interval.Major(6), interval.Major(1), interval.Perfect(3), interval.Major(5)},
+			},
+			{
+				Name:   "Suspended 2nd",
+				Match:  regexp.MustCompile("sus2"),
+				Add:    []interval.Interval{interval.Major(1)},
+				Remove: []interval.Interval{interval.Major(2)},
+			},
+			{
+				Name:   "Suspended 4th",
+				Match:  regexp.MustCompile("sus4?"),
+				Except: regexp.MustCompile("sus2"),
+				Add:    []interval.Interval{interval.Perfect(3)},
+				Remove: []interval.Interval{interval.Minor(2), interval.Major(2)},
+			},
+			{
+				Name:  "Added 2nd/9th",
+				Match: regexp.MustCompile("(add(2|9))"),
+				Add:   []interval.Interval{interval.Major(1)},
+			},
+			{
+				Name:  "Slash 9",
+				Match: regexp.MustCompile("/9"),
+				Add:   []interval.Interval{interval.Major(1)},
+			},
+			{
+				Name:  "Added 4th/11th",
+				Match: regexp.MustCompile("(add(4|11))"),
+				Add:   []interval.Interval{interval.Perfect(3)},
+			},
+			{
+				Name:  "Added 6th/13th",
+				Match: regexp.MustCompile("(add(6|13))"),
+				Add:   []interval.Interval{interval.Major(5)},
+			},
+			{
+				Name:   "Flat 5th",
+				Match:  regexp.MustCompile(`\(b5\)|b5`),
+				Add:    []interval.Interval{interval.Diminished(4, 1)},
+				Remove: []interval.Interval{interval.Perfect(4)},
+			},
+			{
+				Name:  "Flat 6th",
+				Match: regexp.MustCompile(`\(b6\)|b6`),
+				Add:   []interval.Interval{interval.Diminished(5, 1)},
+			},
+			{
+				Name:   "Sharp 5th",
+				Match:  regexp.MustCompile(`\(#5\)|#5`),
+				Add:    []interval.Interval{interval.Augmented(4, 1)},
+				Remove: []interval.Interval{interval.Perfect(4)},
+			},
+		},
 	}
 }
-
-func SetConfig(cfg *Config) {
-	std.Config = cfg
-}
-
-const (
-	pitchClassCount = 12
-)
-
-var (
-	degreeClassToPitchClass = [7]PitchClass{0, 2, 4, 5, 7, 9, 11}
-)
 
 type Config struct {
-	MinorKeySymbols    []string
-	NaturalNoteNames   [7]string
-	SharpSymbols       []string
-	FlatSymbols        []string
-	BaseNoteDelimiters []string
-	ChordModifiers     []ChordModifierGroup
-}
+	NaturalNoteNames   [7]string                      `json:"naturalNoteNames"`
+	SharpSymbols       []string                       `json:"sharpSymbols"`
+	FlatSymbols        []string                       `json:"flatSymbols"`
+	MajorKeySymbols    []string                       `json:"majorKeySymbols"`
+	MinorKeySymbols    []string                       `json:"minorKeySymbols"`
+	BaseNoteDelimiters []string                       `json:"baseNoteDelimiters"`
+	Scales             map[string][]interval.Interval `json:"scales"`
 
-func (cfg *Config) AdjustDegreeClass(degreeClass DegreeClass, by int) DegreeClass {
-	return (degreeClass + DegreeClass(by) + DegreeClass(len(cfg.NaturalNoteNames))) % DegreeClass(len(cfg.NaturalNoteNames))
-}
-
-func (cfg *Config) AdjustPitchClass(pitchClass PitchClass, by int) PitchClass {
-	return (pitchClass + PitchClass(by) + PitchClass(pitchClassCount)) % PitchClass(pitchClassCount)
-}
-
-func (cfg *Config) DegreeClassDelta(a, b DegreeClass) int {
-	return classDelta(int(a), int(b), len(cfg.NaturalNoteNames))
-}
-
-func (cfg *Config) DegreeClassFromNaturalNoteName(naturalNoteName string) DegreeClass {
-	for i, nn := range cfg.NaturalNoteNames {
-		if nn == naturalNoteName {
-			return DegreeClass(i)
-		}
-	}
-
-	panic(fmt.Sprintf("natural note name %q does not map to a degree class", naturalNoteName))
-}
-
-func (cfg *Config) DegreeClassFromPitchClass(pitchClass PitchClass, enharmonic Enharmonic) DegreeClass {
-	switch enharmonic {
-	case Sharp:
-		for i := len(degreeClassToPitchClass) - 1; i >= 0; i-- {
-			if pitchClass >= degreeClassToPitchClass[i] {
-				return DegreeClass(i)
-			}
-		}
-	case Flat:
-		for i := 0; i < len(degreeClassToPitchClass); i++ {
-			if pitchClass <= degreeClassToPitchClass[i] {
-				return DegreeClass(i)
-			}
-		}
-	default:
-		panic(fmt.Sprintf("invalid enharmonic %s", enharmonic))
-	}
-
-	panic(fmt.Sprintf("invalid pitch class %d", pitchClass))
-}
-
-func (cfg *Config) NormalizeAccidentals(accidentals int) int {
-	return normalize(accidentals, pitchClassCount)
-}
-
-func (cfg *Config) PitchClassFromDegreeClass(degreeClass DegreeClass) PitchClass {
-	if int(degreeClass) < len(degreeClassToPitchClass) {
-		return degreeClassToPitchClass[int(degreeClass)]
-	}
-
-	panic(fmt.Sprintf("degree class %d does not map to a pitch class", degreeClass))
-}
-
-func (cfg *Config) PitchClassDelta(a, b PitchClass) int {
-	return classDelta(int(a), int(b), pitchClassCount)
-}
-
-func classDelta(a, b, count int) int {
-	d1 := b - a
-	d2 := b - a + count
-	if math.Abs(float64(d1)) < math.Abs(float64(d2)) {
-		return d1
-	}
-
-	return d2
-}
-
-func normalize(v int, count int) int {
-	switch {
-	case v > count/2:
-		return -count + v
-	case v < -count/2:
-		return count + v
-	default:
-		return v
-	}
-}
-
-type ChordModifierGroup struct {
-	Name      string
-	Modifiers []ChordModifier
+	ChordModifiers []ChordModifier `json:"chordMofifiers"`
 }
 
 type ChordModifier struct {
-	Match     string
-	Except    string
-	Semitones []int
+	Name   string              `json:"name"`
+	Match  *regexp.Regexp      `json:"match"`
+	Except *regexp.Regexp      `json:"except"`
+	Add    []interval.Interval `json:"add"`
+	Remove []interval.Interval `json:"remove"`
 }

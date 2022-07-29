@@ -5,7 +5,8 @@ import (
 	"os"
 
 	"github.com/craiggwilson/songtool/pkg/songio"
-	"github.com/craiggwilson/songtool/pkg/theory"
+	"github.com/craiggwilson/songtool/pkg/theory/interval"
+	"github.com/craiggwilson/songtool/pkg/theory/key"
 )
 
 type TransposeCmd struct {
@@ -21,7 +22,7 @@ func (cmd *TransposeCmd) Run(cfg *Config) error {
 
 	song := cmd.openSong(cfg)
 
-	var fromKey theory.Key
+	var fromKey *key.Parsed
 	if len(cmd.FromKey) == 0 {
 		rewinder := songio.NewRewinder(song)
 		meta, err := songio.ReadMeta(cfg.Theory, rewinder, false)
@@ -30,35 +31,35 @@ func (cmd *TransposeCmd) Run(cfg *Config) error {
 		}
 
 		fromKey = meta.Key
-		if !fromKey.Note.IsValid() {
+		if fromKey == nil {
 			return fmt.Errorf("could not infer from-key")
 		}
 
 		song = rewinder.Rewind()
 	}
 
-	if !fromKey.Note.IsValid() {
+	if fromKey == nil {
 		fk, err := cfg.Theory.ParseKey(cmd.FromKey)
 		if err != nil {
 			return fmt.Errorf("invalid from-key: %w", err)
 		}
 
-		fromKey = fk
+		fromKey = &fk
 	}
 
-	var interval theory.Interval
+	var intval interval.Interval
 	if len(cmd.ToKey) > 0 {
 		toKey, err := cfg.Theory.ParseKey(cmd.ToKey)
 		if err != nil {
 			return fmt.Errorf("invalid to-key: %w", err)
 		}
-		interval = cfg.Theory.IntervalFromDiff(fromKey.Note, toKey.Note)
+		intval = fromKey.Note().Interval(toKey.Note())
 	} else {
-		interval = cfg.Theory.IntervalFromStep(fromKey.Note, cmd.Interval, theory.Sharp)
+		intval = interval.FromStep(fromKey.Note().PitchClass() + cmd.Interval)
 	}
 
-	transposer := songio.Transpose(cfg.Theory, song, interval)
+	transposer := songio.Transpose(song, intval)
 
-	_, err := songio.WriteChordsOverLyrics(transposer, os.Stdout)
+	_, err := songio.WriteChordsOverLyrics(cfg.Theory, transposer, os.Stdout)
 	return err
 }

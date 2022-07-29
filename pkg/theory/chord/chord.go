@@ -3,8 +3,8 @@ package chord
 import (
 	"encoding/json"
 
-	"github.com/craiggwilson/songtool/pkg/theory2/interval"
-	"github.com/craiggwilson/songtool/pkg/theory2/note"
+	"github.com/craiggwilson/songtool/pkg/theory/interval"
+	"github.com/craiggwilson/songtool/pkg/theory/note"
 )
 
 func New(root note.Note, base *note.Note, intervals ...interval.Interval) Chord {
@@ -84,4 +84,15 @@ func (c Chord) Quality() Quality {
 
 func (c Chord) Root() note.Note {
 	return c.root
+}
+
+func (c Chord) Transpose(by interval.Interval) Chord {
+	root := c.root.Transpose(by)
+	var base *note.Note
+	if c.base != nil {
+		newBase := c.base.Transpose(by)
+		base = &newBase
+	}
+
+	return New(root, base, c.intervals...)
 }

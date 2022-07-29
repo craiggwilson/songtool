@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"sync"
 
-	"github.com/craiggwilson/songtool/pkg/theory2/interval"
+	"github.com/craiggwilson/songtool/pkg/theory/interval"
 )
 
 var (
@@ -80,6 +80,10 @@ func (n Note) CompareTo(o Note) int {
 
 func (n Note) DegreeClass() int {
 	return n.degreeClass
+}
+
+func (n Note) Interval(other Note) interval.Interval {
+	return interval.FromStep(other.pitchClass - n.pitchClass)
 }
 
 func (n Note) MarshalJSON() ([]byte, error) {

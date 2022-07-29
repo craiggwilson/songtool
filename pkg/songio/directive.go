@@ -3,17 +3,17 @@ package songio
 import (
 	"encoding/json"
 
-	"github.com/craiggwilson/songtool/pkg/theory"
+	"github.com/craiggwilson/songtool/pkg/theory/key"
 )
 
 type KeyDirectiveLine struct {
-	Key theory.Key `json:"key"`
+	Key key.Parsed `json:"key"`
 }
 
 func (d *KeyDirectiveLine) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Directive string     `json:"directive"`
-		Value     theory.Key `json:"value"`
+		Value     key.Parsed `json:"value"`
 	}{
 		Directive: "key",
 		Value:     d.Key,

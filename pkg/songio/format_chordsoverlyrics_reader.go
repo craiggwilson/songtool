@@ -6,12 +6,14 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/craiggwilson/songtool/pkg/theory"
+	"github.com/craiggwilson/songtool/pkg/theory/chord"
+	"github.com/craiggwilson/songtool/pkg/theory/key"
 )
 
 type ChordsOverLyricsReader struct {
-	t       *theory.Theory
-	scanner *bufio.Scanner
+	keyParser   key.Parser
+	chordParser chord.Parser
+	scanner     *bufio.Scanner
 
 	blankLineCount     int
 	currentSectionName string
@@ -21,10 +23,11 @@ type ChordsOverLyricsReader struct {
 	err error
 }
 
-func ReadChordsOverLyrics(t *theory.Theory, src io.Reader) *ChordsOverLyricsReader {
+func ReadChordsOverLyrics(keyParser key.Parser, chordParser chord.Parser, src io.Reader) *ChordsOverLyricsReader {
 	return &ChordsOverLyricsReader{
-		t:       t,
-		scanner: bufio.NewScanner(src),
+		keyParser:   keyParser,
+		chordParser: chordParser,
+		scanner:     bufio.NewScanner(src),
 	}
 }
 
@@ -115,7 +118,7 @@ func (r *ChordsOverLyricsReader) parseContent(text string) Line {
 	for i, n := range text {
 		if unicode.IsSpace(n) {
 			if wordStartIdx > -1 {
-				chord, err := r.t.ParseChord(text[wordStartIdx:i])
+				chord, err := r.chordParser.ParseChord(text[wordStartIdx:i])
 				if err != nil {
 					return &TextLine{
 						Text: text,
@@ -134,7 +137,7 @@ func (r *ChordsOverLyricsReader) parseContent(text string) Line {
 	}
 
 	if wordStartIdx > -1 {
-		chord, err := r.t.ParseChord(text[wordStartIdx:])
+		chord, err := r.chordParser.ParseChord(text[wordStartIdx:])
 		if err != nil {
 			return &TextLine{
 				Text: text,
@@ -169,7 +172,7 @@ func (r *ChordsOverLyricsReader) parseDirective(text string) Line {
 			Title: value,
 		}
 	case "key":
-		if key, err := r.t.ParseKey(value); err == nil {
+		if key, err := r.keyParser.ParseKey(value); err == nil {
 			return &KeyDirectiveLine{
 				Key: key,
 			}
