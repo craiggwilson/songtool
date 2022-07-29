@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/craiggwilson/songtool/pkg/songio"
 	"github.com/craiggwilson/songtool/pkg/theory/interval"
@@ -15,6 +14,9 @@ type TransposeCmd struct {
 	FromKey  string `name:"from-key" help:"The current key of the song; will be discovered automatically when not specified."`
 	Interval int    `name:"interval" short:"i" xor:"keyinterval" required:"" help:"The number of steps to transpose the song; can be negative. Cannot be used to 'to-key'."`
 	ToKey    string `name:"to-key" xor:"keyinterval" required:"" help:"The desired key of the song. Cannot be used with 'interval'."`
+
+	JSON  bool `name:"json" xor:"json" help:"Prints the output as JSON."`
+	Color bool `name:"color" xor:"json" negatable:"" help:"Indicates whether to use color"`
 }
 
 func (cmd *TransposeCmd) Run(cfg *Config) error {
@@ -60,6 +62,9 @@ func (cmd *TransposeCmd) Run(cfg *Config) error {
 
 	transposer := songio.Transpose(cfg.Theory, song, intval)
 
-	_, err := songio.WriteChordsOverLyrics(cfg.Theory, transposer, os.Stdout)
-	return err
+	if cmd.JSON {
+		return cmd.printSongJSON(transposer)
+	}
+
+	return cmd.printSong(&cfg.Styles, transposer)
 }

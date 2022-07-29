@@ -1,10 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
-	"fmt"
-	"os"
-
 	"github.com/craiggwilson/songtool/pkg/songio"
 )
 
@@ -26,28 +22,8 @@ func (cmd *CatCmd) Run(cfg *Config) error {
 	}
 
 	if cmd.JSON {
-		return cmd.printJSON(song)
+		return cmd.printSongJSON(song)
 	}
 
-	return cmd.print(cfg, song)
-}
-
-func (cmd *CatCmd) print(cfg *Config, song songio.Song) error {
-	_, err := WriteChordsOverLyricsWithHighlighter(&cfg.Styles, song, os.Stdout)
-	return err
-}
-
-func (cmd *CatCmd) printJSON(song songio.Song) error {
-	lines, err := songio.ReadAllLines(song)
-	if err != nil {
-		return err
-	}
-
-	out, err := json.MarshalIndent(lines, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	fmt.Println(string(out))
-	return nil
+	return cmd.printSong(&cfg.Styles, song)
 }
