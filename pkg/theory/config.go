@@ -6,6 +6,14 @@ import (
 	"github.com/craiggwilson/songtool/pkg/theory/interval"
 )
 
+const (
+	patternMinor = "m"
+	patternMajor = "maj"
+	patternDim   = "dim"
+	patternAug   = "aug"
+	numPrefix    = "m(aj)?|dim|aug"
+)
+
 func DefaultConfig() *Config {
 	return &Config{
 		NaturalNoteNames:   [7]string{"C", "D", "E", "F", "G", "A", "B"},
@@ -44,44 +52,44 @@ func DefaultConfig() *Config {
 			},
 			{
 				Name:   "2nd (alt for sus2)",
-				Match:  regexp.MustCompile("^2"),
+				Match:  regexp.MustCompile(`^(m|dim|aug)?(?P<mod>2)`),
 				Add:    []interval.Interval{interval.Major(1)},
 				Remove: []interval.Interval{interval.Major(2)},
 			},
 			{
 				Name:   "4th (alt for sus)",
-				Match:  regexp.MustCompile("^4"),
+				Match:  regexp.MustCompile("^(m|dim|aug)?(?P<mod>4)"),
 				Add:    []interval.Interval{interval.Major(1)},
 				Remove: []interval.Interval{interval.Major(2)},
 			},
 			{
 				Name:   "5th (no 3rd)",
-				Match:  regexp.MustCompile("^5"),
+				Match:  regexp.MustCompile("^(m|dim|aug)?(?P<mod>5)"),
 				Remove: []interval.Interval{interval.Major(2)},
 			},
 			{
 				Name:  "6th",
-				Match: regexp.MustCompile("^m?(6)"),
+				Match: regexp.MustCompile("^(m|dim|aug)?(?P<mod>6)"),
 				Add:   []interval.Interval{interval.Major(5)},
 			},
 			{
 				Name:  "7th",
-				Match: regexp.MustCompile("^m?(7)"),
+				Match: regexp.MustCompile("^(m|dim|aug)?(?P<mod>7)"),
 				Add:   []interval.Interval{interval.Minor(6)},
 			},
 			{
 				Name:  "9th",
-				Match: regexp.MustCompile("^m?(9)"),
+				Match: regexp.MustCompile("^(m|dim|aug)?(?P<mod>9)"),
 				Add:   []interval.Interval{interval.Minor(6), interval.Major(1)},
 			},
 			{
 				Name:  "11th",
-				Match: regexp.MustCompile("^m?(11)"),
+				Match: regexp.MustCompile("^(m|dim|aug)?(?P<mod>11)"),
 				Add:   []interval.Interval{interval.Minor(6), interval.Major(1), interval.Perfect(3)},
 			},
 			{
 				Name:  "13th",
-				Match: regexp.MustCompile("^m?(13)"),
+				Match: regexp.MustCompile("^(m|dim|aug)?(?P<mod>13)"),
 				Add:   []interval.Interval{interval.Minor(6), interval.Major(1), interval.Perfect(3), interval.Major(5)},
 			},
 			{
