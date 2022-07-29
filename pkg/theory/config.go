@@ -74,8 +74,13 @@ func DefaultConfig() *Config {
 			},
 			{
 				Name:  "7th",
-				Match: regexp.MustCompile("^(m|dim|aug)?(?P<mod>7)"),
+				Match: regexp.MustCompile("^(m|aug)?(?P<mod>7)"),
 				Add:   []interval.Interval{interval.Minor(6)},
+			},
+			{
+				Name:  "Diminished 7th",
+				Match: regexp.MustCompile("^dim(7)"),
+				Add:   []interval.Interval{interval.Diminished(6, 1)},
 			},
 			{
 				Name:  "9th",
@@ -94,22 +99,22 @@ func DefaultConfig() *Config {
 			},
 			{
 				Name:  "Major 7th",
-				Match: regexp.MustCompile("^maj7"),
+				Match: regexp.MustCompile("maj7"),
 				Add:   []interval.Interval{interval.Major(6)},
 			},
 			{
 				Name:  "Major 9th",
-				Match: regexp.MustCompile("^maj9"),
+				Match: regexp.MustCompile("maj9"),
 				Add:   []interval.Interval{interval.Major(6), interval.Major(1)},
 			},
 			{
 				Name:  "Major 11th",
-				Match: regexp.MustCompile("^maj11"),
+				Match: regexp.MustCompile("maj11"),
 				Add:   []interval.Interval{interval.Major(6), interval.Major(1), interval.Perfect(3)},
 			},
 			{
 				Name:  "Major 13th",
-				Match: regexp.MustCompile("^maj13"),
+				Match: regexp.MustCompile("maj13"),
 				Add:   []interval.Interval{interval.Major(6), interval.Major(1), interval.Perfect(3), interval.Major(5)},
 			},
 			{

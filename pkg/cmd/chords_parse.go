@@ -27,7 +27,12 @@ func (cmd *ChordsParseCmd) Run(cfg *Config) error {
 }
 
 func (cmd *ChordsParseCmd) print(cfg *Config, c chord.Named) error {
-	fmt.Println(c.Name)
+	fmt.Println("Name:", c.Name)
+	formalName := cfg.Theory.NameChord(c.Chord)
+	if formalName != c.Name {
+		fmt.Println("Normalized Name:", formalName)
+	}
+	fmt.Println("Intervals:", c.Parsed.Chord.Intervals())
 	return nil
 }
 

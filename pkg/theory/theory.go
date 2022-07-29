@@ -49,7 +49,71 @@ func (t *Theory) LookupScale(name string) (ScaleMeta, bool) {
 }
 
 func (t *Theory) NameChord(c chord.Chord) string {
-	panic("not implemented")
+	name := t.NameNote(c.Root())
+	steps := interval.Steps(c.Intervals())
+
+	// Quality
+	if steps[3] && steps[7] || steps[3] && steps[6] && steps[10] {
+		name += "m"
+	} else if steps[3] && steps[6] {
+		name += "dim"
+	} else if steps[4] && steps[8] && !steps[11] {
+		name += "aug"
+	}
+
+	if steps[10] || steps[11] {
+		num := "7"
+		if steps[9] {
+			num = "13"
+		} else if steps[5] {
+			num = "11"
+		} else if steps[2] {
+			num = "9"
+		}
+
+		if steps[10] {
+			name += num
+		} else {
+			name += "maj" + num
+			if steps[8] {
+				name += "#5"
+			}
+		}
+	} else {
+		if steps[9] && steps[3] && steps[6] {
+			name += "7" // dim7
+		}
+
+		if !steps[3] && !steps[4] {
+			if steps[2] {
+				name += "2"
+			}
+			if steps[5] {
+				name += "sus"
+			}
+			if steps[9] && !steps[3] && !steps[6] {
+				name += "add6"
+			}
+		} else {
+			if steps[9] && !steps[3] && !steps[6] {
+				name += "6"
+			}
+			if steps[2] {
+				name += "add2"
+			}
+			if steps[5] {
+				name += "add4"
+			}
+		}
+	}
+
+	// handle flats...
+
+	if base := c.Base(); base != nil {
+		name += "/" + t.NameNote(*base)
+	}
+
+	return name
 }
 
 func (t *Theory) NameKey(k key.Key) string {
@@ -118,6 +182,7 @@ func (t *Theory) ParseChord(text string) (chord.Named, error) {
 							break
 						}
 					}
+					// Otherwise, use the first group.
 					if !found {
 						pos += len(match[1])
 					}

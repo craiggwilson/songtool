@@ -134,12 +134,6 @@ func Parse(text string) (Interval, error) {
 	}
 }
 
-func Sort(intervals []Interval) {
-	sort.Slice(intervals, func(i, j int) bool {
-		return intervals[i].String() < intervals[j].String()
-	})
-}
-
 func Perfect(diatonic int) Interval {
 	i, err := perfectErr(diatonic)
 	if err != nil {
@@ -147,6 +141,22 @@ func Perfect(diatonic int) Interval {
 	}
 
 	return i
+}
+
+func Steps(intervals []Interval) [12]bool {
+	var r [12]bool
+
+	for _, iv := range intervals {
+		r[iv.Chromatic()] = true
+	}
+
+	return r
+}
+
+func Sort(intervals []Interval) {
+	sort.Slice(intervals, func(i, j int) bool {
+		return intervals[i].String() < intervals[j].String()
+	})
 }
 
 type Interval struct {
@@ -195,7 +205,11 @@ func chromaticFromDiatonicAndQuality(diatonic int, q Quality) int {
 	case QualityKindMinor:
 		return chromatic - 1
 	case QualityKindDiminished:
-		return chromatic - q.Size()
+		value := chromatic - q.Size()
+		if diatonic == 1 || diatonic == 2 || diatonic == 5 || diatonic == 6 {
+			value--
+		}
+		return value
 	case QualityKindAugmented:
 		return chromatic + q.Size()
 	default:
