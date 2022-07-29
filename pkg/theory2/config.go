@@ -23,11 +23,6 @@ func DefaultConfig() *Config {
 				Name: "Base",
 				Add:  []interval.Interval{interval.Perfect(0), interval.Major(2), interval.Perfect(4)},
 			},
-			// {
-			// 	Name:  "Major",
-			// 	Match: regexp.MustCompile("^maj"),
-			// 	Add:   []interval.Interval{interval.Major(2), interval.Perfect(4)},
-			// },
 			{
 				Name:   "Minor",
 				Match:  regexp.MustCompile("^m"),
@@ -65,23 +60,28 @@ func DefaultConfig() *Config {
 				Remove: []interval.Interval{interval.Major(2)},
 			},
 			{
+				Name:  "6th",
+				Match: regexp.MustCompile("^m?(6)"),
+				Add:   []interval.Interval{interval.Major(5)},
+			},
+			{
 				Name:  "7th",
-				Match: regexp.MustCompile("^m?7"),
+				Match: regexp.MustCompile("^m?(7)"),
 				Add:   []interval.Interval{interval.Minor(6)},
 			},
 			{
 				Name:  "9th",
-				Match: regexp.MustCompile("^m?9"),
+				Match: regexp.MustCompile("^m?(9)"),
 				Add:   []interval.Interval{interval.Minor(6), interval.Major(1)},
 			},
 			{
 				Name:  "11th",
-				Match: regexp.MustCompile("^m?11"),
+				Match: regexp.MustCompile("^m?(11)"),
 				Add:   []interval.Interval{interval.Minor(6), interval.Major(1), interval.Perfect(3)},
 			},
 			{
 				Name:  "13th",
-				Match: regexp.MustCompile("^m?13"),
+				Match: regexp.MustCompile("^m?(13)"),
 				Add:   []interval.Interval{interval.Minor(6), interval.Major(1), interval.Perfect(3), interval.Major(5)},
 			},
 			{
@@ -119,33 +119,38 @@ func DefaultConfig() *Config {
 			},
 			{
 				Name:  "Added 2nd/9th",
-				Match: regexp.MustCompile("add(2|9)"),
+				Match: regexp.MustCompile("(add(2|9))"),
+				Add:   []interval.Interval{interval.Major(1)},
+			},
+			{
+				Name:  "Slash 9",
+				Match: regexp.MustCompile("/9"),
 				Add:   []interval.Interval{interval.Major(1)},
 			},
 			{
 				Name:  "Added 4th/11th",
-				Match: regexp.MustCompile("add(4|11)"),
+				Match: regexp.MustCompile("(add(4|11))"),
 				Add:   []interval.Interval{interval.Perfect(3)},
 			},
 			{
 				Name:  "Added 6th/13th",
-				Match: regexp.MustCompile("add(6|13)"),
+				Match: regexp.MustCompile("(add(6|13))"),
 				Add:   []interval.Interval{interval.Major(5)},
 			},
 			{
 				Name:   "Flat 5th",
-				Match:  regexp.MustCompile(`(b5)|b5`),
+				Match:  regexp.MustCompile(`\(b5\)|b5`),
 				Add:    []interval.Interval{interval.Diminished(4, 1)},
 				Remove: []interval.Interval{interval.Perfect(4)},
 			},
 			{
 				Name:  "Flat 6th",
-				Match: regexp.MustCompile(`(b6)|b6`),
+				Match: regexp.MustCompile(`\(b6\)|b6`),
 				Add:   []interval.Interval{interval.Diminished(5, 1)},
 			},
 			{
 				Name:   "Sharp 5th",
-				Match:  regexp.MustCompile(`(#5)|#5`),
+				Match:  regexp.MustCompile(`\(#5\)|#5`),
 				Add:    []interval.Interval{interval.Augmented(4, 1)},
 				Remove: []interval.Interval{interval.Perfect(4)},
 			},

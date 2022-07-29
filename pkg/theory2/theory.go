@@ -95,15 +95,33 @@ func (t *Theory) ParseChord(text string) (chord.Parsed, error) {
 	intervalMap := make(map[interval.Interval]struct{})
 
 	suffix := text[pos:]
+	suffixPos := pos
 	for _, m := range t.cfg.ChordModifiers {
 		matched := false
 		if m.Match == nil {
 			matched = true
 		} else {
-			match := m.Match.FindString(suffix)
+			match := m.Match.FindStringSubmatch(suffix)
 			if len(match) > 0 && (m.Except == nil || !m.Except.MatchString(suffix)) {
 				matched = true
-				pos += len(match)
+				if len(match) == 1 {
+					// If there are no groups, use the full match.
+					pos += len(match[0])
+				} else {
+					// If there are named capture groups, there must be one called "mod" which will be used.
+					captureNames := m.Match.SubexpNames()
+					found := false
+					for i, name := range captureNames {
+						if name == "mod" {
+							pos += len(match[i])
+							found = true
+							break
+						}
+					}
+					if !found {
+						pos += len(match[1])
+					}
+				}
 			}
 		}
 		if matched {
@@ -123,6 +141,7 @@ func (t *Theory) ParseChord(text string) (chord.Parsed, error) {
 
 	interval.Sort(intervals)
 
+	delimiterPos := pos
 	base, delim, pos, _ := t.parseBaseNote(text, pos)
 
 	if len(text) > pos {
@@ -131,7 +150,7 @@ func (t *Theory) ParseChord(text string) (chord.Parsed, error) {
 
 	return chord.Parsed{
 		Chord:             chord.New(root, base, intervals...),
-		Suffix:            suffix,
+		Suffix:            text[suffixPos:delimiterPos],
 		BaseNoteDelimiter: delim,
 	}, nil
 }

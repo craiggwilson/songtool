@@ -64,6 +64,21 @@ func TestParseChord(t *testing.T) {
 				Suffix: "sus4",
 			},
 		},
+		{
+			name: "A/B",
+			expected: chord.Parsed{
+				Chord:             chord.New(note.A, &note.B, interval.Perfect(0), interval.Major(2), interval.Perfect(4)),
+				BaseNoteDelimiter: "/",
+			},
+		},
+		{
+			name: "Am7/B",
+			expected: chord.Parsed{
+				Chord:             chord.New(note.A, &note.B, interval.Perfect(0), interval.Minor(2), interval.Perfect(4), interval.Minor(6)),
+				Suffix:            "m7",
+				BaseNoteDelimiter: "/",
+			},
+		},
 	}
 
 	for _, tc := range testCases {
