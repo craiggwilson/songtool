@@ -26,7 +26,7 @@ func (cmd *songCmd) openSong(cfg *Config) songio.Song {
 	return songio.ReadChordsOverLyrics(cfg.Theory, cfg.Theory, cmd.Path)
 }
 
-func (cmd *songCmd) printSong(styles *Styles, song songio.Song) error {
+func (cmd *songCmd) printSong(styles *ConfigStyles, song songio.Song) error {
 	_, err := writeChordsOverLyricsWithHighlighter(styles, song, os.Stdout)
 	return err
 }
@@ -46,7 +46,7 @@ func (cmd *songCmd) printSongJSON(song songio.Song) error {
 	return nil
 }
 
-func writeChordsOverLyricsWithHighlighter(styles *Styles, src songio.Song, w io.Writer) (int, error) {
+func writeChordsOverLyricsWithHighlighter(styles *ConfigStyles, src songio.Song, w io.Writer) (int, error) {
 	n := 0
 	i := 0
 	var sb strings.Builder

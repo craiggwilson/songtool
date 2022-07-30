@@ -81,7 +81,7 @@ func (t *Theory) NameChord(c chord.Chord) string {
 	}
 
 	any7 := func() bool {
-		return steps[10] || steps[11]
+		return steps[10] || steps[11] // 7m || 7M
 	}
 
 	maybeParens := func(s string) string {
@@ -103,13 +103,13 @@ func (t *Theory) NameChord(c chord.Chord) string {
 	// Quality
 	switch {
 	case m():
-		suffix += "m"
+		suffix += t.cfg.MinorSymbols[0]
 	case dim7():
-		suffix += "dim7"
-	case dim(): // 3m b5
-		suffix += "dim"
+		suffix += t.cfg.DiminishedSymbols[0] + "7"
+	case dim():
+		suffix += t.cfg.DiminishedSymbols[0]
 	case aug():
-		suffix += "aug"
+		suffix += t.cfg.AugmentedSymbols[0]
 	}
 
 	if steps[10] { // 7m
@@ -148,7 +148,7 @@ func (t *Theory) NameChord(c chord.Chord) string {
 			num = "9"
 		}
 
-		suffix += "maj" + num
+		suffix += t.cfg.MajorSymbols[0] + num
 	}
 
 	if !no3() {
@@ -258,7 +258,7 @@ func (t *Theory) ParseChord(text string) (chord.Named, error) {
 			matched = true
 		} else if m.Except == nil || !m.Except.MatchString(suffix) {
 			match := m.Match.FindStringSubmatch(suffix)
-			if len(match) > 0 {
+			if len(match) > 0 && len(match[0]) > 0 {
 				matched = true
 				if len(match) == 1 {
 					// If there are no groups, use the full match.

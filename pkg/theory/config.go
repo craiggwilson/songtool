@@ -14,7 +14,7 @@ func DefaultConfigBase() ConfigBase {
 		MajorSymbols:       []string{"maj", "M"},
 		MinorSymbols:       []string{"m", "-"},
 		AugmentedSymbols:   []string{"aug", "+"},
-		DiminishedSymobls:  []string{"dim", "°", "o"},
+		DiminishedSymbols:  []string{"dim", "°", "o"},
 		BaseNoteDelimiters: []string{"/"},
 		Scales: map[string][]interval.Interval{
 			"Major":     interval.Scales.Ionian,
@@ -42,7 +42,7 @@ type ConfigBase struct {
 	MajorSymbols       []string                       `json:"majorSymbols"`
 	MinorSymbols       []string                       `json:"minorSymbols"`
 	AugmentedSymbols   []string                       `json:"augmentedSymbols"`
-	DiminishedSymobls  []string                       `json:"diminishedSymbols"`
+	DiminishedSymbols  []string                       `json:"diminishedSymbols"`
 	BaseNoteDelimiters []string                       `json:"baseNoteDelimiters"`
 	Scales             map[string][]interval.Interval `json:"scales"`
 }
@@ -82,13 +82,13 @@ func BuildChordModifiers(cfg ConfigBase) []ChordModifier {
 		},
 		{
 			Name:   "Diminished",
-			Match:  regexp.MustCompile("^" + regexOr(cfg.DiminishedSymobls)),
+			Match:  regexp.MustCompile("^" + regexOr(cfg.DiminishedSymbols)),
 			Add:    []interval.Interval{interval.Minor(2), interval.Diminished(4, 1)},
 			Remove: []interval.Interval{interval.Major(2), interval.Perfect(4)},
 		},
 		{
 			Name:   "2nd (alt for sus2)",
-			Match:  regexp.MustCompile("^(" + regexOr(cfg.MinorSymbols, cfg.DiminishedSymobls, cfg.AugmentedSymbols) + ")?(?P<mod>2)"),
+			Match:  regexp.MustCompile("^(" + regexOr(cfg.MinorSymbols, cfg.DiminishedSymbols, cfg.AugmentedSymbols) + ")?(?P<mod>2)"),
 			Add:    []interval.Interval{interval.Major(1)},
 			Remove: []interval.Interval{interval.Minor(2), interval.Major(2)},
 		},
@@ -99,13 +99,13 @@ func BuildChordModifiers(cfg ConfigBase) []ChordModifier {
 		},
 		{
 			Name:   "6th",
-			Match:  regexp.MustCompile("^(" + regexOr(cfg.MinorSymbols, cfg.DiminishedSymobls, cfg.AugmentedSymbols) + ")?(?P<mod>6)"),
-			Except: regexp.MustCompile("^(" + regexOr(cfg.MinorSymbols, cfg.DiminishedSymobls, cfg.AugmentedSymbols) + ")?(?P<mod>69)"),
+			Match:  regexp.MustCompile("^(" + regexOr(cfg.MinorSymbols, cfg.DiminishedSymbols, cfg.AugmentedSymbols) + ")?(?P<mod>6)"),
+			Except: regexp.MustCompile("^(" + regexOr(cfg.MinorSymbols, cfg.DiminishedSymbols, cfg.AugmentedSymbols) + ")?(?P<mod>69)"),
 			Add:    []interval.Interval{interval.Major(5)},
 		},
 		{
 			Name:  "6th+9th",
-			Match: regexp.MustCompile("^(" + regexOr(cfg.MinorSymbols, cfg.DiminishedSymobls, cfg.AugmentedSymbols) + ")?(?P<mod>69)"),
+			Match: regexp.MustCompile("^(" + regexOr(cfg.MinorSymbols, cfg.DiminishedSymbols, cfg.AugmentedSymbols) + ")?(?P<mod>69)"),
 			Add:   []interval.Interval{interval.Major(5), interval.Major(8)},
 		},
 		{
@@ -115,22 +115,22 @@ func BuildChordModifiers(cfg ConfigBase) []ChordModifier {
 		},
 		{
 			Name:  "Diminished 7th",
-			Match: regexp.MustCompile("^(" + regexOr(cfg.DiminishedSymobls) + ")(?P<mod>7)"),
+			Match: regexp.MustCompile("^(" + regexOr(cfg.DiminishedSymbols) + ")(?P<mod>7)"),
 			Add:   []interval.Interval{interval.Diminished(6, 1)},
 		},
 		{
 			Name:  "9th",
-			Match: regexp.MustCompile("^(" + regexOr(cfg.MinorSymbols, cfg.DiminishedSymobls, cfg.AugmentedSymbols) + ")?(?P<mod>9)"),
+			Match: regexp.MustCompile("^(" + regexOr(cfg.MinorSymbols, cfg.DiminishedSymbols, cfg.AugmentedSymbols) + ")?(?P<mod>9)"),
 			Add:   []interval.Interval{interval.Minor(6), interval.Major(8)},
 		},
 		{
 			Name:  "11th",
-			Match: regexp.MustCompile("^(" + regexOr(cfg.MinorSymbols, cfg.DiminishedSymobls, cfg.AugmentedSymbols) + ")?(?P<mod>11)"),
+			Match: regexp.MustCompile("^(" + regexOr(cfg.MinorSymbols, cfg.DiminishedSymbols, cfg.AugmentedSymbols) + ")?(?P<mod>11)"),
 			Add:   []interval.Interval{interval.Minor(6), interval.Major(8), interval.Perfect(10)},
 		},
 		{
 			Name:  "13th",
-			Match: regexp.MustCompile("^(" + regexOr(cfg.MinorSymbols, cfg.DiminishedSymobls, cfg.AugmentedSymbols) + ")?(?P<mod>13)"),
+			Match: regexp.MustCompile("^(" + regexOr(cfg.MinorSymbols, cfg.DiminishedSymbols, cfg.AugmentedSymbols) + ")?(?P<mod>13)"),
 			Add:   []interval.Interval{interval.Minor(6), interval.Major(8), interval.Perfect(10), interval.Major(12)},
 		},
 		{

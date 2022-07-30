@@ -187,8 +187,8 @@ func (i Interval) Diatonic() int {
 	return i.diatonic
 }
 
-func (i Interval) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + i.String() + "\""), nil
+func (i *Interval) MarshalText() ([]byte, error) {
+	return []byte(i.String()), nil
 }
 
 func (i Interval) Quality() Quality {
@@ -203,6 +203,16 @@ func (i Interval) Transpose(other Interval) Interval {
 	newDiatonic := normalizeDiatonic(i.diatonic+other.diatonic) % 7
 	newChromatic := normalizeChromatic(i.Chromatic()+other.Chromatic()) % 12
 	return New(newDiatonic, qualityFromDiatonicAndChromatic(newDiatonic, newChromatic))
+}
+
+func (i *Interval) UnmarshalText(text []byte) error {
+	intval, err := Parse(string(text))
+	if err != nil {
+		return err
+	}
+
+	*i = intval
+	return nil
 }
 
 var (

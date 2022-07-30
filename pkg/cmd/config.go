@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -9,17 +10,20 @@ import (
 	"github.com/jwalton/gchalk"
 	"github.com/kirsle/configdir"
 	"github.com/knadh/koanf"
-	"github.com/knadh/koanf/parsers/json"
+	koanfjson "github.com/knadh/koanf/parsers/json"
 	"github.com/knadh/koanf/parsers/toml"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/file"
-	"github.com/knadh/koanf/providers/structs"
+	"github.com/knadh/koanf/providers/rawbytes"
+	"github.com/mitchellh/mapstructure"
 
 	"github.com/craiggwilson/songtool/pkg/theory"
 )
 
 type ConfigCmd struct {
-	Cat ConfigCatCmd `cmd:"" help:"Prints the config."`
+	Cat  ConfigCatCmd  `cmd:"" help:"Prints the config."`
+	Edit ConfigEditCmd `cmd:"" help:"Launches an editor for the config file."`
+	Path ConfigPathCmd `cmd:"" help:"Prints the location of the config file."`
 }
 
 func LoadConfig(path string) (*Config, error) {
@@ -32,12 +36,14 @@ func LoadConfig(path string) (*Config, error) {
 		if err := loadConfig(k, path); err != nil {
 			return nil, err
 		}
-	} else if err := loadGlobalConfig(k); err != nil {
+	} else if globalPath, err := loadGlobalConfig(k); err != nil {
 		return nil, err
+	} else {
+		path = globalPath
 	}
 
 	var configFile ConfigFile
-	if err := k.Unmarshal("", &configFile); err != nil {
+	if err := k.UnmarshalWithConf("", &configFile, koanf.UnmarshalConf{Tag: "json", DecoderConfig: mapStructureDecoderConfig(&configFile)}); err != nil {
 		return nil, fmt.Errorf("reading config file: %w", err)
 	}
 
@@ -46,73 +52,70 @@ func LoadConfig(path string) (*Config, error) {
 	return &Config{
 		ConfigFile: configFile,
 		Theory:     theory.New(theoryCfg),
+
+		configFilePath: path,
 	}, nil
 }
 
 func loadDefaultConfig(k *koanf.Koanf) error {
-	// var defaultConfigFile = `
-	// [styles.chord]
-	// color = "#69b797"
-	// italic = true
-
-	// [styles.directive]
-	// color = "#666666"
-
-	// [styles.section]
-	// color = "#41829f"
-	// underline = true
-
-	// [styles.text]
-	// color = "#AAAAAA"
-	// `
-	//k.Load(rawbytes.Provider([]byte(defaultConfigFile)), toml.Parser());
-
 	cfg := ConfigFile{
-		Styles: Styles{
-			Chord: Style{
+		Edit: ConfigEdit{
+			Command: firstNonEmptyString(
+				os.Getenv("VISUAL"),
+				os.Getenv("EDITOR"),
+				defaultEditor,
+			),
+		},
+		Styles: ConfigStyles{
+			Chord: ConfigStyle{
 				Color:  "#69b797",
 				Italic: true,
 			},
-			Directive: Style{
+			Directive: ConfigStyle{
 				Color: "#666666",
 			},
-			Section: Style{
+			Section: ConfigStyle{
 				Color:     "#41829f",
 				Underline: true,
 			},
-			Text: Style{
+			Text: ConfigStyle{
 				Color: "#AAAAAA",
 			},
 		},
 		Theory: theory.DefaultConfigBase(),
 	}
 
-	return k.Load(structs.Provider(cfg, ""), nil)
+	marshaled, err := json.Marshal(cfg)
+	if err != nil {
+		return err
+	}
+
+	return k.Load(rawbytes.Provider(marshaled), koanfjson.Parser())
 }
 
-func loadGlobalConfig(k *koanf.Koanf) error {
+func loadGlobalConfig(k *koanf.Koanf) (string, error) {
 	configDir := configdir.LocalConfig("songtool")
 	if err := configdir.MakePath(configDir); err != nil {
-		return err
+		return "", err
 	}
 	if err := loadConfig(k, filepath.Join(configDir, "config.json")); err == nil || !errors.Is(err, os.ErrNotExist) {
-		return err
+		return filepath.Join(configDir, "config.json"), err
 	}
 	if err := loadConfig(k, filepath.Join(configDir, "config.yaml")); err == nil || !errors.Is(err, os.ErrNotExist) {
-		return err
+		return filepath.Join(configDir, "config.yaml"), err
 	}
 	if err := loadConfig(k, filepath.Join(configDir, "config.toml")); err == nil || !errors.Is(err, os.ErrNotExist) {
-		return err
+		return filepath.Join(configDir, "config.toml"), err
 	}
 
-	return nil
+	return filepath.Join(configDir, "config.toml"), nil
 }
 
 func loadConfig(k *koanf.Koanf, path string) error {
 	ext := filepath.Ext(path)
 	switch ext {
 	case ".json":
-		if err := k.Load(file.Provider(path), json.Parser()); err != nil {
+		if err := k.Load(file.Provider(path), koanfjson.Parser()); err != nil {
 			return fmt.Errorf("loading config at %q: %w", path, err)
 		}
 	case ".yaml":
@@ -130,19 +133,35 @@ func loadConfig(k *koanf.Koanf, path string) error {
 	return nil
 }
 
+func mapStructureDecoderConfig(o interface{}) *mapstructure.DecoderConfig {
+	return &mapstructure.DecoderConfig{
+		DecodeHook: mapstructure.ComposeDecodeHookFunc(
+			mapstructure.TextUnmarshallerHookFunc(),
+		),
+		Result:  o,
+		TagName: "json",
+	}
+}
+
 type ConfigFile struct {
-	Styles Styles            `json:"styles"`
+	Edit   ConfigEdit        `json:"edit"`
+	Styles ConfigStyles      `json:"styles"`
 	Theory theory.ConfigBase `json:"theory"`
 }
 
-type Styles struct {
-	Chord     Style `json:"chord,omitempty"`
-	Directive Style `json:"directive,omitempty"`
-	Section   Style `json:"section,omitempty"`
-	Text      Style `json:"text,omitempty"`
+type ConfigEdit struct {
+	Command string   `json:"command"`
+	Args    []string `json:"args,omitempty"`
 }
 
-type Style struct {
+type ConfigStyles struct {
+	Chord     ConfigStyle `json:"chord,omitempty"`
+	Directive ConfigStyle `json:"directive,omitempty"`
+	Section   ConfigStyle `json:"section,omitempty"`
+	Text      ConfigStyle `json:"text,omitempty"`
+}
+
+type ConfigStyle struct {
 	Background string `json:"background,omitempty"`
 	Bold       bool   `json:"bold"`
 	Color      string `json:"color,omitempty"`
@@ -152,7 +171,7 @@ type Style struct {
 	f gchalk.ColorFn
 }
 
-func (s *Style) Render(str string) string {
+func (s *ConfigStyle) Render(str string) string {
 	if s.f == nil {
 		bldr := gchalk.New()
 
@@ -182,11 +201,13 @@ func (s *Style) Render(str string) string {
 	return s.f(str)
 }
 
-func (s *Style) Renderf(format string, a ...interface{}) string {
+func (s *ConfigStyle) Renderf(format string, a ...interface{}) string {
 	return s.Render(fmt.Sprintf(format, a...))
 }
 
 type Config struct {
 	ConfigFile
 	Theory *theory.Theory
+
+	configFilePath string
 }
