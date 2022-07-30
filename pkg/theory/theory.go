@@ -52,32 +52,59 @@ func (t *Theory) NameChord(c chord.Chord) string {
 	suffix := ""
 	steps := interval.Steps(c.Intervals())
 
+	halfDim := func() bool {
+		return steps[3] && steps[6] && steps[10] // 3m b5 m7
+	}
+
+	m := func() bool {
+		return steps[3] && steps[7] || halfDim() // 3m 5P
+	}
+
+	dim7 := func() bool {
+		return steps[3] && steps[6] && steps[9] // 3m b5 7d
+	}
+
+	dim := func() bool {
+		return steps[3] && steps[6] // 3m b5
+	}
+
+	aug := func() bool {
+		return steps[4] && steps[8] && !steps[7] && !steps[11] // 3M 5a !5P !7M
+	}
+
+	no3 := func() bool {
+		return !steps[3] && !steps[4] // !3m !3M
+	}
+
+	simple6 := func() bool {
+		return steps[9] && !steps[2] && !steps[5] && !dim() // 6M !2M !4P
+	}
+
+	any7 := func() bool {
+		return steps[10] || steps[11]
+	}
+
+	maybeParens := func(s string) string {
+		if len(suffix) > 0 {
+			return s
+		}
+
+		return "(" + s + ")"
+	}
+
 	// Quality
 	switch {
-	case steps[3] && steps[7] || steps[3] && steps[6] && steps[10]: // 3m 5P || 3m b5 m7 (half-diminished)
+	case m():
 		suffix += "m"
-	case steps[3] && steps[6] && steps[9]: // 3m b5 7d
+	case dim7():
 		suffix += "dim7"
-	case steps[3] && steps[6]: // 3m b5
+	case dim(): // 3m b5
 		suffix += "dim"
-	case steps[4] && steps[8] && !steps[7] && !steps[11]: // 3M 5a !5P !7M
+	case aug():
 		suffix += "aug"
 	}
 
-	if !steps[3] && !steps[4] { // !3m !3M
-		if steps[2] { // 2M
-			suffix += "2"
-		}
-		if steps[5] { // 4P
-			suffix += "sus"
-		}
-	}
-
-	if steps[9] && !(steps[3] && steps[6]) { // 6M !(3m b5)
-		suffix += "6"
-	}
-
-	if steps[10] || steps[11] { // 7m || 7M
+	if steps[10] { // 7m
 		num := "7"
 		if steps[21] { // 13M
 			num = "13"
@@ -87,18 +114,36 @@ func (t *Theory) NameChord(c chord.Chord) string {
 			num = "9"
 		}
 
-		if steps[10] { // 7m
-			suffix += num
-		} else {
-			suffix += "maj" + num
+		suffix += num
+	}
 
-			if steps[8] { // 5a
-				suffix += "#5"
-			}
+	if no3() {
+		if steps[2] { // 2M
+			suffix += "2"
+		}
+		if steps[5] { // 4P
+			suffix += "sus"
 		}
 	}
 
-	if steps[3] || steps[4] { // 3m || 3M
+	if simple6() {
+		suffix += "6"
+	}
+
+	if steps[11] { // 7M
+		num := "7"
+		if steps[21] { // 13M
+			num = "13"
+		} else if steps[17] { // 11P
+			num = "11"
+		} else if steps[14] { // 9M
+			num = "9"
+		}
+
+		suffix += "maj" + num
+	}
+
+	if !no3() {
 		if steps[2] { // 2M
 			suffix += "add2"
 		}
@@ -107,7 +152,11 @@ func (t *Theory) NameChord(c chord.Chord) string {
 		}
 	}
 
-	if !steps[10] && !steps[11] { // !7m !7M
+	if steps[9] && !simple6() && !dim7() {
+		suffix += "add6"
+	}
+
+	if !any7() {
 		if steps[14] { // 9M
 			suffix += "add9"
 		}
@@ -119,25 +168,32 @@ func (t *Theory) NameChord(c chord.Chord) string {
 		}
 	}
 
-	// if steps[2] && !steps[3] && !steps[4] { // 2M !3m !3M
-	// 	suffix += "2"
-	// }
+	if steps[6] && (halfDim() || !dim()) { // 5d
+		suffix += maybeParens("b5")
+	}
 
-	// handle flats and sharps...
-	if steps[3] && steps[6] && steps[10] {
-		if len(suffix) > 0 {
-			suffix += "b5"
+	if steps[8] && !aug() {
+		if steps[3] { // 3m
+			suffix += maybeParens("b6")
 		} else {
-			suffix += "(b5)"
+			suffix += maybeParens("#5")
 		}
 	}
 
-	if !steps[4] && steps[8] && steps[7] && steps[11] {
-		if len(suffix) > 0 {
-			suffix += "#5"
-		} else {
-			suffix += "(#5)"
-		}
+	if steps[13] { // 9m
+		suffix += maybeParens("b9")
+	}
+
+	if steps[15] { // 9a
+		suffix += maybeParens("#9")
+	}
+
+	if steps[18] { // 11a
+		suffix += maybeParens("#11")
+	}
+
+	if no3() && len(suffix) == 0 {
+		suffix += "5"
 	}
 
 	if base := c.Base(); base != nil {
