@@ -25,7 +25,7 @@ func Diminished(diatonic, size int) Interval {
 }
 
 func FromStep(step int) Interval {
-	step = normalizeChromatic(step)
+	step = normalizeChromatic(step) % 12
 	for i := 0; i < len(diatonicToChromatic); i++ {
 		if step <= diatonicToChromatic[i] {
 			return Interval{i, qualityFromDiatonicAndChromatic(i, step)}
@@ -80,38 +80,47 @@ func Parse(text string) (Interval, error) {
 		return Interval{}, fmt.Errorf("expected number as pos 0, but got %q", text[0])
 	}
 
-	diatonic, _ := strconv.Atoi(string(text[0]))
-	if diatonic < 1 || diatonic > 7 {
-		return Interval{}, fmt.Errorf("expected a number between 1 and 7, but got %d", diatonic)
-	}
-	switch text[1] {
-	case 'P':
-		if diatonic != 1 && diatonic != 4 && diatonic != 5 {
-			return Interval{}, fmt.Errorf("only 1, 4, and 5 can be perfect, but got %d", diatonic)
+	digits := 1
+	if unicode.IsDigit(rune(text[1])) {
+		digits++
+
+		if len(text) < 2 {
+			return Interval{}, fmt.Errorf("intervals must contain a quality, but had none")
 		}
-		if len(text) > 2 {
+	}
+
+	diatonic, _ := strconv.Atoi(string(text[:digits]))
+	if diatonic < 1 || diatonic > 13 {
+		return Interval{}, fmt.Errorf("expected a number between 1 and 13, but got %d", diatonic)
+	}
+	switch text[digits] {
+	case 'P':
+		if !canDiatonicBePerfect(diatonic - 1) {
+			return Interval{}, fmt.Errorf("only 1, 4, 5, and 11 can be perfect, but got %d", diatonic)
+		}
+		if len(text) > digits+1 {
 			return Interval{}, fmt.Errorf("perfect interval quality has no size")
 		}
 		return perfectErr(diatonic - 1)
 	case 'M':
-		if diatonic != 2 && diatonic != 3 && diatonic != 6 && diatonic != 7 {
-			return Interval{}, fmt.Errorf("only 2, 3, 6, and 7 can be major, but got %d", diatonic)
+		if !canDiatonicBeMajorMinor(diatonic - 1) {
+			return Interval{}, fmt.Errorf("only 2, 3, 6, 7, 9, 10, and 13 can be major, but got %d", diatonic)
 		}
-		if len(text) > 2 {
+		if len(text) > digits+1 {
 			return Interval{}, fmt.Errorf("major interval quality has no size")
 		}
 		return majorErr(diatonic - 1)
 	case 'm':
-		if diatonic != 2 && diatonic != 3 && diatonic != 6 && diatonic != 7 {
-			return Interval{}, fmt.Errorf("only 2, 3, 6, and 7 can be minor, but got %d", diatonic)
+		if !canDiatonicBeMajorMinor(diatonic - 1) {
+			return Interval{}, fmt.Errorf("only 2, 3, 6, 7, 9, 10, and 13 can be minor, but got %d", diatonic)
 		}
-		if len(text) > 2 {
+		if len(text) > digits+1 {
 			return Interval{}, fmt.Errorf("minor interval quality has no size")
 		}
 		return minorErr(diatonic - 1)
 	case 'a':
 		size := 1
-		for i := 2; i < len(text); i++ {
+		for i := digits + 1; i < len(text); i++ {
 			if text[i] == text[1] {
 				size++
 			} else {
@@ -121,7 +130,7 @@ func Parse(text string) (Interval, error) {
 		return augmentedErr(diatonic-1, size)
 	case 'd':
 		size := 1
-		for i := 2; i < len(text); i++ {
+		for i := digits + 1; i < len(text); i++ {
 			if text[i] == text[1] {
 				size++
 			} else {
@@ -143,8 +152,8 @@ func Perfect(diatonic int) Interval {
 	return i
 }
 
-func Steps(intervals []Interval) [12]bool {
-	var r [12]bool
+func Steps(intervals []Interval) [22]bool {
+	var r [22]bool
 
 	for _, iv := range intervals {
 		r[iv.Chromatic()] = true
@@ -155,6 +164,12 @@ func Steps(intervals []Interval) [12]bool {
 
 func Sort(intervals []Interval) {
 	sort.Slice(intervals, func(i, j int) bool {
+		if intervals[i].diatonic < intervals[j].diatonic {
+			return true
+		} else if intervals[i].diatonic > intervals[j].diatonic {
+			return false
+		}
+
 		return intervals[i].String() < intervals[j].String()
 	})
 }
@@ -185,10 +200,8 @@ func (i Interval) String() string {
 }
 
 func (i Interval) Transpose(other Interval) Interval {
-	newDiatonic := normalizeDiatonic(i.diatonic + other.diatonic)
-	ic := i.Chromatic()
-	oc := other.Chromatic()
-	newChromatic := normalizeChromatic(ic + oc) //i.Chromatic() + other.Chromatic())
+	newDiatonic := normalizeDiatonic(i.diatonic+other.diatonic) % 7
+	newChromatic := normalizeChromatic(i.Chromatic()+other.Chromatic()) % 12
 	return New(newDiatonic, qualityFromDiatonicAndChromatic(newDiatonic, newChromatic))
 }
 
@@ -196,8 +209,29 @@ var (
 	diatonicToChromatic = [7]int{0, 2, 4, 5, 7, 9, 11}
 )
 
+func canDiatonicBeMajorMinor(diatonic int) bool {
+	switch diatonic {
+	case 1, 2, 5, 6, 8, 9, 11, 12:
+		return true
+	default:
+		return false
+	}
+}
+
+func canDiatonicBePerfect(diatonic int) bool {
+	switch diatonic {
+	case 0, 3, 4, 10:
+		return true
+	default:
+		return false
+	}
+}
+
 func chromaticFromDiatonicAndQuality(diatonic int, q Quality) int {
-	chromatic := diatonicToChromatic[diatonic]
+	chromatic := diatonicToChromatic[diatonic%7]
+	if diatonic > 7 {
+		chromatic += 12
+	}
 
 	switch q.Kind() {
 	case QualityKindPerfect, QualityKindMajor:
@@ -206,7 +240,7 @@ func chromaticFromDiatonicAndQuality(diatonic int, q Quality) int {
 		return chromatic - 1
 	case QualityKindDiminished:
 		value := chromatic - q.Size()
-		if diatonic == 1 || diatonic == 2 || diatonic == 5 || diatonic == 6 {
+		if canDiatonicBeMajorMinor(diatonic) {
 			value--
 		}
 		return value
@@ -235,39 +269,51 @@ func diminishedErr(diatonic, size int) (Interval, error) {
 }
 
 func majorErr(diatonic int) (Interval, error) {
-	if diatonic != 1 && diatonic != 2 && diatonic != 5 && diatonic != 6 {
-		return Interval{}, fmt.Errorf("only 1, 2, 5, and 6 can be major, but got %d", diatonic)
+	if !canDiatonicBeMajorMinor(diatonic) {
+		return Interval{}, fmt.Errorf("only 1, 2, 5, 6, 9, 10, and 13 can be major, but got %d", diatonic)
 	}
 
 	return New(diatonic, MajorQuality()), nil
 }
 
 func minorErr(diatonic int) (Interval, error) {
-	if diatonic != 1 && diatonic != 2 && diatonic != 5 && diatonic != 6 {
-		return Interval{}, fmt.Errorf("only 1, 2, 5, and 6 can be minor, but got %d", diatonic)
+	if !canDiatonicBeMajorMinor(diatonic) {
+		return Interval{}, fmt.Errorf("only 1, 2, 5, 6, 9, 10, 13 can be minor, but got %d", diatonic)
 	}
 
 	return New(diatonic, MinorQuality()), nil
 }
 
 func normalizeDiatonic(diatonic int) int {
-	return (diatonic + 7) % 7
+	if diatonic < 0 {
+		return (diatonic + 7) % 7
+	}
+
+	if diatonic > 7 {
+		return 7 + (diatonic % 7)
+	}
+
+	return diatonic % 7
 }
 
 func normalizeChromatic(chromatic int) int {
-	return (chromatic + 12) % 12
-}
-
-func perfectErr(diatonic int) (Interval, error) {
-	if diatonic != 0 && diatonic != 3 && diatonic != 4 {
-		return Interval{}, fmt.Errorf("only 0, 3, and 4 can be perfect, but got %d", diatonic)
+	if chromatic < 0 {
+		return (chromatic + 12) % 12
 	}
 
-	return New(diatonic, PerfectQuality()), nil
+	if chromatic > 12 {
+		return 12 + (chromatic % 12)
+	}
+
+	return chromatic % 12
 }
 
 func qualityFromDiatonicAndChromatic(diatonic, chromatic int) Quality {
-	diff := chromatic - diatonicToChromatic[diatonic]
+	if diatonic > 7 {
+		diatonic %= 7
+	}
+
+	diff := (chromatic % 12) - diatonicToChromatic[diatonic]
 
 	switch diatonic {
 	case 0:
@@ -301,4 +347,12 @@ func qualityFromDiatonicAndChromatic(diatonic, chromatic int) Quality {
 
 	q, _ := DiminishedQuality(-diff)
 	return q
+}
+
+func perfectErr(diatonic int) (Interval, error) {
+	if !canDiatonicBePerfect(diatonic) {
+		return Interval{}, fmt.Errorf("only 0, 3, 4, and 10 can be perfect, but got %d", diatonic)
+	}
+
+	return New(diatonic, PerfectQuality()), nil
 }

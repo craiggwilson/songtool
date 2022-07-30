@@ -26,6 +26,11 @@ func TestInterval_Transpose(t *testing.T) {
 		},
 		{
 			input:    interval.Perfect(0),
+			by:       interval.Perfect(10),
+			expected: interval.Perfect(3),
+		},
+		{
+			input:    interval.Perfect(0),
 			by:       interval.NewWithChromatic(-1, -1),
 			expected: interval.Major(6),
 		},
@@ -186,6 +191,34 @@ func TestParseRoundTrip(t *testing.T) {
 			expected: interval.NewWithChromatic(5, 0),
 		},
 		{
+			text:     "9m",
+			expected: interval.NewWithChromatic(8, 13),
+		},
+		{
+			text:     "9M",
+			expected: interval.NewWithChromatic(8, 14),
+		},
+		{
+			text:     "9a",
+			expected: interval.NewWithChromatic(8, 15),
+		},
+		{
+			text:     "11P",
+			expected: interval.NewWithChromatic(10, 17),
+		},
+		{
+			text:     "11a",
+			expected: interval.NewWithChromatic(10, 18),
+		},
+		{
+			text:     "13m",
+			expected: interval.NewWithChromatic(12, 20),
+		},
+		{
+			text:     "13M",
+			expected: interval.NewWithChromatic(12, 21),
+		},
+		{
 			text:           "1",
 			expectedErrStr: "intervals must contain at least 2 characters, but had 1",
 		},
@@ -194,20 +227,16 @@ func TestParseRoundTrip(t *testing.T) {
 			expectedErrStr: "intervals must contain at least 2 characters, but had 1",
 		},
 		{
-			text:           "9P",
-			expectedErrStr: "expected a number between 1 and 7, but got 9",
-		},
-		{
 			text:           "3P",
-			expectedErrStr: "only 1, 4, and 5 can be perfect, but got 3",
+			expectedErrStr: "only 1, 4, 5, and 11 can be perfect, but got 3",
 		},
 		{
 			text:           "5M",
-			expectedErrStr: "only 2, 3, 6, and 7 can be major, but got 5",
+			expectedErrStr: "only 2, 3, 6, 7, 9, 10, and 13 can be major, but got 5",
 		},
 		{
 			text:           "5m",
-			expectedErrStr: "only 2, 3, 6, and 7 can be minor, but got 5",
+			expectedErrStr: "only 2, 3, 6, 7, 9, 10, and 13 can be minor",
 		},
 		{
 			text:           "5PP",

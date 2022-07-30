@@ -49,71 +49,102 @@ func (t *Theory) LookupScale(name string) (ScaleMeta, bool) {
 }
 
 func (t *Theory) NameChord(c chord.Chord) string {
-	name := t.NameNote(c.Root())
+	suffix := ""
 	steps := interval.Steps(c.Intervals())
 
 	// Quality
-	if steps[3] && steps[7] || steps[3] && steps[6] && steps[10] {
-		name += "m"
-	} else if steps[3] && steps[6] {
-		name += "dim"
-	} else if steps[4] && steps[8] && !steps[11] {
-		name += "aug"
+	switch {
+	case steps[3] && steps[7] || steps[3] && steps[6] && steps[10]: // 3m 5P || 3m b5 m7 (half-diminished)
+		suffix += "m"
+	case steps[3] && steps[6] && steps[9]: // 3m b5 7d
+		suffix += "dim7"
+	case steps[3] && steps[6]: // 3m b5
+		suffix += "dim"
+	case steps[4] && steps[8] && !steps[7] && !steps[11]: // 3M 5a !5P !7M
+		suffix += "aug"
 	}
 
-	if steps[10] || steps[11] {
+	if !steps[3] && !steps[4] { // !3m !3M
+		if steps[2] { // 2M
+			suffix += "2"
+		}
+		if steps[5] { // 4P
+			suffix += "sus"
+		}
+	}
+
+	if steps[9] && !(steps[3] && steps[6]) { // 6M !(3m b5)
+		suffix += "6"
+	}
+
+	if steps[10] || steps[11] { // 7m || 7M
 		num := "7"
-		if steps[9] {
+		if steps[21] { // 13M
 			num = "13"
-		} else if steps[5] {
+		} else if steps[17] { // 11P
 			num = "11"
-		} else if steps[2] {
+		} else if steps[14] { // 9M
 			num = "9"
 		}
 
-		if steps[10] {
-			name += num
+		if steps[10] { // 7m
+			suffix += num
 		} else {
-			name += "maj" + num
-			if steps[8] {
-				name += "#5"
-			}
-		}
-	} else {
-		if steps[9] && steps[3] && steps[6] {
-			name += "7" // dim7
-		}
+			suffix += "maj" + num
 
-		if !steps[3] && !steps[4] {
-			if steps[2] {
-				name += "2"
-			}
-			if steps[5] {
-				name += "sus"
-			}
-			if steps[9] && !steps[3] && !steps[6] {
-				name += "add6"
-			}
-		} else {
-			if steps[9] && !steps[3] && !steps[6] {
-				name += "6"
-			}
-			if steps[2] {
-				name += "add2"
-			}
-			if steps[5] {
-				name += "add4"
+			if steps[8] { // 5a
+				suffix += "#5"
 			}
 		}
 	}
 
-	// handle flats...
+	if steps[3] || steps[4] { // 3m || 3M
+		if steps[2] { // 2M
+			suffix += "add2"
+		}
+		if steps[5] { // 4P
+			suffix += "add4"
+		}
+	}
+
+	if !steps[10] && !steps[11] { // !7m !7M
+		if steps[14] { // 9M
+			suffix += "add9"
+		}
+		if steps[17] { // 11P
+			suffix += "add11"
+		}
+		if steps[21] { // 13M
+			suffix += "add13"
+		}
+	}
+
+	// if steps[2] && !steps[3] && !steps[4] { // 2M !3m !3M
+	// 	suffix += "2"
+	// }
+
+	// handle flats and sharps...
+	if steps[3] && steps[6] && steps[10] {
+		if len(suffix) > 0 {
+			suffix += "b5"
+		} else {
+			suffix += "(b5)"
+		}
+	}
+
+	if !steps[4] && steps[8] && steps[7] && steps[11] {
+		if len(suffix) > 0 {
+			suffix += "#5"
+		} else {
+			suffix += "(#5)"
+		}
+	}
 
 	if base := c.Base(); base != nil {
-		name += "/" + t.NameNote(*base)
+		suffix += "/" + t.NameNote(*base)
 	}
 
-	return name
+	return t.NameNote(c.Root()) + suffix
 }
 
 func (t *Theory) NameKey(k key.Key) string {
@@ -175,8 +206,8 @@ func (t *Theory) ParseChord(text string) (chord.Named, error) {
 					// If there are named capture groups, there must be one called "mod" which will be used.
 					captureNames := m.Match.SubexpNames()
 					found := false
-					for i, name := range captureNames {
-						if name == "mod" {
+					for i, suffix := range captureNames {
+						if suffix == "mod" {
 							pos += len(match[i])
 							found = true
 							break
