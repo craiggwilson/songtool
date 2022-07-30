@@ -92,6 +92,14 @@ func (t *Theory) NameChord(c chord.Chord) string {
 		return "(" + s + ")"
 	}
 
+	sharp := func(s string) string {
+		return t.cfg.SharpSymbols[0] + s
+	}
+
+	flat := func(s string) string {
+		return t.cfg.FlatSymbols[0] + s
+	}
+
 	// Quality
 	switch {
 	case m():
@@ -169,27 +177,27 @@ func (t *Theory) NameChord(c chord.Chord) string {
 	}
 
 	if steps[6] && (halfDim() || !dim()) { // 5d
-		suffix += maybeParens("b5")
+		suffix += maybeParens(flat("5"))
 	}
 
 	if steps[8] && !aug() {
 		if steps[3] { // 3m
-			suffix += maybeParens("b6")
+			suffix += maybeParens(flat("6"))
 		} else {
-			suffix += maybeParens("#5")
+			suffix += maybeParens(sharp("5"))
 		}
 	}
 
 	if steps[13] { // 9m
-		suffix += maybeParens("b9")
+		suffix += maybeParens(flat("9"))
 	}
 
 	if steps[15] { // 9a
-		suffix += maybeParens("#9")
+		suffix += maybeParens(sharp("9"))
 	}
 
 	if steps[18] { // 11a
-		suffix += maybeParens("#11")
+		suffix += maybeParens(sharp("11"))
 	}
 
 	if no3() && len(suffix) == 0 {
@@ -197,7 +205,7 @@ func (t *Theory) NameChord(c chord.Chord) string {
 	}
 
 	if base := c.Base(); base != nil {
-		suffix += "/" + t.NameNote(*base)
+		suffix += t.cfg.BaseNoteDelimiters[0] + t.NameNote(*base)
 	}
 
 	return t.NameNote(c.Root()) + suffix
@@ -205,11 +213,8 @@ func (t *Theory) NameChord(c chord.Chord) string {
 
 func (t *Theory) NameKey(k key.Key) string {
 	name := t.NameNote(k.Note())
-	if k.Kind() == key.KindMajor && len(t.cfg.MajorKeySymbols) > 0 {
-		name += t.cfg.MajorKeySymbols[0]
-	}
-	if k.Kind() == key.KindMinor && len(t.cfg.MinorKeySymbols) > 0 {
-		name += t.cfg.MinorKeySymbols[0]
+	if k.Kind() == key.KindMinor && len(t.cfg.MinorSymbols) > 0 {
+		name += t.cfg.MinorSymbols[0]
 	}
 
 	return name
@@ -251,9 +256,9 @@ func (t *Theory) ParseChord(text string) (chord.Named, error) {
 		matched := false
 		if m.Match == nil {
 			matched = true
-		} else {
+		} else if m.Except == nil || !m.Except.MatchString(suffix) {
 			match := m.Match.FindStringSubmatch(suffix)
-			if len(match) > 0 && (m.Except == nil || !m.Except.MatchString(suffix)) {
+			if len(match) > 0 {
 				matched = true
 				if len(match) == 1 {
 					// If there are no groups, use the full match.
@@ -314,7 +319,7 @@ func (t *Theory) ParseKey(text string) (key.Named, error) {
 	found := false
 	kind := key.KindMajor
 	suffix := ""
-	for _, sym := range t.cfg.MajorKeySymbols {
+	for _, sym := range t.cfg.MajorSymbols {
 		idx := strings.Index(text, sym)
 		if idx > 0 {
 			text = text[:idx]
@@ -326,7 +331,7 @@ func (t *Theory) ParseKey(text string) (key.Named, error) {
 	}
 
 	if !found {
-		for _, sym := range t.cfg.MinorKeySymbols {
+		for _, sym := range t.cfg.MinorSymbols {
 			idx := strings.Index(text, sym)
 			if idx > 0 {
 				text = text[:idx]

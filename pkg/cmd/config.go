@@ -13,30 +13,18 @@ import (
 	"github.com/knadh/koanf/parsers/toml"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/file"
-	"github.com/knadh/koanf/providers/rawbytes"
+	"github.com/knadh/koanf/providers/structs"
 
 	"github.com/craiggwilson/songtool/pkg/theory"
 )
 
-var defaultConfigFile = `
-[styles.chord]
-color = "#69b797"
-italic = true
-
-[styles.directive]
-color = "#666666"
-
-[styles.section]
-color = "#41829f"
-underline = true
-
-[styles.text]
-color = "#AAAAAA"
-`
+type ConfigCmd struct {
+	Cat ConfigCatCmd `cmd:"" help:"Prints the config."`
+}
 
 func LoadConfig(path string) (*Config, error) {
 	k := koanf.New(".")
-	if err := k.Load(rawbytes.Provider([]byte(defaultConfigFile)), toml.Parser()); err != nil {
+	if err := loadDefaultConfig(k); err != nil {
 		return nil, fmt.Errorf("parsing default config: %w", err)
 	}
 
@@ -44,7 +32,7 @@ func LoadConfig(path string) (*Config, error) {
 		if err := loadConfig(k, path); err != nil {
 			return nil, err
 		}
-	} else if err := loadDefaultConfig(k); err != nil {
+	} else if err := loadGlobalConfig(k); err != nil {
 		return nil, err
 	}
 
@@ -53,13 +41,56 @@ func LoadConfig(path string) (*Config, error) {
 		return nil, fmt.Errorf("reading config file: %w", err)
 	}
 
+	theoryCfg := theory.NewConfig(configFile.Theory)
+
 	return &Config{
 		ConfigFile: configFile,
-		Theory:     theory.Default(),
+		Theory:     theory.New(theoryCfg),
 	}, nil
 }
 
 func loadDefaultConfig(k *koanf.Koanf) error {
+	// var defaultConfigFile = `
+	// [styles.chord]
+	// color = "#69b797"
+	// italic = true
+
+	// [styles.directive]
+	// color = "#666666"
+
+	// [styles.section]
+	// color = "#41829f"
+	// underline = true
+
+	// [styles.text]
+	// color = "#AAAAAA"
+	// `
+	//k.Load(rawbytes.Provider([]byte(defaultConfigFile)), toml.Parser());
+
+	cfg := ConfigFile{
+		Styles: Styles{
+			Chord: Style{
+				Color:  "#69b797",
+				Italic: true,
+			},
+			Directive: Style{
+				Color: "#666666",
+			},
+			Section: Style{
+				Color:     "#41829f",
+				Underline: true,
+			},
+			Text: Style{
+				Color: "#AAAAAA",
+			},
+		},
+		Theory: theory.DefaultConfigBase(),
+	}
+
+	return k.Load(structs.Provider(cfg, ""), nil)
+}
+
+func loadGlobalConfig(k *koanf.Koanf) error {
 	configDir := configdir.LocalConfig("songtool")
 	if err := configdir.MakePath(configDir); err != nil {
 		return err
@@ -100,22 +131,23 @@ func loadConfig(k *koanf.Koanf, path string) error {
 }
 
 type ConfigFile struct {
-	Styles Styles `koanf:"styles"`
+	Styles Styles            `json:"styles"`
+	Theory theory.ConfigBase `json:"theory"`
 }
 
 type Styles struct {
-	Chord     Style `koanf:"chord"`
-	Directive Style `koanf:"directive"`
-	Section   Style `koanf:"section"`
-	Text      Style `koanf:"text"`
+	Chord     Style `json:"chord,omitempty"`
+	Directive Style `json:"directive,omitempty"`
+	Section   Style `json:"section,omitempty"`
+	Text      Style `json:"text,omitempty"`
 }
 
 type Style struct {
-	Background string `koanf:"background"`
-	Bold       bool   `koanf:"bold"`
-	Color      string `koanf:"color"`
-	Italic     bool   `koanf:"italic"`
-	Underline  bool   `koanf:"underline"`
+	Background string `json:"background,omitempty"`
+	Bold       bool   `json:"bold"`
+	Color      string `json:"color,omitempty"`
+	Italic     bool   `json:"italic"`
+	Underline  bool   `json:"underline"`
 
 	f gchalk.ColorFn
 }

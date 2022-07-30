@@ -13,7 +13,6 @@ type ChordsParseCmd struct {
 }
 
 func (cmd *ChordsParseCmd) Run(cfg *Config) error {
-
 	c, err := cfg.Theory.ParseChord(cmd.Name)
 	if err != nil {
 		return err

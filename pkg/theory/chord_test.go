@@ -5,16 +5,16 @@ import (
 	"testing"
 
 	"github.com/craiggwilson/songtool/pkg/theory"
-	theory2 "github.com/craiggwilson/songtool/pkg/theory"
 	"github.com/craiggwilson/songtool/pkg/theory/chord"
 	"github.com/craiggwilson/songtool/pkg/theory/interval"
 	"github.com/craiggwilson/songtool/pkg/theory/note"
 	"github.com/stretchr/testify/require"
 )
 
-func TestNameChord(t *testing.T) {
+func TestRoundtripChord(t *testing.T) {
 	testCases := []struct {
 		chord    chord.Chord
+		subset   bool
 		expected string
 	}{
 		{
@@ -39,14 +39,6 @@ func TestNameChord(t *testing.T) {
 				interval.Perfect(4),
 			),
 			expected: "C5",
-		},
-		{
-			chord: chord.New(note.C, nil,
-				interval.Perfect(0),
-				interval.Major(2),
-				interval.Augmented(4, 1),
-			),
-			expected: "Caug",
 		},
 		{
 			chord: chord.New(note.C, nil,
@@ -238,6 +230,7 @@ func TestNameChord(t *testing.T) {
 				interval.Major(6),
 				interval.Perfect(10),
 			),
+			subset:   true,
 			expected: "Cmaj11",
 		},
 		{
@@ -260,6 +253,7 @@ func TestNameChord(t *testing.T) {
 				interval.Major(6),
 				interval.Major(12),
 			),
+			subset:   true,
 			expected: "Cmaj13",
 		},
 		{
@@ -300,6 +294,7 @@ func TestNameChord(t *testing.T) {
 				interval.Minor(6),
 				interval.Perfect(10),
 			),
+			subset:   true,
 			expected: "Cm11",
 		},
 		{
@@ -322,6 +317,7 @@ func TestNameChord(t *testing.T) {
 				interval.Minor(6),
 				interval.Major(12),
 			),
+			subset:   true,
 			expected: "Cm13",
 		},
 		{
@@ -356,10 +352,9 @@ func TestNameChord(t *testing.T) {
 			chord: chord.New(note.C, nil,
 				interval.Perfect(0),
 				interval.Major(2),
-				interval.Perfect(4),
-				interval.Minor(5),
+				interval.Augmented(4, 1),
 			),
-			expected: "C(#5)",
+			expected: "Caug",
 		},
 		{
 			chord: chord.New(note.C, nil,
@@ -429,6 +424,7 @@ func TestNameChord(t *testing.T) {
 				interval.Minor(8),
 				interval.Major(12),
 			),
+			subset:   true,
 			expected: "C13b9",
 		},
 		{
@@ -440,6 +436,7 @@ func TestNameChord(t *testing.T) {
 				interval.Augmented(8, 1),
 				interval.Major(12),
 			),
+			subset:   true,
 			expected: "C13#9",
 		},
 		{
@@ -465,21 +462,21 @@ func TestNameChord(t *testing.T) {
 		{
 			chord: chord.New(note.C, nil,
 				interval.Perfect(0),
+				interval.Major(2),
+				interval.Augmented(4, 1),
+				interval.Major(6),
+			),
+			subset:   true,
+			expected: "Cmaj7#5",
+		},
+		{
+			chord: chord.New(note.C, nil,
+				interval.Perfect(0),
 				interval.Minor(2),
 				interval.Perfect(4),
 				interval.Major(6),
 			),
 			expected: "Cmmaj7",
-		},
-		{
-			chord: chord.New(note.C, nil,
-				interval.Perfect(0),
-				interval.Major(2),
-				interval.Perfect(4),
-				interval.Minor(5),
-				interval.Major(6),
-			),
-			expected: "Cmaj7#5",
 		},
 		{
 			chord: chord.New(note.C, nil,
@@ -494,94 +491,17 @@ func TestNameChord(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(fmt.Sprint(tc.chord.Intervals()), func(t *testing.T) {
+		t.Run(fmt.Sprint(tc.expected, " ", tc.chord.Intervals()), func(t *testing.T) {
 			actual := theory.NameChord(tc.chord)
 			require.Equal(t, tc.expected, actual)
-		})
-	}
-}
 
-func TestParseChord(t *testing.T) {
-	testCases := []struct {
-		name           string
-		expected       chord.Parsed
-		expectedErrMsg string
-	}{
-		{
-			name: "A",
-			expected: chord.Parsed{
-				Chord: chord.New(note.A, nil, interval.Perfect(0), interval.Major(2), interval.Perfect(4)),
-			},
-		},
-		{
-			name: "Am",
-			expected: chord.Parsed{
-				Chord:  chord.New(note.A, nil, interval.Perfect(0), interval.Minor(2), interval.Perfect(4)),
-				Suffix: "m",
-			},
-		},
-		{
-			name: "Aaug",
-			expected: chord.Parsed{
-				Chord:  chord.New(note.A, nil, interval.Perfect(0), interval.Major(2), interval.Augmented(4, 1)),
-				Suffix: "aug",
-			},
-		},
-		{
-			name: "Adim",
-			expected: chord.Parsed{
-				Chord:  chord.New(note.A, nil, interval.Perfect(0), interval.Minor(2), interval.Diminished(4, 1)),
-				Suffix: "dim",
-			},
-		},
-		{
-			name: "Asus",
-			expected: chord.Parsed{
-				Chord:  chord.New(note.A, nil, interval.Perfect(0), interval.Perfect(3), interval.Perfect(4)),
-				Suffix: "sus",
-			},
-		},
-		{
-			name: "Asus2",
-			expected: chord.Parsed{
-				Chord:  chord.New(note.A, nil, interval.Perfect(0), interval.Major(1), interval.Perfect(4)),
-				Suffix: "sus2",
-			},
-		},
-		{
-			name: "Asus4",
-			expected: chord.Parsed{
-				Chord:  chord.New(note.A, nil, interval.Perfect(0), interval.Perfect(3), interval.Perfect(4)),
-				Suffix: "sus4",
-			},
-		},
-		{
-			name: "A/B",
-			expected: chord.Parsed{
-				Chord:             chord.New(note.A, &note.B, interval.Perfect(0), interval.Major(2), interval.Perfect(4)),
-				BaseNoteDelimiter: "/",
-			},
-		},
-		{
-			name: "Am7/B",
-			expected: chord.Parsed{
-				Chord:             chord.New(note.A, &note.B, interval.Perfect(0), interval.Minor(2), interval.Perfect(4), interval.Minor(6)),
-				Suffix:            "m7",
-				BaseNoteDelimiter: "/",
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			actual, err := theory2.ParseChord(tc.name)
-			if len(tc.expectedErrMsg) > 0 {
-				require.EqualError(t, err, tc.expectedErrMsg)
+			parsed, err := theory.ParseChord(actual)
+			require.Nil(t, err)
+			if !tc.subset {
+				require.EqualValues(t, tc.chord.Intervals(), parsed.Intervals())
 			} else {
-				require.Nil(t, err)
+				require.Subset(t, parsed.Intervals(), tc.chord.Intervals())
 			}
-
-			require.Equal(t, tc.expected, actual)
 		})
 	}
 }
