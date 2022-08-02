@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/craiggwilson/songtool/pkg/songio"
 	"github.com/craiggwilson/songtool/pkg/theory/interval"
@@ -62,9 +63,6 @@ func (cmd *TransposeCmd) Run(cfg *Config) error {
 
 	transposer := songio.Transpose(cfg.Theory, song, intval)
 
-	if cmd.JSON {
-		return cmd.printSongJSON(transposer)
-	}
-
-	return cmd.printSong(&cfg.Styles, transposer)
+	_, err := songio.WriteChordsOverLyrics(cfg.Theory, transposer, os.Stdout)
+	return err
 }
