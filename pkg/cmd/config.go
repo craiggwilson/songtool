@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/jwalton/gchalk"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/kirsle/configdir"
 	"github.com/knadh/koanf"
 	koanfjson "github.com/knadh/koanf/parsers/json"
@@ -168,34 +168,34 @@ type ConfigStyle struct {
 	Italic     bool   `json:"italic"`
 	Underline  bool   `json:"underline"`
 
-	f gchalk.ColorFn
+	f func(string) string
 }
 
 func (s *ConfigStyle) Render(str string) string {
 	if s.f == nil {
-		bldr := gchalk.New()
+		bldr := lipgloss.NewStyle()
 
 		if len(s.Background) > 0 {
-			bldr, _ = bldr.WithStyle("bg" + s.Background)
+			bldr = bldr.Background(lipgloss.Color(s.Background))
 		}
 
 		if s.Bold {
-			bldr = bldr.WithBold()
+			bldr = bldr.Bold(true)
 		}
 
 		if len(s.Color) > 0 {
-			bldr, _ = bldr.WithStyle(s.Color)
+			bldr = bldr.Foreground(lipgloss.Color(s.Color))
 		}
 
 		if s.Italic {
-			bldr = bldr.WithItalic()
+			bldr = bldr.Italic(true)
 		}
 
 		if s.Underline {
-			bldr = bldr.WithUnderline()
+			bldr = bldr.Underline(true)
 		}
 
-		s.f = bldr.StyleMust()
+		s.f = bldr.Render
 	}
 
 	return s.f(str)

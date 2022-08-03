@@ -3,8 +3,10 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/alecthomas/kong"
+	"github.com/muesli/termenv"
 )
 
 var main struct {
@@ -18,7 +20,9 @@ var main struct {
 }
 
 func Run(versionInfo VersionInfo, args []string) int {
-	parser, err := kong.New(&main, kong.UsageOnError())
+	parser, err := kong.New(&main, kong.UsageOnError(), kong.Vars{
+		"color": strconv.FormatBool(termenv.EnvColorProfile() != termenv.Ascii),
+	})
 	if err != nil {
 		panic(err)
 	}
