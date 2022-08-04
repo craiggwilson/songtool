@@ -9,7 +9,7 @@ import (
 	"github.com/muesli/termenv"
 )
 
-var main struct {
+var mainCmd struct {
 	Cat       CatCmd       `cmd:"" help:"Displays a song."`
 	Chords    ChordsCmd    `cmd:"" help:"Tools for working with chords."`
 	Config    ConfigCmd    `cmd:"" help:"Tools for managin the config."`
@@ -17,10 +17,11 @@ var main struct {
 	Meta      MetaCmd      `cmd:"" help:"Displays the meta information about a song."`
 	Scales    ScalesCmd    `cmd:"" help:"Tools for working with scales."`
 	Transpose TransposeCmd `cmd:"" help:"Transposes a song."`
+	View      ViewCmd      `cmd:"" help:"View a song in a modal."`
 }
 
 func Run(versionInfo VersionInfo, args []string) int {
-	parser, err := kong.New(&main, kong.UsageOnError(), kong.Vars{
+	parser, err := kong.New(&mainCmd, kong.UsageOnError(), kong.Vars{
 		"color": strconv.FormatBool(termenv.EnvColorProfile() != termenv.Ascii),
 	})
 	if err != nil {

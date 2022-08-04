@@ -33,7 +33,7 @@ func LoadConfig(path string) (*Config, error) {
 	}
 
 	if len(path) > 0 {
-		if err := loadConfig(k, path); err != nil {
+		if err := loadConfigFromPath(k, path); err != nil {
 			return nil, err
 		}
 	} else if globalPath, err := loadGlobalConfig(k); err != nil {
@@ -42,19 +42,25 @@ func LoadConfig(path string) (*Config, error) {
 		path = globalPath
 	}
 
-	var configFile ConfigFile
-	if err := k.UnmarshalWithConf("", &configFile, koanf.UnmarshalConf{Tag: "json", DecoderConfig: mapStructureDecoderConfig(&configFile)}); err != nil {
+	var cfgFile ConfigFile
+	if err := k.UnmarshalWithConf("", &cfgFile, koanf.UnmarshalConf{Tag: "json", DecoderConfig: mapStructureDecoderConfig(&cfgFile)}); err != nil {
 		return nil, fmt.Errorf("reading config file: %w", err)
 	}
 
-	theoryCfg := theory.NewConfig(configFile.Theory)
+	return buildConfig(path, cfgFile), nil
+}
+
+func buildConfig(path string, cfgFile ConfigFile) *Config {
+	cfgFile.Styles.apply()
+
+	theoryCfg := theory.NewConfig(cfgFile.Theory)
 
 	return &Config{
-		ConfigFile: configFile,
+		ConfigFile: cfgFile,
 		Theory:     theory.New(theoryCfg),
 
 		configFilePath: path,
-	}, nil
+	}
 }
 
 func loadDefaultConfig(k *koanf.Koanf) error {
@@ -67,19 +73,36 @@ func loadDefaultConfig(k *koanf.Koanf) error {
 			),
 		},
 		Styles: ConfigStyles{
+			MaxColumns: 3,
+			BoundaryColor: ConfigStyleColor{
+				Light: "#D9DCCF",
+				Dark:  "#383838",
+			},
 			Chord: ConfigStyle{
-				Color:  "#69b797",
+				Foreground: ConfigStyleColor{
+					Light: "#43BF6D",
+					Dark:  "#73F59F",
+				},
 				Italic: true,
 			},
 			Directive: ConfigStyle{
-				Color: "#666666",
+				Foreground: ConfigStyleColor{
+					Light: "#666666",
+					Dark:  "#CCCCCC",
+				},
 			},
-			Section: ConfigStyle{
-				Color:     "#41829f",
+			SectionName: ConfigStyle{
+				Foreground: ConfigStyleColor{
+					Light: "#874BFD",
+					Dark:  "#7D56F4",
+				},
 				Underline: true,
 			},
-			Text: ConfigStyle{
-				Color: "#AAAAAA",
+			Lyrics: ConfigStyle{
+				Foreground: ConfigStyleColor{
+					Light: "#111111",
+					Dark:  "#EEEEEE",
+				},
 			},
 		},
 		Theory: theory.DefaultConfigBase(),
@@ -98,20 +121,20 @@ func loadGlobalConfig(k *koanf.Koanf) (string, error) {
 	if err := configdir.MakePath(configDir); err != nil {
 		return "", err
 	}
-	if err := loadConfig(k, filepath.Join(configDir, "config.json")); err == nil || !errors.Is(err, os.ErrNotExist) {
+	if err := loadConfigFromPath(k, filepath.Join(configDir, "config.json")); err == nil || !errors.Is(err, os.ErrNotExist) {
 		return filepath.Join(configDir, "config.json"), err
 	}
-	if err := loadConfig(k, filepath.Join(configDir, "config.yaml")); err == nil || !errors.Is(err, os.ErrNotExist) {
+	if err := loadConfigFromPath(k, filepath.Join(configDir, "config.yaml")); err == nil || !errors.Is(err, os.ErrNotExist) {
 		return filepath.Join(configDir, "config.yaml"), err
 	}
-	if err := loadConfig(k, filepath.Join(configDir, "config.toml")); err == nil || !errors.Is(err, os.ErrNotExist) {
+	if err := loadConfigFromPath(k, filepath.Join(configDir, "config.toml")); err == nil || !errors.Is(err, os.ErrNotExist) {
 		return filepath.Join(configDir, "config.toml"), err
 	}
 
 	return filepath.Join(configDir, "config.toml"), nil
 }
 
-func loadConfig(k *koanf.Koanf, path string) error {
+func loadConfigFromPath(k *koanf.Koanf, path string) error {
 	ext := filepath.Ext(path)
 	switch ext {
 	case ".json":
@@ -155,54 +178,65 @@ type ConfigEdit struct {
 }
 
 type ConfigStyles struct {
-	Chord     ConfigStyle `json:"chord,omitempty"`
-	Directive ConfigStyle `json:"directive,omitempty"`
-	Section   ConfigStyle `json:"section,omitempty"`
-	Text      ConfigStyle `json:"text,omitempty"`
+	MaxColumns int `json:"maxColumns,omitempty"`
+
+	BoundaryColor ConfigStyleColor `json:"boundaryColor,omitempty"`
+	Chord         ConfigStyle      `json:"chord,omitempty"`
+	Directive     ConfigStyle      `json:"directive,omitempty"`
+	Lyrics        ConfigStyle      `json:"lyrics,omitempty"`
+	SectionName   ConfigStyle      `json:"sectionName,omitempty"`
+	TitleStyle    ConfigStyle      `json:"titleStyle,omitempty"`
+}
+
+func (cs ConfigStyles) apply() {
+	headerStyle = headerStyle.BorderForeground(cs.BoundaryColor.lipglossColor())
+	headerFooterBoundaryStyle = headerFooterBoundaryStyle.Foreground(cs.BoundaryColor.lipglossColor())
+	footerStyle = footerStyle.BorderForeground(cs.BoundaryColor.lipglossColor())
+
+	chordStyle = cs.Chord.Apply(chordStyle)
+	directiveStyle = cs.Directive.Apply(directiveStyle)
+	lyricsStyle = cs.Lyrics.Apply(lyricsStyle)
+	sectionNameStyle = cs.SectionName.Apply(sectionNameStyle)
+	titleStyle = cs.TitleStyle.Apply(titleStyle)
 }
 
 type ConfigStyle struct {
-	Background string `json:"background,omitempty"`
-	Bold       bool   `json:"bold"`
-	Color      string `json:"color,omitempty"`
-	Italic     bool   `json:"italic"`
-	Underline  bool   `json:"underline"`
+	Background ConfigStyleColor `json:"background,omitempty"`
+	Bold       bool             `json:"bold"`
+	Foreground ConfigStyleColor `json:"foreground,omitempty"`
+	Italic     bool             `json:"italic"`
+	Underline  bool             `json:"underline"`
 
 	f func(string) string
 }
 
-func (s *ConfigStyle) Render(str string) string {
-	if s.f == nil {
-		bldr := lipgloss.NewStyle()
-
-		if len(s.Background) > 0 {
-			bldr = bldr.Background(lipgloss.Color(s.Background))
-		}
-
-		if s.Bold {
-			bldr = bldr.Bold(true)
-		}
-
-		if len(s.Color) > 0 {
-			bldr = bldr.Foreground(lipgloss.Color(s.Color))
-		}
-
-		if s.Italic {
-			bldr = bldr.Italic(true)
-		}
-
-		if s.Underline {
-			bldr = bldr.Underline(true)
-		}
-
-		s.f = bldr.Render
-	}
-
-	return s.f(str)
+type ConfigStyleColor struct {
+	Light string `json:"light,omitempty"`
+	Dark  string `json:"dark,omitempty"`
 }
 
-func (s *ConfigStyle) Renderf(format string, a ...interface{}) string {
-	return s.Render(fmt.Sprintf(format, a...))
+func (csc ConfigStyleColor) lipglossColor() lipgloss.TerminalColor {
+	switch {
+	case len(csc.Light) != 0 && len(csc.Dark) != 0:
+		return lipgloss.AdaptiveColor{
+			Light: csc.Light,
+			Dark:  csc.Dark,
+		}
+	case len(csc.Light) != 0:
+		return lipgloss.Color(csc.Light)
+	case len(csc.Dark) != 0:
+		return lipgloss.Color(csc.Dark)
+	default:
+		return lipgloss.NoColor{}
+	}
+}
+
+func (s *ConfigStyle) Apply(style lipgloss.Style) lipgloss.Style {
+	return style.Background(s.Background.lipglossColor()).
+		Bold(s.Bold).
+		Foreground(s.Foreground.lipglossColor()).
+		Italic(s.Italic).
+		Underline(s.Underline)
 }
 
 type Config struct {

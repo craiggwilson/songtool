@@ -1,5 +1,7 @@
 package songio
 
+import "strings"
+
 type Song interface {
 	Next() (Line, bool)
 	Err() error
@@ -28,9 +30,12 @@ func (s *chordsRemover) Next() (Line, bool) {
 		return line, false
 	}
 
-	switch line.(type) {
+	switch tl := line.(type) {
 	case *ChordLine:
 		return s.Next()
+	case *TextLine:
+		tl.Text = strings.TrimSpace(tl.Text)
+		return tl, true
 	default:
 		return line, true
 	}
