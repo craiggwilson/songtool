@@ -75,35 +75,26 @@ func loadDefaultConfig(k *koanf.Koanf) error {
 		Styles: ConfigStyles{
 			MaxColumns: 3,
 			BoundaryColor: ConfigStyleColor{
-				Light: "#D9DCCF",
-				Dark:  "#383838",
+				Dark: "0",
 			},
 			Chord: ConfigStyle{
 				Foreground: ConfigStyleColor{
-					Light: "#43BF6D",
-					Dark:  "#73F59F",
+					Dark: "8",
 				},
 				Italic: true,
 			},
 			Directive: ConfigStyle{
 				Foreground: ConfigStyleColor{
-					Light: "#666666",
-					Dark:  "#CCCCCC",
+					Dark: "0",
 				},
 			},
 			SectionName: ConfigStyle{
 				Foreground: ConfigStyleColor{
-					Light: "#874BFD",
-					Dark:  "#7D56F4",
+					Dark: "5",
 				},
 				Underline: true,
 			},
-			Lyrics: ConfigStyle{
-				Foreground: ConfigStyleColor{
-					Light: "#111111",
-					Dark:  "#EEEEEE",
-				},
-			},
+			Lyrics: ConfigStyle{},
 		},
 		Theory: theory.DefaultConfigBase(),
 	}
