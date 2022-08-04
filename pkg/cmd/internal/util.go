@@ -1,4 +1,4 @@
-package cmd
+package internal
 
 import (
 	"encoding/json"
@@ -6,15 +6,6 @@ import (
 
 	"github.com/craiggwilson/songtool/pkg/theory/key"
 )
-
-func firstNonEmptyString(ss ...string) string {
-	for _, s := range ss {
-		if s != "" {
-			return s
-		}
-	}
-	return ""
-}
 
 func marshalJSON(v interface{}) ([]byte, error) {
 	return json.MarshalIndent(v, "", " ")

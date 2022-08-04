@@ -1,8 +1,9 @@
-package cmd
+package internal
 
 import (
 	"fmt"
 
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/config"
 	"github.com/craiggwilson/songtool/pkg/theory/interval"
 	"github.com/craiggwilson/songtool/pkg/theory/scale"
 )
@@ -14,7 +15,7 @@ type ScalesCatCmd struct {
 	JSON bool `name:"json" help:"Prints the output as JSON."`
 }
 
-func (cmd *ScalesCatCmd) Run(cfg *Config) error {
+func (cmd *ScalesCatCmd) Run(cfg *config.Config) error {
 	meta, ok := cfg.Theory.LookupScale(cmd.Name)
 	if !ok {
 		return fmt.Errorf("unknown scale %q", cmd.Name)
@@ -34,7 +35,7 @@ func (cmd *ScalesCatCmd) Run(cfg *Config) error {
 	return cmd.print(cfg, scale)
 }
 
-func (cmd *ScalesCatCmd) print(cfg *Config, scale scale.Scale) error {
+func (cmd *ScalesCatCmd) print(cfg *config.Config, scale scale.Scale) error {
 	notes := scale.Notes()
 	noteNames := make([]string, 0, len(notes))
 	for _, n := range notes {
@@ -45,7 +46,7 @@ func (cmd *ScalesCatCmd) print(cfg *Config, scale scale.Scale) error {
 	return nil
 }
 
-func (cmd *ScalesCatCmd) printJSON(cfg *Config, scale scale.Scale) error {
+func (cmd *ScalesCatCmd) printJSON(cfg *config.Config, scale scale.Scale) error {
 	notes := scale.Notes()
 	noteSurs := make([]noteSurrogate, 0, len(notes))
 	pitchClassOffset := notes[0].PitchClass()

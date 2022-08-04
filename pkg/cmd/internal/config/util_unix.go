@@ -1,6 +1,6 @@
 //go:build !windows
 // +build !windows
 
-package cmd
+package config
 
 const defaultEditor = "vi"

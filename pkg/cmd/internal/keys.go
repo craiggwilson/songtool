@@ -1,8 +1,9 @@
-package cmd
+package internal
 
 import (
 	"fmt"
 
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/config"
 	"github.com/craiggwilson/songtool/pkg/theory/key"
 )
 
@@ -11,7 +12,7 @@ type KeysCmd struct {
 	Kind string `name:"kind" enum:"all,major,minor" default:"all" help:"Indicates which kind of keys to generate; major, minor, or all"`
 }
 
-func (cmd *KeysCmd) Run(cfg *Config) error {
+func (cmd *KeysCmd) Run(cfg *config.Config) error {
 	keys := key.List()
 
 	if cmd.Kind == "major" {
@@ -43,7 +44,7 @@ func (cmd *KeysCmd) Run(cfg *Config) error {
 	return cmd.print(cfg, keys)
 }
 
-func (cmd *KeysCmd) print(cfg *Config, keys []key.Key) error {
+func (cmd *KeysCmd) print(cfg *config.Config, keys []key.Key) error {
 	for _, k := range keys {
 		fmt.Println(cfg.Theory.NameKey(k))
 	}
@@ -51,7 +52,7 @@ func (cmd *KeysCmd) print(cfg *Config, keys []key.Key) error {
 	return nil
 }
 
-func (cmd *KeysCmd) printJSON(cfg *Config, keys []key.Key) error {
+func (cmd *KeysCmd) printJSON(cfg *config.Config, keys []key.Key) error {
 	keySurs := make([]keySurrogate, 0, len(keys))
 	for _, k := range keys {
 		keySurs = append(keySurs, keySurrogate{

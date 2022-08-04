@@ -1,9 +1,10 @@
-package cmd
+package internal
 
 import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/config"
 	"github.com/craiggwilson/songtool/pkg/songio"
 )
 
@@ -13,7 +14,7 @@ type MetaCmd struct {
 	JSON bool `name:"json" help:"Prints the output as JSON."`
 }
 
-func (cmd *MetaCmd) Run(cfg *Config) error {
+func (cmd *MetaCmd) Run(cfg *config.Config) error {
 	defer cmd.ensurePath().Close()
 
 	song := cmd.openSong(cfg)
@@ -30,7 +31,7 @@ func (cmd *MetaCmd) Run(cfg *Config) error {
 	return cmd.print(cfg, meta)
 }
 
-func (cmd *MetaCmd) print(cfg *Config, meta songio.Meta) error {
+func (cmd *MetaCmd) print(cfg *config.Config, meta songio.Meta) error {
 	if len(meta.Title) > 0 {
 		fmt.Println("Title:", meta.Title)
 	} else {

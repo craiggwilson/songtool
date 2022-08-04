@@ -1,9 +1,10 @@
-package cmd
+package internal
 
 import (
 	"fmt"
 	"os"
 
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/config"
 	"github.com/craiggwilson/songtool/pkg/songio"
 	"github.com/craiggwilson/songtool/pkg/theory/interval"
 	"github.com/craiggwilson/songtool/pkg/theory/key"
@@ -20,7 +21,7 @@ type TransposeCmd struct {
 	Color bool `name:"color" xor:"json" negatable:"" help:"Indicates whether to use color"`
 }
 
-func (cmd *TransposeCmd) Run(cfg *Config) error {
+func (cmd *TransposeCmd) Run(cfg *config.Config) error {
 	defer cmd.ensurePath().Close()
 
 	song := cmd.openSong(cfg)

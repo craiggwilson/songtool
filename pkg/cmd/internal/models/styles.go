@@ -1,6 +1,9 @@
-package cmd
+package models
 
-import "github.com/charmbracelet/lipgloss"
+import (
+	"github.com/charmbracelet/lipgloss"
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/config"
+)
 
 var (
 	// Text styles.
@@ -29,3 +32,15 @@ var (
 		return headerStyle.Copy().BorderStyle(b)
 	}()
 )
+
+func initStyles(styles *config.Styles) {
+	headerStyle = headerStyle.BorderForeground(styles.BoundaryColor.Color())
+	headerFooterBoundaryStyle = headerFooterBoundaryStyle.Foreground(styles.BoundaryColor.Color())
+	footerStyle = footerStyle.BorderForeground(styles.BoundaryColor.Color())
+
+	chordStyle = styles.Chord.Apply(chordStyle)
+	directiveStyle = styles.Directive.Apply(directiveStyle)
+	lyricsStyle = styles.Lyrics.Apply(lyricsStyle)
+	sectionNameStyle = styles.SectionName.Apply(sectionNameStyle)
+	titleStyle = styles.TitleStyle.Apply(titleStyle)
+}

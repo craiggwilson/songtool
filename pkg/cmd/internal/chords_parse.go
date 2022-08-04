@@ -1,8 +1,9 @@
-package cmd
+package internal
 
 import (
 	"fmt"
 
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/config"
 	"github.com/craiggwilson/songtool/pkg/theory/chord"
 )
 
@@ -12,7 +13,7 @@ type ChordsParseCmd struct {
 	Name string `arg:"<name>" help:"The name of the chord to parse."`
 }
 
-func (cmd *ChordsParseCmd) Run(cfg *Config) error {
+func (cmd *ChordsParseCmd) Run(cfg *config.Config) error {
 	c, err := cfg.Theory.ParseChord(cmd.Name)
 	if err != nil {
 		return err
@@ -25,7 +26,7 @@ func (cmd *ChordsParseCmd) Run(cfg *Config) error {
 	return cmd.print(cfg, c)
 }
 
-func (cmd *ChordsParseCmd) print(cfg *Config, c chord.Named) error {
+func (cmd *ChordsParseCmd) print(cfg *config.Config, c chord.Named) error {
 	fmt.Println("Name:", c.Name)
 	formalName := cfg.Theory.NameChord(c.Chord)
 	if formalName != c.Name {
@@ -35,6 +36,6 @@ func (cmd *ChordsParseCmd) print(cfg *Config, c chord.Named) error {
 	return nil
 }
 
-func (cmd *ChordsParseCmd) printJSON(cfg *Config, c chord.Named) error {
+func (cmd *ChordsParseCmd) printJSON(cfg *config.Config, c chord.Named) error {
 	return printJSON(c)
 }

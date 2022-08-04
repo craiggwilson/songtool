@@ -1,17 +1,18 @@
 package songio
 
-func NewMemory(src Song) *Memory {
+func NewMemory(lines []Line) *Memory {
 	return &Memory{
-		src: src,
+		lines: lines,
 	}
 }
 
 type Memory struct {
-	src   Song
 	lines []Line
 	i     int
+}
 
-	err error
+func (s *Memory) Lines() []Line {
+	return s.lines
 }
 
 func (s *Memory) Next() (Line, bool) {
@@ -20,17 +21,11 @@ func (s *Memory) Next() (Line, bool) {
 		return s.lines[s.i-1], true
 	}
 
-	line, ok := s.src.Next()
-	if ok {
-		s.lines = append(s.lines, line)
-		s.i++
-	}
-
-	return line, ok
+	return nil, false
 }
 
 func (s *Memory) Err() error {
-	return s.src.Err()
+	return nil
 }
 
 func (s *Memory) Rewind() {

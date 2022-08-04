@@ -1,8 +1,9 @@
-package cmd
+package internal
 
 import (
 	"fmt"
 
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/config"
 	"github.com/craiggwilson/songtool/pkg/theory"
 )
 
@@ -10,7 +11,7 @@ type ScalesLsCmd struct {
 	JSON bool `name:"json" xor:"json" help:"Prints the output as JSON."`
 }
 
-func (cmd *ScalesLsCmd) Run(cfg *Config) error {
+func (cmd *ScalesLsCmd) Run(cfg *config.Config) error {
 	scales := cfg.Theory.ListScales()
 	theory.SortScaleMetas(scales)
 

@@ -1,8 +1,9 @@
-package cmd
+package internal
 
 import (
 	"os"
 
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/config"
 	"github.com/craiggwilson/songtool/pkg/songio"
 )
 
@@ -18,6 +19,6 @@ func (cmd *songCmd) ensurePath() *os.File {
 	return cmd.Path
 }
 
-func (cmd *songCmd) openSong(cfg *Config) songio.Song {
+func (cmd *songCmd) openSong(cfg *config.Config) songio.Song {
 	return songio.ReadChordsOverLyrics(cfg.Theory, cfg.Theory, cmd.Path)
 }

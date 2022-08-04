@@ -1,4 +1,4 @@
-package cmd
+package internal
 
 type ScalesCmd struct {
 	Cat ScalesCatCmd `cmd:"" help:"Prints the scale."`
