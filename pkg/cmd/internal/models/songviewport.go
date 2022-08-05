@@ -23,9 +23,9 @@ type SongViewPortModel struct {
 	Height     int
 	MaxColumns int
 	Width      int
+	Lines      []songio.Line
 
 	ready bool
-	lines []songio.Line
 
 	viewport viewport.Model
 
@@ -37,15 +37,11 @@ func (m SongViewPortModel) ScrollPercent() float64 {
 	return m.viewport.ScrollPercent()
 }
 
-func (m *SongViewPortModel) SetSongLines(lines []songio.Line) {
-	m.lines = lines
-}
-
 func (m SongViewPortModel) Update(msg tea.Msg) (SongViewPortModel, tea.Cmd) {
 	m.viewport.Width = m.Width
 	m.viewport.Height = m.Height
 
-	if m.lines == nil {
+	if m.Lines == nil {
 		m.viewport.SetContent("")
 	} else {
 		m.viewport.SetContent(m.contentView())
@@ -57,7 +53,7 @@ func (m SongViewPortModel) Update(msg tea.Msg) (SongViewPortModel, tea.Cmd) {
 }
 
 func (m SongViewPortModel) View() string {
-	if m.lines == nil {
+	if m.Lines == nil {
 		return "<no song>"
 	}
 
@@ -98,7 +94,7 @@ func (m SongViewPortModel) contentView() string {
 func (m SongViewPortModel) buildSections() []section {
 	var sections []section
 	var currentSection section
-	for _, line := range m.lines {
+	for _, line := range m.Lines {
 		switch tl := line.(type) {
 		case *songio.SectionStartDirectiveLine:
 			currentSection = section{

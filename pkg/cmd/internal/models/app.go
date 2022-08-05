@@ -24,6 +24,7 @@ type appModel struct {
 	commandMode bool
 	lines       []songio.Line
 	meta        songio.Meta
+	errStr      string
 
 	viewport   SongViewPortModel
 	commandBar textinput.Model
@@ -51,7 +52,7 @@ func (m *appModel) SetSong(path string, song songio.Song) error {
 	m.lines = lines
 	m.meta = meta
 
-	m.viewport.SetSongLines(lines)
+	m.viewport.Lines = lines
 
 	return nil
 }
@@ -67,10 +68,20 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.commandMode {
 			switch msg.Type {
 			case tea.KeyEnter:
-				switch m.commandBar.Value() {
-				case "q":
+				command := m.commandBar.Value()
+				switch command {
+				case "q", "quit":
+					m.commandBar.SetValue("")
 					return m, tea.Quit
+				default:
+					err := runCommand(&m, command)
+					if err != nil {
+						m.errStr = err.Error()
+					} else {
+						m.commandBar.SetValue("")
+					}
 				}
+				m.commandMode = false
 			case tea.KeyEsc, tea.KeyCtrlC:
 				m.commandMode = false
 				m.commandBar.SetValue("")
@@ -80,14 +91,32 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		} else {
 			switch msg.Type {
-			case tea.KeyEsc, tea.KeyCtrlC:
+			case tea.KeyEsc:
+				if m.errStr != "" {
+					m.errStr = ""
+					break
+				}
+
 				return m, tea.Quit
+			case tea.KeyCtrlC:
+				return m, tea.Quit
+			case tea.KeyCtrlLeft:
+				err := runCommand(&m, "transpose -1")
+				if err != nil {
+					m.errStr = err.Error()
+				}
+			case tea.KeyCtrlRight:
+				err := runCommand(&m, "transpose 1")
+				if err != nil {
+					m.errStr = err.Error()
+				}
 			case tea.KeyRunes:
 				switch string(msg.Runes) {
 				case "q":
 					return m, tea.Quit
 				case ":":
 					m.commandMode = true
+					m.errStr = ""
 					m.commandBar.Focus()
 				}
 			}
@@ -103,7 +132,8 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if !m.ready {
 			m.viewport = NewSongViewPort(msg.Width, msg.Height-verticalMarginHeight)
-			m.viewport.SetSongLines(m.lines)
+			m.viewport.MaxColumns = m.cfg.Styles.MaxColumns
+			m.viewport.Lines = m.lines
 			m.commandBar = textinput.New()
 			m.ready = true
 		} else {
@@ -127,6 +157,8 @@ func (m appModel) View() string {
 	commandBarStr := "\n"
 	if m.commandMode {
 		commandBarStr += m.commandBar.View()
+	} else if len(m.errStr) > 0 {
+		commandBarStr += lipgloss.NewStyle().Foreground(lipgloss.Color("1")).Render(m.errStr)
 	}
 
 	return fmt.Sprintf("%s\n%s\n%s%s", m.headerView(), m.viewport.View(), m.footerView(), commandBarStr)
