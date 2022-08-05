@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -26,7 +27,7 @@ type appModel struct {
 	meta        songio.Meta
 	errStr      string
 
-	viewport   SongViewPortModel
+	viewport   songViewPortModel
 	commandBar textinput.Model
 }
 
@@ -61,28 +62,23 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var (
 		cmd  tea.Cmd
 		cmds []tea.Cmd
+		err  error
 	)
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if m.commandMode {
-			switch msg.Type {
-			case tea.KeyEnter:
-				command := m.commandBar.Value()
-				switch command {
-				case "q", "quit", "exit":
+			switch {
+			case key.Matches(msg, defaultKeyMap.command.Accept):
+				cmd, err := runCommand(&m, m.commandBar.Value())
+				cmds = append(cmds, cmd)
+				if err != nil {
+					m.errStr = err.Error()
+				} else {
 					m.commandBar.SetValue("")
-					return m, tea.Quit
-				default:
-					err := runCommand(&m, command)
-					if err != nil {
-						m.errStr = err.Error()
-					} else {
-						m.commandBar.SetValue("")
-					}
 				}
 				m.commandMode = false
-			case tea.KeyEsc, tea.KeyCtrlC:
+			case key.Matches(msg, defaultKeyMap.command.Clear):
 				m.commandMode = false
 				m.commandBar.SetValue("")
 			default:
@@ -90,34 +86,29 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmds = append(cmds, cmd)
 			}
 		} else {
-			switch msg.Type {
-			case tea.KeyEsc:
+			switch {
+			case key.Matches(msg, defaultKeyMap.normal.CommandMode):
+				m.commandMode = true
+				m.errStr = ""
+				m.commandBar.Focus()
+			case key.Matches(msg, defaultKeyMap.normal.Quit):
 				if m.errStr != "" {
 					m.errStr = ""
 					break
 				}
 
 				return m, tea.Quit
-			case tea.KeyCtrlC:
-				return m, tea.Quit
-			case tea.KeyCtrlLeft:
-				err := runCommand(&m, "transpose -- -1")
+			case key.Matches(msg, defaultKeyMap.normal.TransposeDown1):
+				cmd, err = runCommand(&m, "transpose -- -1")
+				cmds = append(cmds, cmd)
 				if err != nil {
 					m.errStr = err.Error()
 				}
-			case tea.KeyCtrlRight:
-				err := runCommand(&m, "transpose 1")
+			case key.Matches(msg, defaultKeyMap.normal.TransposeUp1):
+				cmd, err = runCommand(&m, "transpose 1")
+				cmds = append(cmds, cmd)
 				if err != nil {
 					m.errStr = err.Error()
-				}
-			case tea.KeyRunes:
-				switch string(msg.Runes) {
-				case "q":
-					return m, tea.Quit
-				case ":":
-					m.commandMode = true
-					m.errStr = ""
-					m.commandBar.Focus()
 				}
 			}
 		}
@@ -131,7 +122,7 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewport.Height = msg.Height - verticalMarginHeight
 
 		if !m.ready {
-			m.viewport = NewSongViewPort(msg.Width, msg.Height-verticalMarginHeight)
+			m.viewport = newSongViewPort(msg.Width, msg.Height-verticalMarginHeight)
 			m.viewport.MaxColumns = m.cfg.Styles.MaxColumns
 			m.viewport.Lines = m.lines
 			m.commandBar = textinput.New()

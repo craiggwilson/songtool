@@ -10,8 +10,8 @@ import (
 	"github.com/craiggwilson/songtool/pkg/songio"
 )
 
-func NewSongViewPort(width, height int) SongViewPortModel {
-	return SongViewPortModel{
+func newSongViewPort(width, height int) songViewPortModel {
+	return songViewPortModel{
 		Height:     height,
 		Width:      width,
 		MaxColumns: 3,
@@ -19,7 +19,7 @@ func NewSongViewPort(width, height int) SongViewPortModel {
 	}
 }
 
-type SongViewPortModel struct {
+type songViewPortModel struct {
 	Height     int
 	MaxColumns int
 	Width      int
@@ -33,11 +33,11 @@ type SongViewPortModel struct {
 	commandBar  textinput.Model
 }
 
-func (m SongViewPortModel) ScrollPercent() float64 {
+func (m songViewPortModel) ScrollPercent() float64 {
 	return m.viewport.ScrollPercent()
 }
 
-func (m SongViewPortModel) Update(msg tea.Msg) (SongViewPortModel, tea.Cmd) {
+func (m songViewPortModel) Update(msg tea.Msg) (songViewPortModel, tea.Cmd) {
 	m.viewport.Width = m.Width
 	m.viewport.Height = m.Height
 
@@ -52,7 +52,7 @@ func (m SongViewPortModel) Update(msg tea.Msg) (SongViewPortModel, tea.Cmd) {
 	return m, cmd
 }
 
-func (m SongViewPortModel) View() string {
+func (m songViewPortModel) View() string {
 	if m.Lines == nil {
 		return "<no song>"
 	}
@@ -60,7 +60,7 @@ func (m SongViewPortModel) View() string {
 	return m.viewport.View()
 }
 
-func (m SongViewPortModel) contentView() string {
+func (m songViewPortModel) contentView() string {
 	sections := m.buildSections()
 	maxSectionWidth := 0
 
@@ -91,7 +91,7 @@ func (m SongViewPortModel) contentView() string {
 	return lipgloss.JoinHorizontal(lipgloss.Top, renderedColumns...)
 }
 
-func (m SongViewPortModel) buildSections() []section {
+func (m songViewPortModel) buildSections() []section {
 	var sections []section
 	var currentSection section
 	for _, line := range m.Lines {
