@@ -20,6 +20,8 @@ const (
 var (
 	keys     []Key
 	initOnce sync.Once
+
+	degreeClassToPitchClass = [7]int{0, 2, 4, 5, 7, 9, 11}
 )
 
 func List() []Key {
@@ -69,6 +71,10 @@ func (k Key) CompareTo(o Key) int {
 	return strings.Compare(string(k.kind), string(o.kind))
 }
 
+func (k Key) Enharmonic() interval.Interval {
+	return k.note.Enharmonic()
+}
+
 func (k Key) Kind() Kind {
 	return k.kind
 }
@@ -88,9 +94,15 @@ func (k Key) Note() note.Note {
 	return k.note
 }
 
+func (k Key) Step(step int) interval.Interval {
+	return k.note.Step(step)
+}
+
 func (k Key) Transpose(by interval.Interval) Key {
+	newNote := k.note.Transpose(by)
+
 	return New(
-		k.note.Transpose(by),
+		newNote,
 		k.kind,
 	)
 }

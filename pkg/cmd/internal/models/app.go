@@ -70,7 +70,7 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case tea.KeyEnter:
 				command := m.commandBar.Value()
 				switch command {
-				case "q", "quit":
+				case "q", "quit", "exit":
 					m.commandBar.SetValue("")
 					return m, tea.Quit
 				default:
@@ -101,7 +101,7 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case tea.KeyCtrlC:
 				return m, tea.Quit
 			case tea.KeyCtrlLeft:
-				err := runCommand(&m, "transpose -1")
+				err := runCommand(&m, "transpose -- -1")
 				if err != nil {
 					m.errStr = err.Error()
 				}

@@ -7,6 +7,10 @@ import (
 	"unicode"
 )
 
+var (
+	diatonicToChromatic = [7]int{0, 2, 4, 5, 7, 9, 11}
+)
+
 func Augmented(diatonic, size int) Interval {
 	i, err := augmentedErr(diatonic, size)
 	if err != nil {
@@ -22,17 +26,6 @@ func Diminished(diatonic, size int) Interval {
 	}
 
 	return i
-}
-
-func FromStep(step int) Interval {
-	step = normalizeChromatic(step) % 12
-	for i := 0; i < len(diatonicToChromatic); i++ {
-		if step <= diatonicToChromatic[i] {
-			return Interval{i, qualityFromDiatonicAndChromatic(i, step)}
-		}
-	}
-
-	panic(fmt.Sprintf("impossible step %d", step))
 }
 
 func Major(diatonic int) Interval {
@@ -67,7 +60,6 @@ func New(diatonic int, q Quality) Interval {
 
 func NewWithChromatic(diatonic, chromatic int) Interval {
 	diatonic = normalizeDiatonic(diatonic)
-	chromatic = normalizeChromatic(chromatic)
 	return Interval{diatonic, qualityFromDiatonicAndChromatic(diatonic, chromatic)}
 }
 
@@ -121,7 +113,7 @@ func Parse(text string) (Interval, error) {
 	case 'a':
 		size := 1
 		for i := digits + 1; i < len(text); i++ {
-			if text[i] == text[1] {
+			if text[i] == text[digits] {
 				size++
 			} else {
 				return Interval{}, fmt.Errorf("cannot mix interval qualities; expected %q, but got %q at pos %d", text[1], text[i], i)
@@ -131,7 +123,7 @@ func Parse(text string) (Interval, error) {
 	case 'd':
 		size := 1
 		for i := digits + 1; i < len(text); i++ {
-			if text[i] == text[1] {
+			if text[i] == text[digits] {
 				size++
 			} else {
 				return Interval{}, fmt.Errorf("cannot mix interval qualities; expected %q, but got %q at pos %d", text[1], text[i], i)
@@ -180,7 +172,12 @@ type Interval struct {
 }
 
 func (i Interval) Chromatic() int {
-	return chromaticFromDiatonicAndQuality(i.diatonic, i.quality)
+	c := chromaticFromDiatonicAndQuality(i.diatonic, i.quality)
+	if c == 12 {
+		c = 0
+	}
+
+	return c
 }
 
 func (i Interval) Diatonic() int {
@@ -214,10 +211,6 @@ func (i *Interval) UnmarshalText(text []byte) error {
 	*i = intval
 	return nil
 }
-
-var (
-	diatonicToChromatic = [7]int{0, 2, 4, 5, 7, 9, 11}
-)
 
 func canDiatonicBeMajorMinor(diatonic int) bool {
 	switch diatonic {
@@ -324,13 +317,14 @@ func qualityFromDiatonicAndChromatic(diatonic, chromatic int) Quality {
 	}
 
 	diff := (chromatic % 12) - diatonicToChromatic[diatonic]
+	if diff > 6 {
+		diff -= 12
+	} else if diff < -6 {
+		diff += 12
+	}
 
-	switch diatonic {
-	case 0:
-		fallthrough
-	case 3:
-		fallthrough
-	case 4:
+	switch {
+	case canDiatonicBePerfect(diatonic):
 		if diff == 0 {
 			return PerfectQuality()
 		}
@@ -338,16 +332,13 @@ func qualityFromDiatonicAndChromatic(diatonic, chromatic int) Quality {
 		if diff == 0 {
 			return MajorQuality()
 		}
-
 		if diff == -1 {
 			return MinorQuality()
 		}
-	}
 
-	if diff > 6 {
-		diff -= 12
-	} else if diff < -6 {
-		diff += 12
+		if diff < -1 {
+			diff++
+		}
 	}
 
 	if diff > 0 {

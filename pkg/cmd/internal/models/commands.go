@@ -11,7 +11,7 @@ import (
 )
 
 func runCommand(app *appModel, s string) error {
-	parser, err := kong.New(&mainCmd)
+	parser, err := kong.New(&mainCmd, kong.NoDefaultHelp())
 	if err != nil {
 		return err
 	}
@@ -30,7 +30,24 @@ func runCommand(app *appModel, s string) error {
 }
 
 var mainCmd struct {
-	Transpose transposeCmd `cmd:"" help:"Transpose the current song."`
+	Enharmonic enharmonicCmd `cmd:"" aliases:"e" help:"Tranpose the song to it's enhmarmonic."`
+	Transpose  transposeCmd  `cmd:"" aliases:"t" help:"Transpose the current song."`
+}
+
+type enharmonicCmd struct{}
+
+func (cmd *enharmonicCmd) Run(app *appModel) error {
+	if app.meta.Key == nil {
+		return fmt.Errorf("current key is unset")
+	}
+
+	song := songio.NewMemory(app.lines)
+
+	intval := app.meta.Key.Enharmonic()
+
+	transposer := songio.Transpose(app.cfg.Theory, song, intval)
+
+	return app.SetSong(app.meta.Title, transposer)
 }
 
 type transposeCmd struct {
@@ -47,7 +64,7 @@ func (cmd *transposeCmd) Run(app *appModel) error {
 	var intval interval.Interval
 	step, err := strconv.Atoi(cmd.Arg)
 	if err == nil {
-		intval = app.meta.Key.Note().Step(step)
+		intval = app.meta.Key.Step(step)
 	} else {
 		toKey, err := app.cfg.Theory.ParseKey(cmd.Arg)
 		if err != nil {

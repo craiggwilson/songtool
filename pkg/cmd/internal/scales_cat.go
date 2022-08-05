@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/config"
-	"github.com/craiggwilson/songtool/pkg/theory/interval"
 	"github.com/craiggwilson/songtool/pkg/theory/scale"
 )
 
@@ -53,7 +52,7 @@ func (cmd *ScalesCatCmd) printJSON(cfg *config.Config, scale scale.Scale) error 
 	for _, n := range notes {
 		noteSurs = append(noteSurs, noteSurrogate{
 			Name:        cfg.Theory.NameNote(n),
-			Interval:    interval.FromStep(n.PitchClass() - pitchClassOffset).String(),
+			Interval:    notes[0].Step(n.PitchClass() - pitchClassOffset).String(),
 			DegreeClass: n.DegreeClass(),
 			PitchClass:  n.PitchClass(),
 		})

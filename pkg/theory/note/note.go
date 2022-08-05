@@ -60,6 +60,11 @@ type Note struct {
 	pitchClass  int
 }
 
+func (n Note) Accidentals() int {
+	stdPitchClass := degreeClassToPitchClass[n.degreeClass]
+	return n.pitchClass - stdPitchClass
+}
+
 func (n Note) CompareTo(o Note) int {
 	if n.degreeClass < o.degreeClass {
 		return -1
@@ -82,36 +87,31 @@ func (n Note) DegreeClass() int {
 	return n.degreeClass
 }
 
+func (n Note) Enharmonic() interval.Interval {
+	accidentals := n.Accidentals()
+	switch {
+	case accidentals > 0:
+		return interval.NewWithChromatic(1, 0)
+	case accidentals < 0:
+		return interval.NewWithChromatic(-1, 0)
+	default:
+		return interval.NewWithChromatic(0, 0)
+	}
+}
+
 func (n Note) Interval(other Note) interval.Interval {
-	return interval.FromStep(other.pitchClass - n.pitchClass)
+	return interval.NewWithChromatic(other.degreeClass-n.degreeClass, other.pitchClass-n.pitchClass)
 }
 
 func (n Note) Step(step int) interval.Interval {
-	degreeClassCnt := 0
-	pitchClassCnt := 0
-	for step > 0 {
-		stdPitchClass := degreeClassToPitchClass[normalizeDegreeClass(n.degreeClass+degreeClassCnt)]
-		pitchClassDiff := n.pitchClass - stdPitchClass + pitchClassCnt
-		nextStdPitchClass := degreeClassToPitchClass[normalizeDegreeClass(n.degreeClass+degreeClassCnt+1)]
-		if stdPitchClass+pitchClassDiff+1 >= nextStdPitchClass {
-			degreeClassCnt++
-		}
-		pitchClassCnt++
-		step--
+	switch {
+	case step < 0:
+		return stepDown(n.degreeClass, n.pitchClass, step)
+	case step > 0:
+		return stepUp(n.degreeClass, n.pitchClass, step)
+	default:
+		return interval.NewWithChromatic(0, 0)
 	}
-
-	for step < 0 {
-		stdPitchClass := degreeClassToPitchClass[normalizeDegreeClass(n.degreeClass+degreeClassCnt)]
-		pitchClassDiff := n.pitchClass - stdPitchClass + pitchClassCnt
-		nextStdPitchClass := degreeClassToPitchClass[normalizeDegreeClass(n.degreeClass+degreeClassCnt-1)]
-		if stdPitchClass+pitchClassDiff-1 <= nextStdPitchClass {
-			degreeClassCnt--
-		}
-		pitchClassCnt--
-		step++
-	}
-
-	return interval.NewWithChromatic(degreeClassCnt, pitchClassCnt)
 }
 
 func (n Note) MarshalJSON() ([]byte, error) {
@@ -133,6 +133,48 @@ func (n Note) Transpose(by interval.Interval) Note {
 	current := interval.NewWithChromatic(n.degreeClass, n.pitchClass)
 	next := current.Transpose(by)
 	return New(next.Diatonic(), next.Chromatic())
+}
+
+func stepDown(degreeClass, pitchClass, step int) interval.Interval {
+	diatonicSteps := 0
+	chromaticSteps := 0
+	for step < 0 {
+		stdPitchClass := degreeClassToPitchClass[normalizeDegreeClass(degreeClass+diatonicSteps)]
+		accidentals := pitchClass - stdPitchClass + chromaticSteps
+		prevStdPitchClass := degreeClassToPitchClass[normalizeDegreeClass(degreeClass-1+diatonicSteps)]
+		normalizedNextPitchClass := normalizePitchClass(stdPitchClass + accidentals - 1)
+		if prevStdPitchClass-normalizedNextPitchClass > 6 {
+			prevStdPitchClass -= 12
+		}
+		if normalizedNextPitchClass <= prevStdPitchClass {
+			diatonicSteps--
+		}
+		chromaticSteps--
+		step++
+	}
+
+	return interval.NewWithChromatic(diatonicSteps, chromaticSteps)
+}
+
+func stepUp(degreeClass, pitchClass, step int) interval.Interval {
+	diatonicSteps := 0
+	chromaticSteps := 0
+	for step > 0 {
+		stdPitchClass := degreeClassToPitchClass[normalizeDegreeClass(degreeClass+diatonicSteps)]
+		accidentals := pitchClass - stdPitchClass + chromaticSteps
+		nextStdPitchClass := degreeClassToPitchClass[normalizeDegreeClass(degreeClass+diatonicSteps+1)]
+		normalizedPitchClass := normalizePitchClass(stdPitchClass + accidentals + 1)
+		if normalizedPitchClass-nextStdPitchClass > 6 {
+			nextStdPitchClass += 12
+		}
+		if normalizedPitchClass >= nextStdPitchClass {
+			diatonicSteps++
+		}
+		chromaticSteps++
+		step--
+	}
+
+	return interval.NewWithChromatic(diatonicSteps, chromaticSteps)
 }
 
 func normalizeDegreeClass(degreeClass int) int {
