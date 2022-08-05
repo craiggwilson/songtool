@@ -47,7 +47,7 @@ func (cmd *transposeCmd) Run(app *appModel) error {
 	var intval interval.Interval
 	step, err := strconv.Atoi(cmd.Arg)
 	if err == nil {
-		intval = interval.FromStep(step)
+		intval = app.meta.Key.Note().Step(step)
 	} else {
 		toKey, err := app.cfg.Theory.ParseKey(cmd.Arg)
 		if err != nil {

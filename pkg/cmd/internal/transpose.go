@@ -59,7 +59,7 @@ func (cmd *TransposeCmd) Run(cfg *config.Config) error {
 		}
 		intval = fromKey.Note().Interval(toKey.Note())
 	} else {
-		intval = interval.FromStep(cmd.Interval)
+		intval = fromKey.Note().Step(cmd.Interval)
 	}
 
 	transposer := songio.Transpose(cfg.Theory, song, intval)

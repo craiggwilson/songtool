@@ -86,6 +86,34 @@ func (n Note) Interval(other Note) interval.Interval {
 	return interval.FromStep(other.pitchClass - n.pitchClass)
 }
 
+func (n Note) Step(step int) interval.Interval {
+	degreeClassCnt := 0
+	pitchClassCnt := 0
+	for step > 0 {
+		stdPitchClass := degreeClassToPitchClass[normalizeDegreeClass(n.degreeClass+degreeClassCnt)]
+		pitchClassDiff := n.pitchClass - stdPitchClass + pitchClassCnt
+		nextStdPitchClass := degreeClassToPitchClass[normalizeDegreeClass(n.degreeClass+degreeClassCnt+1)]
+		if stdPitchClass+pitchClassDiff+1 >= nextStdPitchClass {
+			degreeClassCnt++
+		}
+		pitchClassCnt++
+		step--
+	}
+
+	for step < 0 {
+		stdPitchClass := degreeClassToPitchClass[normalizeDegreeClass(n.degreeClass+degreeClassCnt)]
+		pitchClassDiff := n.pitchClass - stdPitchClass + pitchClassCnt
+		nextStdPitchClass := degreeClassToPitchClass[normalizeDegreeClass(n.degreeClass+degreeClassCnt-1)]
+		if stdPitchClass+pitchClassDiff-1 <= nextStdPitchClass {
+			degreeClassCnt--
+		}
+		pitchClassCnt--
+		step++
+	}
+
+	return interval.NewWithChromatic(degreeClassCnt, pitchClassCnt)
+}
+
 func (n Note) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		DegreeClass int `json:"degreeClass"`
