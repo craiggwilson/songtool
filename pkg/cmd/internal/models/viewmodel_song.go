@@ -3,41 +3,37 @@ package models
 import (
 	"strings"
 
-	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/craiggwilson/songtool/pkg/songio"
 )
 
-func newSongViewPort(width, height int) songViewPortModel {
-	return songViewPortModel{
-		Height:     height,
-		Width:      width,
-		MaxColumns: 3,
-		viewport:   viewport.New(width, height),
+func newSongViewModel(maxColumns int) songViewModel {
+	return songViewModel{
+		MaxColumns: maxColumns,
+		viewport:   viewport.New(0, 0),
 	}
 }
 
-type songViewPortModel struct {
+type songViewModel struct {
 	Height     int
 	MaxColumns int
 	Width      int
 	Lines      []songio.Line
 
-	ready bool
-
 	viewport viewport.Model
-
-	commandMode bool
-	commandBar  textinput.Model
 }
 
-func (m songViewPortModel) ScrollPercent() float64 {
+func (m *songViewModel) SetMaxColumns(maxColumns int) {
+	m.MaxColumns = maxColumns
+}
+
+func (m songViewModel) ScrollPercent() float64 {
 	return m.viewport.ScrollPercent()
 }
 
-func (m songViewPortModel) Update(msg tea.Msg) (songViewPortModel, tea.Cmd) {
+func (m songViewModel) Update(msg tea.Msg) (songViewModel, tea.Cmd) {
 	m.viewport.Width = m.Width
 	m.viewport.Height = m.Height
 
@@ -52,15 +48,11 @@ func (m songViewPortModel) Update(msg tea.Msg) (songViewPortModel, tea.Cmd) {
 	return m, cmd
 }
 
-func (m songViewPortModel) View() string {
-	if m.Lines == nil {
-		return "<no song>"
-	}
-
+func (m songViewModel) View() string {
 	return m.viewport.View()
 }
 
-func (m songViewPortModel) contentView() string {
+func (m songViewModel) contentView() string {
 	sections := m.buildSections()
 	maxSectionWidth := 0
 
@@ -91,7 +83,7 @@ func (m songViewPortModel) contentView() string {
 	return lipgloss.JoinHorizontal(lipgloss.Top, renderedColumns...)
 }
 
-func (m songViewPortModel) buildSections() []section {
+func (m songViewModel) buildSections() []section {
 	var sections []section
 	var currentSection section
 	for _, line := range m.Lines {

@@ -2,12 +2,12 @@ package songio
 
 import "strings"
 
-type Song interface {
+type Reader interface {
 	Next() (Line, bool)
 	Err() error
 }
 
-func ReadAllLines(s Song) ([]Line, error) {
+func ReadAllLines(s Reader) ([]Line, error) {
 	var lines []Line
 	for nl, ok := s.Next(); ok; nl, ok = s.Next() {
 		lines = append(lines, nl)
@@ -16,12 +16,12 @@ func ReadAllLines(s Song) ([]Line, error) {
 	return lines, s.Err()
 }
 
-func RemoveChords(src Song) Song {
+func RemoveChords(src Reader) Reader {
 	return &chordsRemover{src: src}
 }
 
 type chordsRemover struct {
-	src Song
+	src Reader
 }
 
 func (s *chordsRemover) Next() (Line, bool) {

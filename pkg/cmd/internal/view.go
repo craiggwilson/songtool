@@ -4,6 +4,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/config"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/models"
+	"github.com/craiggwilson/songtool/pkg/songio"
 )
 
 type ViewCmd struct {
@@ -15,11 +16,14 @@ func (cmd *ViewCmd) Run(cfg *config.Config) error {
 
 	song := cmd.openSong(cfg)
 
-	appModel := models.NewApp(cfg)
-
-	appModel.SetSong(path.Name(), song)
+	lines, err := songio.ReadAllLines(song)
+	if err != nil {
+		return err
+	}
 
 	path.Close()
+
+	appModel := models.NewApp(cfg, models.UpdateSongFromSource(cfg.Theory, path.Name(), songio.FromLines(lines)))
 
 	p := tea.NewProgram(
 		appModel,

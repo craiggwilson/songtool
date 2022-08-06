@@ -5,7 +5,7 @@ import (
 	"github.com/craiggwilson/songtool/pkg/theory/note"
 )
 
-func Transpose(noteNamer note.Namer, src Song, interval interval.Interval) *SongTransposer {
+func Transpose(noteNamer note.Namer, src Reader, interval interval.Interval) *SongTransposer {
 	return &SongTransposer{
 		noteNamer: noteNamer,
 		src:       src,
@@ -15,7 +15,7 @@ func Transpose(noteNamer note.Namer, src Song, interval interval.Interval) *Song
 
 type SongTransposer struct {
 	noteNamer note.Namer
-	src       Song
+	src       Reader
 	interval  interval.Interval
 }
 

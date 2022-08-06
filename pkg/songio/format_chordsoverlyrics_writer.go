@@ -8,7 +8,7 @@ import (
 	"github.com/craiggwilson/songtool/pkg/theory/note"
 )
 
-func WriteChordsOverLyrics(noteNamer note.Namer, src Song, w io.Writer) (int, error) {
+func WriteChordsOverLyrics(noteNamer note.Namer, src Reader, w io.Writer) (int, error) {
 	n := 0
 	i := 0
 	var sb strings.Builder

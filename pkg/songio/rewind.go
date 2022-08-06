@@ -1,11 +1,11 @@
 package songio
 
 type Rewinder struct {
-	src   Song
+	src   Reader
 	lines []Line
 }
 
-func NewRewinder(src Song) *Rewinder {
+func NewRewinder(src Reader) *Rewinder {
 	return &Rewinder{
 		src: src,
 	}
@@ -24,7 +24,7 @@ func (s *Rewinder) Err() error {
 	return s.src.Err()
 }
 
-func (s *Rewinder) Rewind() Song {
+func (s *Rewinder) Rewind() Reader {
 	return &rewoundSong{
 		src:   s.src,
 		lines: s.lines,
@@ -32,7 +32,7 @@ func (s *Rewinder) Rewind() Song {
 }
 
 type rewoundSong struct {
-	src   Song
+	src   Reader
 	lines []Line
 	i     int
 }

@@ -13,7 +13,7 @@ type Meta struct {
 	Chords   []chord.Named `json:"chords"`
 }
 
-func ReadMeta(noteNamer note.Namer, src Song, full bool) (Meta, error) {
+func ReadMeta(noteNamer note.Namer, src Reader, full bool) (Meta, error) {
 	var meta Meta
 
 	chordSet := make(map[string]struct{})

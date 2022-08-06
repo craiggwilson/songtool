@@ -12,75 +12,69 @@ import (
 	"github.com/craiggwilson/songtool/pkg/songio"
 )
 
-func NewApp(cfg *config.Config) appModel {
+func NewApp(cfg *config.Config, cmds ...tea.Cmd) appModel {
+
 	return appModel{
-		cfg: cfg,
+		cfg:        cfg,
+		initCmds:   cmds,
+		header:     newHeaderViewModel(),
+		song:       newSongViewModel(cfg.Styles.MaxColumns),
+		commandBar: textinput.New(),
 	}
 }
 
 type appModel struct {
-	cfg   *config.Config
-	ready bool
+	cfg      *config.Config
+	initCmds []tea.Cmd
 
+	ready       bool
 	commandMode bool
-	lines       []songio.Line
-	meta        songio.Meta
-	errStr      string
+	err         error
 
-	viewport   songViewPortModel
+	header     headerViewModel
+	song       songViewModel
 	commandBar textinput.Model
 }
 
 func (m appModel) Init() tea.Cmd {
 	initStyles(&m.cfg.Styles)
-	return nil
-}
 
-func (m *appModel) SetSong(path string, song songio.Song) error {
-	lines, err := songio.ReadAllLines(song)
-	if err != nil {
-		return err
-	}
+	cmds := m.initCmds
 
-	meta, err := songio.ReadMeta(m.cfg.Theory, songio.NewMemory(lines), false)
-	if err != nil {
-		return err
-	}
-	if len(meta.Title) == 0 {
-		meta.Title = path
-	}
-
-	m.lines = lines
-	m.meta = meta
-
-	m.viewport.Lines = lines
-
-	return nil
+	return tea.Batch(cmds...)
 }
 
 func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var (
 		cmd  tea.Cmd
 		cmds []tea.Cmd
-		err  error
 	)
 
 	switch msg := msg.(type) {
+	case StatusErrorMsg:
+		m.err = msg
+	case TransposeMsg:
+		transposed := songio.Transpose(m.cfg.Theory, songio.FromLines(m.song.Lines), msg.Interval)
+		meta, err := songio.ReadMeta(m.cfg.Theory, transposed, true)
+		if err != nil {
+			cmds = append(cmds, StatusError(err))
+		} else {
+			cmds = append(cmds, UpdateSong(meta, m.song.Lines))
+		}
+	case UpdateSongMsg:
+		m.header.Meta = &msg.Meta
+		m.song.Lines = msg.Lines
 	case tea.KeyMsg:
 		if m.commandMode {
 			switch {
 			case key.Matches(msg, defaultKeyMap.command.Accept):
-				cmd, err := runCommand(&m, m.commandBar.Value())
-				cmds = append(cmds, cmd)
-				if err != nil {
-					m.errStr = err.Error()
-				} else {
-					m.commandBar.SetValue("")
-				}
+				cmds = append(cmds, runCommand(m.commandContext(), m.commandBar.Value()))
+				m.commandBar.Reset()
 				m.commandMode = false
 			case key.Matches(msg, defaultKeyMap.command.Clear):
 				m.commandMode = false
-				m.commandBar.SetValue("")
+				m.commandBar.Reset()
+				cmds = append(cmds, StatusError(nil))
 			default:
 				m.commandBar, cmd = m.commandBar.Update(msg)
 				cmds = append(cmds, cmd)
@@ -89,58 +83,48 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch {
 			case key.Matches(msg, defaultKeyMap.normal.CommandMode):
 				m.commandMode = true
-				m.errStr = ""
-				m.commandBar.Focus()
+				cmds = append(cmds, StatusError(nil))
+				cmds = append(cmds, m.commandBar.Focus())
 			case key.Matches(msg, defaultKeyMap.normal.Quit):
-				if m.errStr != "" {
-					m.errStr = ""
+				if m.err != nil {
+					m.err = nil
 					break
 				}
 
 				return m, tea.Quit
 			case key.Matches(msg, defaultKeyMap.normal.Transpose):
 				m.commandMode = true
-				m.errStr = ""
+				m.err = nil
 				m.commandBar.SetValue("transpose ")
-				m.commandBar.Focus()
+				cmds = append(cmds, m.commandBar.Focus())
 			case key.Matches(msg, defaultKeyMap.normal.TransposeDown1):
-				cmd, err = runCommand(&m, "transpose -- -1")
-				cmds = append(cmds, cmd)
-				if err != nil {
-					m.errStr = err.Error()
-				}
+				cmds = append(cmds, runCommand(m.commandContext(), "transpose -- -1"))
 			case key.Matches(msg, defaultKeyMap.normal.TransposeUp1):
-				cmd, err = runCommand(&m, "transpose 1")
-				cmds = append(cmds, cmd)
-				if err != nil {
-					m.errStr = err.Error()
-				}
+				cmds = append(cmds, runCommand(m.commandContext(), "transpose 1"))
 			}
 		}
 
 	case tea.WindowSizeMsg:
-		headerHeight := lipgloss.Height(m.headerView())
+		m.ready = true
+
+		headerHeight := lipgloss.Height(m.header.View())
 		footerHeight := lipgloss.Height(m.footerView())
 		commandBarHeight := lipgloss.Height(m.commandBar.View())
 		verticalMarginHeight := headerHeight + footerHeight + commandBarHeight
 
-		m.viewport.Height = msg.Height - verticalMarginHeight
-
-		if !m.ready {
-			m.viewport = newSongViewPort(msg.Width, msg.Height-verticalMarginHeight)
-			m.viewport.MaxColumns = m.cfg.Styles.MaxColumns
-			m.viewport.Lines = m.lines
-			m.commandBar = textinput.New()
-			m.ready = true
-		} else {
-			m.viewport.Width = msg.Width
-			m.viewport.Height = msg.Height - verticalMarginHeight
-			m.commandBar.Width = msg.Width
-		}
+		m.header.Width = msg.Width
+		m.song.Width = msg.Width
+		m.song.Height = msg.Height - verticalMarginHeight
+		m.commandBar.Width = msg.Width
 	}
 
-	m.viewport, cmd = m.viewport.Update(msg)
+	m.header, cmd = m.header.Update(msg)
 	cmds = append(cmds, cmd)
+
+	m.song, cmd = m.song.Update(msg)
+	cmds = append(cmds, cmd)
+
+	// todo footer
 
 	return m, tea.Batch(cmds...)
 }
@@ -153,27 +137,23 @@ func (m appModel) View() string {
 	commandBarStr := "\n"
 	if m.commandMode {
 		commandBarStr += m.commandBar.View()
-	} else if len(m.errStr) > 0 {
-		commandBarStr += lipgloss.NewStyle().Foreground(lipgloss.Color("1")).Render(m.errStr)
+	} else if m.err != nil {
+		commandBarStr += lipgloss.NewStyle().Foreground(lipgloss.Color("1")).Render(m.err.Error())
 	}
 
-	return fmt.Sprintf("%s\n%s\n%s%s", m.headerView(), m.viewport.View(), m.footerView(), commandBarStr)
+	return fmt.Sprintf("%s\n%s\n%s%s", m.header.View(), m.song.View(), m.footerView(), commandBarStr)
 }
 
-func (m appModel) headerView() string {
-	var title string
-	header := m.meta.Title
-	if m.meta.Key != nil {
-		header += fmt.Sprintf(" [%s]", chordStyle.Render(m.meta.Key.Name))
+func (m *appModel) commandContext() *commandContext {
+	return &commandContext{
+		Theory: m.cfg.Theory,
+		Meta:   m.header.Meta,
+		Lines:  m.song.Lines,
 	}
-	title = headerStyle.Render(titleStyle.Render(header))
-
-	line := headerFooterBoundaryStyle.Render(strings.Repeat("─", max(0, m.viewport.Width-lipgloss.Width(title))))
-	return lipgloss.JoinHorizontal(lipgloss.Center, title, line)
 }
 
-func (m appModel) footerView() string {
-	info := footerStyle.Render(fmt.Sprintf("%3.f%%", m.viewport.ScrollPercent()*100))
-	line := headerFooterBoundaryStyle.Render(strings.Repeat("─", max(0, m.viewport.Width-lipgloss.Width(info))))
+func (m *appModel) footerView() string {
+	info := footerStyle.Render(fmt.Sprintf("%3.f%%", m.song.ScrollPercent()*100))
+	line := headerFooterBoundaryStyle.Render(strings.Repeat("─", max(0, m.song.Width-lipgloss.Width(info))))
 	return lipgloss.JoinHorizontal(lipgloss.Center, line, info)
 }

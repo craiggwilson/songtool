@@ -7,30 +7,41 @@ import (
 	"github.com/alecthomas/kong"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/craiggwilson/songtool/pkg/songio"
+	"github.com/craiggwilson/songtool/pkg/theory"
 	"github.com/craiggwilson/songtool/pkg/theory/interval"
 	"github.com/mattn/go-shellwords"
 )
 
-func runCommand(app *appModel, s string) (tea.Cmd, error) {
+type commandContext struct {
+	Theory *theory.Theory
+	Meta   *songio.Meta
+	Lines  []songio.Line
+}
+
+func runCommand(ctx *commandContext, s string) tea.Cmd {
 	parser, err := kong.New(&mainCmd, kong.NoDefaultHelp())
 	if err != nil {
-		return nil, err
+		return StatusError(err)
 	}
 
 	args, err := shellwords.Parse(s)
 	if err != nil {
-		return nil, err
+		return StatusError(err)
 	}
 
-	ctx, err := parser.Parse(args)
+	kctx, err := parser.Parse(args)
 	if err != nil {
-		return nil, err
+		return StatusError(err)
 	}
 
 	var result tea.Cmd
 
-	err = ctx.Run(app, &result)
-	return result, err
+	err = kctx.Run(ctx, &result)
+	if err != nil {
+		return StatusError(err)
+	}
+
+	return result
 }
 
 var mainCmd struct {
@@ -41,23 +52,19 @@ var mainCmd struct {
 
 type enharmonicCmd struct{}
 
-func (cmd *enharmonicCmd) Run(app *appModel, _ *tea.Cmd) error {
-	if app.meta.Key == nil {
-		return fmt.Errorf("current key is unset")
+func (cmd *enharmonicCmd) Run(ctx *commandContext, result *tea.Cmd) error {
+	if ctx.Meta.Key == nil {
+		*result = StatusError(fmt.Errorf("current key is unset"))
+		return nil
 	}
 
-	song := songio.NewMemory(app.lines)
-
-	intval := app.meta.Key.Enharmonic()
-
-	transposer := songio.Transpose(app.cfg.Theory, song, intval)
-
-	return app.SetSong(app.meta.Title, transposer)
+	*result = Transpose(ctx.Meta.Key.Enharmonic())
+	return nil
 }
 
 type quitCmd struct{}
 
-func (cmd *quitCmd) Run(_ *appModel, result *tea.Cmd) error {
+func (cmd *quitCmd) Run(ctx *commandContext, result *tea.Cmd) error {
 	*result = tea.Quit
 	return nil
 }
@@ -66,26 +73,23 @@ type transposeCmd struct {
 	Arg string `arg:"<key or step>" required:""`
 }
 
-func (cmd *transposeCmd) Run(app *appModel, _ *tea.Cmd) error {
-	if app.meta.Key == nil {
-		return fmt.Errorf("current key is unset")
+func (cmd *transposeCmd) Run(ctx *commandContext, result *tea.Cmd) error {
+	if ctx.Meta.Key == nil {
+		*result = StatusError(fmt.Errorf("current key is unset"))
 	}
-
-	song := songio.NewMemory(app.lines)
 
 	var intval interval.Interval
 	step, err := strconv.Atoi(cmd.Arg)
 	if err == nil {
-		intval = app.meta.Key.Step(step)
+		intval = ctx.Meta.Key.Step(step)
 	} else {
-		toKey, err := app.cfg.Theory.ParseKey(cmd.Arg)
+		toKey, err := ctx.Theory.ParseKey(cmd.Arg)
 		if err != nil {
 			return fmt.Errorf("invalid to-key: %w", err)
 		}
-		intval = app.meta.Key.Note().Interval(toKey.Note())
+		intval = ctx.Meta.Key.Note().Interval(toKey.Note())
 	}
 
-	transposer := songio.Transpose(app.cfg.Theory, song, intval)
-
-	return app.SetSong(app.meta.Title, transposer)
+	*result = Transpose(intval)
+	return nil
 }

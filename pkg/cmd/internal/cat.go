@@ -33,7 +33,7 @@ func (cmd *CatCmd) Run(cfg *config.Config) error {
 	return cmd.printSong(cfg, song)
 }
 
-func (cmd *songCmd) printSong(cfg *config.Config, song songio.Song) error {
+func (cmd *songCmd) printSong(cfg *config.Config, song songio.Reader) error {
 	for line, ok := song.Next(); ok; line, ok = song.Next() {
 		switch tl := line.(type) {
 		case *songio.TitleDirectiveLine:
@@ -76,7 +76,7 @@ func (cmd *songCmd) printSong(cfg *config.Config, song songio.Song) error {
 	return nil
 }
 
-func (cmd *songCmd) printSongJSON(song songio.Song) error {
+func (cmd *songCmd) printSongJSON(song songio.Reader) error {
 	lines, err := songio.ReadAllLines(song)
 	if err != nil {
 		return err
