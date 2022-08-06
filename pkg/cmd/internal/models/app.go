@@ -98,6 +98,11 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 
 				return m, tea.Quit
+			case key.Matches(msg, defaultKeyMap.normal.Transpose):
+				m.commandMode = true
+				m.errStr = ""
+				m.commandBar.SetValue("transpose ")
+				m.commandBar.Focus()
 			case key.Matches(msg, defaultKeyMap.normal.TransposeDown1):
 				cmd, err = runCommand(&m, "transpose -- -1")
 				cmds = append(cmds, cmd)
