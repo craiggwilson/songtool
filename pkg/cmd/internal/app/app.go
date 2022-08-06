@@ -6,12 +6,12 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/bubbles/footer"
-	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/bubbles/header"
-	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/bubbles/song"
-	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/bubbles/status"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/eval"
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/footer"
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/header"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/message"
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/song"
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/status"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/config"
 )
 
