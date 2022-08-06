@@ -3,32 +3,42 @@ package models
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/config"
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/models/bubbles/footer"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/models/bubbles/header"
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/models/bubbles/song"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/models/message"
 	"github.com/craiggwilson/songtool/pkg/songio"
 	"github.com/craiggwilson/songtool/pkg/theory/interval"
 )
 
 func NewApp(cfg *config.Config, cmds ...tea.Cmd) appModel {
-	initStyles(&cfg.Styles)
-
 	header := header.New()
 	header.BorderColor = cfg.Styles.BoundaryColor.Color()
 	header.KeyStyle = cfg.Styles.Chord.Style()
 	header.TitleStyle = cfg.Styles.Title.Style()
 
+	song := song.New()
+	song.MaxColumns = cfg.Styles.MaxColumns
+	song.ChordStyle = cfg.Styles.Chord.Style()
+	song.LyricsStyle = cfg.Styles.Lyrics.Style()
+	song.SectionNameStyle = cfg.Styles.SectionName.Style()
+
+	footer := footer.New()
+	footer.BorderColor = cfg.Styles.BoundaryColor.Color()
+	footer.ScrollPercentStyle = cfg.Styles.Title.Style()
+
 	return appModel{
 		cfg:        cfg,
 		initCmds:   cmds,
 		header:     header,
-		song:       newSongViewModel(cfg.Styles.MaxColumns),
+		song:       song,
+		footer:     footer,
 		commandBar: textinput.New(),
 	}
 }
@@ -43,8 +53,9 @@ type appModel struct {
 	meta        *songio.Meta
 	lines       []songio.Line
 
-	header     header.Header
-	song       songViewModel
+	header     header.Model
+	song       song.Model
+	footer     footer.Model
 	commandBar textinput.Model
 }
 
@@ -119,11 +130,12 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		m.header.Width = msg.Width
 		m.song.Width = msg.Width
+		m.footer.Width = msg.Width
 		m.commandBar.Width = msg.Width
 
 		headerHeight := lipgloss.Height(m.header.View())
 		commandBarHeight := lipgloss.Height(m.commandBarView())
-		footerHeight := lipgloss.Height(m.footerView())
+		footerHeight := lipgloss.Height(m.footer.View())
 
 		verticalMarginHeight := headerHeight + footerHeight + commandBarHeight + 1
 
@@ -136,6 +148,10 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.song, cmd = m.song.Update(msg)
 	appendCmd(cmd)
 
+	m.footer.ScrollPercent = m.song.ScrollPercent()
+	m.footer, cmd = m.footer.Update(msg)
+	appendCmd(cmd)
+
 	// todo footer
 
 	return m, tea.Batch(cmds...)
@@ -146,7 +162,7 @@ func (m appModel) View() string {
 		return "\n  Initializing..."
 	}
 
-	return fmt.Sprintf("%s\n%s\n%s%s", m.header.View(), m.song.View(), m.footerView(), m.commandBarView())
+	return fmt.Sprintf("%s\n%s\n%s%s", m.header.View(), m.song.View(), m.footer.View(), m.commandBarView())
 }
 
 func (m *appModel) commandContext() *commandContext {
@@ -166,12 +182,6 @@ func (m appModel) commandBarView() string {
 	}
 
 	return commandBarStr
-}
-
-func (m appModel) footerView() string {
-	info := footerStyle.Render(fmt.Sprintf("%3.f%%", m.song.ScrollPercent()*100))
-	line := headerFooterBoundaryStyle.Render(strings.Repeat("─", max(0, m.song.Width-lipgloss.Width(info))))
-	return lipgloss.JoinHorizontal(lipgloss.Center, line, info)
 }
 
 func (m appModel) loadSong(path string) tea.Cmd {

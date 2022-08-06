@@ -17,11 +17,11 @@ var (
 	}()
 )
 
-func New() Header {
-	return Header{}
+func New() Model {
+	return Model{}
 }
 
-type Header struct {
+type Model struct {
 	BorderColor lipgloss.TerminalColor
 	KeyStyle    lipgloss.Style
 	TitleStyle  lipgloss.Style
@@ -30,11 +30,11 @@ type Header struct {
 	Meta *songio.Meta
 }
 
-func (m Header) Update(msg tea.Msg) (Header, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m Header) View() string {
+func (m Model) View() string {
 	if m.Meta == nil {
 		return "<no song>"
 	}
