@@ -13,6 +13,7 @@ import (
 )
 
 var mainCmd struct {
+	App       internal.AppCmd       `cmd:"" help:"Loads the songtool interactive TUI." default:"withargs"`
 	Cat       internal.CatCmd       `cmd:"" help:"Displays a song."`
 	Chords    internal.ChordsCmd    `cmd:"" help:"Tools for working with chords."`
 	Config    internal.ConfigCmd    `cmd:"" help:"Tools for managin the config."`
@@ -20,7 +21,6 @@ var mainCmd struct {
 	Meta      internal.MetaCmd      `cmd:"" help:"Displays the meta information about a song."`
 	Scales    internal.ScalesCmd    `cmd:"" help:"Tools for working with scales."`
 	Transpose internal.TransposeCmd `cmd:"" help:"Transposes a song."`
-	View      internal.ViewCmd      `cmd:"" help:"View a song in a modal."`
 }
 
 func Run(versionInfo VersionInfo, args []string) int {

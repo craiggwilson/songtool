@@ -40,13 +40,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	if m.Meta == nil {
-		return "<no song>"
-	}
-
-	title := m.Meta.Title
-	if m.Meta.Key != nil {
-		title += fmt.Sprintf(" [%s]", m.KeyStyle.Render(m.Meta.Key.Name))
+	title := "<no song>"
+	if m.Meta != nil {
+		title = m.Meta.Title
+		if m.Meta.Key != nil {
+			title += fmt.Sprintf(" [%s]", m.KeyStyle.Render(m.Meta.Key.Name))
+		}
 	}
 
 	title = titleBorderStyle.BorderForeground(m.BorderColor).Render(m.TitleStyle.Render(title))

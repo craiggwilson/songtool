@@ -27,8 +27,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch tmsg := msg.(type) {
 	case message.EvalMsg:
 		return m, run(m.Context, tmsg.Text)
-	case message.LoadSongMsg:
-		return m, m.loadSong(tmsg.Path)
+	case message.OpenSongMsg:
+		return m, m.openSong(tmsg.Path)
 	case message.TransposeSongMsg:
 		return m, m.transposeSong(tmsg.Interval)
 	case message.UpdateSongMsg:
@@ -39,14 +39,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m Model) loadSong(path string) tea.Cmd {
+func (m Model) openSong(path string) tea.Cmd {
 	var f *os.File
 	var err error
 	switch path {
 	case "":
 		return message.UpdateStatusError(fmt.Errorf("no file to load"))
-	case "-":
-		f = os.Stdin
 	default:
 		f, err = os.Open(path)
 		if err != nil {

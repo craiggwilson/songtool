@@ -72,12 +72,11 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	v := "\n"
 	if m.CommandMode {
-		v += m.command.View()
+		return m.command.View()
 	} else if m.Err != nil {
-		v += lipgloss.NewStyle().Foreground(lipgloss.Color("1")).Render(m.Err.Error())
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("1")).Render(m.Err.Error())
 	}
 
-	return v
+	return ""
 }

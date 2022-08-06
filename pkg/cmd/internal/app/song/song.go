@@ -1,166 +1,80 @@
 package song
 
 import (
-	"strings"
+	"fmt"
 
-	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/message"
-	"github.com/craiggwilson/songtool/pkg/songio"
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/footer"
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/header"
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/songtext"
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/config"
 )
 
-var (
-	colStyle = lipgloss.NewStyle().MarginLeft(2)
-)
+func New(cfg *config.Config) Model {
+	header := header.New()
+	header.BorderColor = cfg.Styles.BoundaryColor.Color()
+	header.KeyStyle = cfg.Styles.Chord.Style()
+	header.TitleStyle = cfg.Styles.Title.Style()
 
-func New() Model {
+	songtext := songtext.New()
+	songtext.MaxColumns = cfg.Styles.MaxColumns
+	songtext.ChordStyle = cfg.Styles.Chord.Style()
+	songtext.LyricsStyle = cfg.Styles.Lyrics.Style()
+	songtext.SectionNameStyle = cfg.Styles.SectionName.Style()
+
+	footer := footer.New()
+	footer.BorderColor = cfg.Styles.BoundaryColor.Color()
+	footer.ScrollPercentStyle = cfg.Styles.Title.Style()
+
 	return Model{
-		viewport: viewport.New(0, 0),
+		header:   header,
+		songtext: songtext,
+		footer:   footer,
 	}
 }
 
 type Model struct {
-	ChordStyle       lipgloss.Style
-	LyricsStyle      lipgloss.Style
-	SectionNameStyle lipgloss.Style
-	Height           int
-	MaxColumns       int
-	Width            int
+	Height int
+	Width  int
 
-	Lines []songio.Line
-
-	viewport viewport.Model
-}
-
-func (m *Model) SetMaxColumns(maxColumns int) {
-	m.MaxColumns = maxColumns
-}
-
-func (m Model) ScrollPercent() float64 {
-	return m.viewport.ScrollPercent()
+	header   header.Model
+	songtext songtext.Model
+	footer   footer.Model
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
-	switch tmsg := msg.(type) {
-	case message.UpdateSongMsg:
-		m.Lines = tmsg.Lines
+	var (
+		cmd  tea.Cmd
+		cmds []tea.Cmd
+	)
+
+	appendCmd := func(cmd tea.Cmd) {
+		cmds = append(cmds, cmd)
 	}
 
-	m.viewport.Width = m.Width
-	m.viewport.Height = m.Height
+	m.header.Width = m.Width
+	m.songtext.Width = m.Width
+	m.footer.Width = m.Width
 
-	if m.Lines == nil {
-		m.viewport.SetContent("")
-	} else {
-		m.viewport.SetContent(m.contentView())
-	}
+	headerHeight := lipgloss.Height(m.header.View())
+	footerHeight := lipgloss.Height(m.footer.View())
 
-	var cmd tea.Cmd
-	m.viewport, cmd = m.viewport.Update(msg)
-	return m, cmd
+	m.songtext.Height = m.Height - headerHeight - footerHeight
+
+	m.header, cmd = m.header.Update(msg)
+	appendCmd(cmd)
+
+	m.songtext, cmd = m.songtext.Update(msg)
+	appendCmd(cmd)
+
+	m.footer.ScrollPercent = m.songtext.ScrollPercent()
+	m.footer, cmd = m.footer.Update(msg)
+	appendCmd(cmd)
+
+	return m, tea.Batch(cmds...)
 }
 
 func (m Model) View() string {
-	return m.viewport.View()
-}
-
-func (m Model) contentView() string {
-	sections := m.buildSections()
-	maxSectionWidth := 0
-
-	renderedSections := make([]string, len(sections))
-	for i, section := range sections {
-		rs := section.render(m.SectionNameStyle)
-		maxSectionWidth = max(maxSectionWidth, lipgloss.Width(rs)+colStyle.GetHorizontalFrameSize())
-		renderedSections[i] = rs
-	}
-
-	numCols := max(1, min(m.Width/maxSectionWidth, m.MaxColumns))
-	colStyle.Width(maxSectionWidth)
-
-	renderedColumns := make([]string, numCols)
-	for i := 0; i < len(renderedSections); i += numCols {
-		for j := 0; j < numCols && i+j < len(renderedSections); j++ {
-			if i >= numCols {
-				renderedColumns[j] += "\n\n"
-			}
-			renderedColumns[j] += renderedSections[i+j]
-		}
-	}
-
-	for i := 0; i < len(renderedColumns); i++ {
-		renderedColumns[i] = colStyle.Render(renderedColumns[i])
-	}
-
-	return lipgloss.JoinHorizontal(lipgloss.Top, renderedColumns...)
-}
-
-func (m Model) buildSections() []section {
-	var sections []section
-	var currentSection section
-	for _, line := range m.Lines {
-		switch tl := line.(type) {
-		case *songio.SectionStartDirectiveLine:
-			currentSection = section{
-				name: tl.Name,
-			}
-		case *songio.SectionEndDirectiveLine:
-			sections = append(sections, currentSection)
-		case *songio.TextLine:
-			currentSection.lines = append(currentSection.lines, m.LyricsStyle.Render(tl.Text))
-		case *songio.ChordLine:
-			row := ""
-			currentOffset := 0
-			for _, chordOffset := range tl.Chords {
-				offsetDiff := chordOffset.Offset - currentOffset
-				if offsetDiff > 0 {
-					row += strings.Repeat(" ", offsetDiff)
-					currentOffset += offsetDiff
-				}
-
-				chordName := chordOffset.Chord.Name
-				row += m.ChordStyle.Render(chordName)
-				currentOffset += len(chordName)
-			}
-
-			currentSection.lines = append(currentSection.lines, row)
-		case *songio.EmptyLine:
-			currentSection.lines = append(currentSection.lines, "")
-		}
-	}
-
-	return sections
-}
-
-type section struct {
-	name  string
-	lines []string
-}
-
-func (s section) render(sectionNameStyle lipgloss.Style) string {
-	var sectionBuilder strings.Builder
-	sectionBuilder.WriteString(sectionNameStyle.Render(s.name) + "\n")
-	for j, line := range s.lines {
-		if j != 0 {
-			sectionBuilder.WriteByte('\n')
-		}
-		sectionBuilder.WriteString(line)
-	}
-
-	return sectionBuilder.String()
-}
-
-func max(a, b int) int {
-	if a >= b {
-		return a
-	}
-	return b
-}
-
-func min(a, b int) int {
-	if a <= b {
-		return a
-	}
-	return b
+	return fmt.Sprintf("%s\n%s\n%s", m.header.View(), m.songtext.View(), m.footer.View())
 }

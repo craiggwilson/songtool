@@ -8,11 +8,11 @@ import (
 
 func LoadSong(path string) tea.Cmd {
 	return func() tea.Msg {
-		return LoadSongMsg{Path: path}
+		return OpenSongMsg{Path: path}
 	}
 }
 
-type LoadSongMsg struct {
+type OpenSongMsg struct {
 	Path string
 }
 
