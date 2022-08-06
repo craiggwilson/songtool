@@ -1,4 +1,4 @@
-package models
+package eval
 
 import (
 	"fmt"
@@ -7,25 +7,17 @@ import (
 	"github.com/alecthomas/kong"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/models/message"
-	"github.com/craiggwilson/songtool/pkg/songio"
-	"github.com/craiggwilson/songtool/pkg/theory"
 	"github.com/craiggwilson/songtool/pkg/theory/interval"
 	"github.com/mattn/go-shellwords"
 )
 
-type commandContext struct {
-	Theory *theory.Theory
-	Meta   *songio.Meta
-	Lines  []songio.Line
-}
-
-func runCommand(ctx *commandContext, s string) tea.Cmd {
+func run(ctx Context, text string) tea.Cmd {
 	parser, err := kong.New(&mainCmd, kong.NoDefaultHelp())
 	if err != nil {
 		return message.UpdateStatusError(err)
 	}
 
-	args, err := shellwords.Parse(s)
+	args, err := shellwords.Parse(text)
 	if err != nil {
 		return message.UpdateStatusError(err)
 	}
@@ -53,7 +45,7 @@ var mainCmd struct {
 
 type enharmonicCmd struct{}
 
-func (cmd *enharmonicCmd) Run(ctx *commandContext, result *tea.Cmd) error {
+func (cmd *enharmonicCmd) Run(ctx Context, result *tea.Cmd) error {
 	if ctx.Meta.Key == nil {
 		*result = message.UpdateStatusError(fmt.Errorf("current key is unset"))
 		return nil
@@ -65,7 +57,7 @@ func (cmd *enharmonicCmd) Run(ctx *commandContext, result *tea.Cmd) error {
 
 type quitCmd struct{}
 
-func (cmd *quitCmd) Run(ctx *commandContext, result *tea.Cmd) error {
+func (cmd *quitCmd) Run(ctx Context, result *tea.Cmd) error {
 	*result = tea.Quit
 	return nil
 }
@@ -74,7 +66,7 @@ type transposeCmd struct {
 	Arg string `arg:"<key or step>" required:""`
 }
 
-func (cmd *transposeCmd) Run(ctx *commandContext, result *tea.Cmd) error {
+func (cmd *transposeCmd) Run(ctx Context, result *tea.Cmd) error {
 	if ctx.Meta.Key == nil {
 		*result = message.UpdateStatusError(fmt.Errorf("current key is unset"))
 	}

@@ -6,6 +6,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/models/message"
 	"github.com/craiggwilson/songtool/pkg/songio"
 )
 
@@ -41,6 +42,11 @@ func (m Model) ScrollPercent() float64 {
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+	switch tmsg := msg.(type) {
+	case message.UpdateSongMsg:
+		m.Lines = tmsg.Lines
+	}
+
 	m.viewport.Width = m.Width
 	m.viewport.Height = m.Height
 

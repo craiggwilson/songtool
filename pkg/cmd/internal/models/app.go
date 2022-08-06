@@ -2,22 +2,22 @@ package models
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/config"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/models/bubbles/footer"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/models/bubbles/header"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/models/bubbles/song"
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/models/bubbles/status"
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/models/eval"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/models/message"
-	"github.com/craiggwilson/songtool/pkg/songio"
-	"github.com/craiggwilson/songtool/pkg/theory/interval"
 )
 
 func NewApp(cfg *config.Config, cmds ...tea.Cmd) appModel {
+	eval := eval.New(cfg.Theory)
+
 	header := header.New()
 	header.BorderColor = cfg.Styles.BoundaryColor.Color()
 	header.KeyStyle = cfg.Styles.Chord.Style()
@@ -33,13 +33,16 @@ func NewApp(cfg *config.Config, cmds ...tea.Cmd) appModel {
 	footer.BorderColor = cfg.Styles.BoundaryColor.Color()
 	footer.ScrollPercentStyle = cfg.Styles.Title.Style()
 
+	status := status.New()
+
 	return appModel{
-		cfg:        cfg,
-		initCmds:   cmds,
-		header:     header,
-		song:       song,
-		footer:     footer,
-		commandBar: textinput.New(),
+		cfg:      cfg,
+		initCmds: cmds,
+		eval:     eval,
+		header:   header,
+		song:     song,
+		footer:   footer,
+		status:   status,
 	}
 }
 
@@ -47,16 +50,13 @@ type appModel struct {
 	cfg      *config.Config
 	initCmds []tea.Cmd
 
-	ready       bool
-	commandMode bool
-	err         error
-	meta        *songio.Meta
-	lines       []songio.Line
+	ready bool
 
-	header     header.Model
-	song       song.Model
-	footer     footer.Model
-	commandBar textinput.Model
+	eval   eval.Model
+	header header.Model
+	song   song.Model
+	footer footer.Model
+	status status.Model
 }
 
 func (m appModel) Init() tea.Cmd {
@@ -73,74 +73,58 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, cmd)
 	}
 
-	switch msg := msg.(type) {
-	case message.LoadSongMsg:
-		appendCmd(m.loadSong(msg.Path))
-	case message.TransposeSongMsg:
-		appendCmd(m.transposeSong(msg.Interval))
-	case message.UpdateSongMsg:
-		m.meta = &msg.Meta
-		m.lines = msg.Lines
-		m.header.Meta = m.meta
-		m.song.Lines = m.lines
-	case message.UpdateStatusMsg:
-		m.err = msg.Err
+	switch tmsg := msg.(type) {
 	case tea.KeyMsg:
-		if m.commandMode {
-			switch {
-			case key.Matches(msg, defaultKeyMap.command.Accept):
-				appendCmd(runCommand(m.commandContext(), m.commandBar.Value()))
-				m.commandBar.Reset()
-				m.commandMode = false
-			case key.Matches(msg, defaultKeyMap.command.Clear):
-				m.commandMode = false
-				m.commandBar.Reset()
-				appendCmd(message.UpdateStatusError(nil))
-			default:
-				m.commandBar, cmd = m.commandBar.Update(msg)
-				appendCmd(cmd)
-			}
+		if m.status.CommandMode {
+			m.status, cmd = m.status.Update(msg)
+			appendCmd(cmd)
+			msg = nil // handled
 		} else {
 			switch {
-			case key.Matches(msg, defaultKeyMap.normal.CommandMode):
-				m.commandMode = true
+			case key.Matches(tmsg, defaultKeyMap.CommandMode):
+				m.status.CommandMode = true
 				appendCmd(message.UpdateStatusError(nil))
-				appendCmd(m.commandBar.Focus())
-			case key.Matches(msg, defaultKeyMap.normal.Quit):
-				if m.err != nil {
-					m.err = nil
+				appendCmd(m.status.Focus())
+
+				msg = nil // handled
+			case key.Matches(tmsg, defaultKeyMap.Quit):
+				if m.status.Err != nil {
+					m.status.Err = nil
 					break
 				}
 
 				return m, tea.Quit
-			case key.Matches(msg, defaultKeyMap.normal.Transpose):
-				m.commandMode = true
-				m.err = nil
-				m.commandBar.SetValue("transpose ")
-				appendCmd(m.commandBar.Focus())
-			case key.Matches(msg, defaultKeyMap.normal.TransposeDown1):
-				appendCmd(runCommand(m.commandContext(), "transpose -- -1"))
-			case key.Matches(msg, defaultKeyMap.normal.TransposeUp1):
-				appendCmd(runCommand(m.commandContext(), "transpose 1"))
+			case key.Matches(tmsg, defaultKeyMap.Transpose):
+				m.status.Err = nil
+				m.status.SetValue("transpose ")
+				m.status.CommandMode = true
+				appendCmd(m.status.Focus())
+			case key.Matches(tmsg, defaultKeyMap.TransposeDown1):
+				appendCmd(message.Eval("transpose -- -1"))
+			case key.Matches(tmsg, defaultKeyMap.TransposeUp1):
+				appendCmd(message.Eval("transpose 1"))
 			}
 		}
 
 	case tea.WindowSizeMsg:
 		m.ready = true
 
-		m.header.Width = msg.Width
-		m.song.Width = msg.Width
-		m.footer.Width = msg.Width
-		m.commandBar.Width = msg.Width
+		m.header.Width = tmsg.Width
+		m.song.Width = tmsg.Width
+		m.footer.Width = tmsg.Width
+		m.status.Width = tmsg.Width
 
 		headerHeight := lipgloss.Height(m.header.View())
-		commandBarHeight := lipgloss.Height(m.commandBarView())
+		statusHeight := lipgloss.Height(m.status.View())
 		footerHeight := lipgloss.Height(m.footer.View())
 
-		verticalMarginHeight := headerHeight + footerHeight + commandBarHeight + 1
+		verticalMarginHeight := headerHeight + footerHeight + statusHeight + 1
 
-		m.song.Height = msg.Height - verticalMarginHeight
+		m.song.Height = tmsg.Height - verticalMarginHeight
 	}
+
+	m.eval, cmd = m.eval.Update(msg)
+	appendCmd(cmd)
 
 	m.header, cmd = m.header.Update(msg)
 	appendCmd(cmd)
@@ -152,7 +136,8 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.footer, cmd = m.footer.Update(msg)
 	appendCmd(cmd)
 
-	// todo footer
+	m.status, cmd = m.status.Update(msg)
+	appendCmd(cmd)
 
 	return m, tea.Batch(cmds...)
 }
@@ -162,68 +147,5 @@ func (m appModel) View() string {
 		return "\n  Initializing..."
 	}
 
-	return fmt.Sprintf("%s\n%s\n%s%s", m.header.View(), m.song.View(), m.footer.View(), m.commandBarView())
-}
-
-func (m *appModel) commandContext() *commandContext {
-	return &commandContext{
-		Theory: m.cfg.Theory,
-		Meta:   m.header.Meta,
-		Lines:  m.song.Lines,
-	}
-}
-
-func (m appModel) commandBarView() string {
-	commandBarStr := "\n"
-	if m.commandMode {
-		commandBarStr += m.commandBar.View()
-	} else if m.err != nil {
-		commandBarStr += lipgloss.NewStyle().Foreground(lipgloss.Color("1")).Render(m.err.Error())
-	}
-
-	return commandBarStr
-}
-
-func (m appModel) loadSong(path string) tea.Cmd {
-	var f *os.File
-	var err error
-	switch path {
-	case "":
-		return message.UpdateStatusError(fmt.Errorf("no file to load"))
-	case "-":
-		f = os.Stdin
-	default:
-		f, err = os.Open(path)
-		if err != nil {
-			return message.UpdateStatusError(err)
-		}
-	}
-	defer f.Close()
-
-	rdr := songio.ReadChordsOverLyrics(m.cfg.Theory, m.cfg.Theory, f)
-	lines, err := songio.ReadAllLines(rdr)
-	if err != nil {
-		return message.UpdateStatusError(err)
-	}
-
-	meta, err := songio.ReadMeta(m.cfg.Theory, songio.FromLines(lines), true)
-	if err != nil {
-		return message.UpdateStatusError(err)
-	}
-
-	if meta.Title == "" {
-		meta.Title = path
-	}
-
-	return message.UpdateSong(meta, lines)
-}
-
-func (m appModel) transposeSong(by interval.Interval) tea.Cmd {
-	transposed := songio.Transpose(m.cfg.Theory, songio.FromLines(m.lines), by)
-	meta, err := songio.ReadMeta(m.cfg.Theory, transposed, true)
-	if err != nil {
-		return message.UpdateStatusError(err)
-	}
-
-	return message.UpdateSong(meta, m.song.Lines)
+	return fmt.Sprintf("%s\n%s\n%s%s", m.header.View(), m.song.View(), m.footer.View(), m.status.View())
 }

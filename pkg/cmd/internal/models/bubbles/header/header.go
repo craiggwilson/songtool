@@ -6,6 +6,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/models/message"
 	"github.com/craiggwilson/songtool/pkg/songio"
 )
 
@@ -31,6 +32,10 @@ type Model struct {
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+	switch tmsg := msg.(type) {
+	case message.UpdateSongMsg:
+		m.Meta = &tmsg.Meta
+	}
 	return m, nil
 }
 
