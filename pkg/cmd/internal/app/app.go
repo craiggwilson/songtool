@@ -1,4 +1,4 @@
-package models
+package app
 
 import (
 	"fmt"
@@ -6,16 +6,16 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/bubbles/footer"
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/bubbles/header"
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/bubbles/song"
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/bubbles/status"
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/eval"
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/message"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/config"
-	"github.com/craiggwilson/songtool/pkg/cmd/internal/models/bubbles/footer"
-	"github.com/craiggwilson/songtool/pkg/cmd/internal/models/bubbles/header"
-	"github.com/craiggwilson/songtool/pkg/cmd/internal/models/bubbles/song"
-	"github.com/craiggwilson/songtool/pkg/cmd/internal/models/bubbles/status"
-	"github.com/craiggwilson/songtool/pkg/cmd/internal/models/eval"
-	"github.com/craiggwilson/songtool/pkg/cmd/internal/models/message"
 )
 
-func NewApp(cfg *config.Config, cmds ...tea.Cmd) appModel {
+func New(cfg *config.Config, cmds ...tea.Cmd) appModel {
 	eval := eval.New(cfg.Theory)
 
 	header := header.New()

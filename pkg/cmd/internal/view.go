@@ -2,9 +2,9 @@ package internal
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/app"
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/message"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/config"
-	"github.com/craiggwilson/songtool/pkg/cmd/internal/models"
-	"github.com/craiggwilson/songtool/pkg/cmd/internal/models/message"
 )
 
 type ViewCmd struct {
@@ -13,7 +13,7 @@ type ViewCmd struct {
 }
 
 func (cmd *ViewCmd) Run(cfg *config.Config) error {
-	appModel := models.NewApp(cfg, message.LoadSong(cmd.Path))
+	appModel := app.New(cfg, message.LoadSong(cmd.Path))
 
 	p := tea.NewProgram(
 		appModel,

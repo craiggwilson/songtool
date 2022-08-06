@@ -5,7 +5,7 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/craiggwilson/songtool/pkg/cmd/internal/models/message"
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/message"
 	"github.com/craiggwilson/songtool/pkg/songio"
 	"github.com/craiggwilson/songtool/pkg/theory"
 	"github.com/craiggwilson/songtool/pkg/theory/interval"

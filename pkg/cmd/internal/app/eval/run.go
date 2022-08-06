@@ -6,7 +6,7 @@ import (
 
 	"github.com/alecthomas/kong"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/craiggwilson/songtool/pkg/cmd/internal/models/message"
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/message"
 	"github.com/craiggwilson/songtool/pkg/theory/interval"
 	"github.com/mattn/go-shellwords"
 )
