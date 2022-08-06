@@ -6,6 +6,7 @@ import (
 
 	"github.com/alecthomas/kong"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/models/message"
 	"github.com/craiggwilson/songtool/pkg/songio"
 	"github.com/craiggwilson/songtool/pkg/theory"
 	"github.com/craiggwilson/songtool/pkg/theory/interval"
@@ -21,24 +22,24 @@ type commandContext struct {
 func runCommand(ctx *commandContext, s string) tea.Cmd {
 	parser, err := kong.New(&mainCmd, kong.NoDefaultHelp())
 	if err != nil {
-		return StatusError(err)
+		return message.UpdateStatusError(err)
 	}
 
 	args, err := shellwords.Parse(s)
 	if err != nil {
-		return StatusError(err)
+		return message.UpdateStatusError(err)
 	}
 
 	kctx, err := parser.Parse(args)
 	if err != nil {
-		return StatusError(err)
+		return message.UpdateStatusError(err)
 	}
 
 	var result tea.Cmd
 
 	err = kctx.Run(ctx, &result)
 	if err != nil {
-		return StatusError(err)
+		return message.UpdateStatusError(err)
 	}
 
 	return result
@@ -54,11 +55,11 @@ type enharmonicCmd struct{}
 
 func (cmd *enharmonicCmd) Run(ctx *commandContext, result *tea.Cmd) error {
 	if ctx.Meta.Key == nil {
-		*result = StatusError(fmt.Errorf("current key is unset"))
+		*result = message.UpdateStatusError(fmt.Errorf("current key is unset"))
 		return nil
 	}
 
-	*result = Transpose(ctx.Meta.Key.Enharmonic())
+	*result = message.TransposeSong(ctx.Meta.Key.Enharmonic())
 	return nil
 }
 
@@ -75,7 +76,7 @@ type transposeCmd struct {
 
 func (cmd *transposeCmd) Run(ctx *commandContext, result *tea.Cmd) error {
 	if ctx.Meta.Key == nil {
-		*result = StatusError(fmt.Errorf("current key is unset"))
+		*result = message.UpdateStatusError(fmt.Errorf("current key is unset"))
 	}
 
 	var intval interval.Interval
@@ -90,6 +91,6 @@ func (cmd *transposeCmd) Run(ctx *commandContext, result *tea.Cmd) error {
 		intval = ctx.Meta.Key.Note().Interval(toKey.Note())
 	}
 
-	*result = Transpose(intval)
+	*result = message.TransposeSong(intval)
 	return nil
 }

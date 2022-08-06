@@ -42,5 +42,5 @@ func initStyles(styles *config.Styles) {
 	directiveStyle = styles.Directive.Apply(directiveStyle)
 	lyricsStyle = styles.Lyrics.Apply(lyricsStyle)
 	sectionNameStyle = styles.SectionName.Apply(sectionNameStyle)
-	titleStyle = styles.TitleStyle.Apply(titleStyle)
+	titleStyle = styles.Title.Apply(titleStyle)
 }

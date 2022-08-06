@@ -4,26 +4,16 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/config"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/models"
-	"github.com/craiggwilson/songtool/pkg/songio"
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/models/message"
 )
 
 type ViewCmd struct {
-	songCmd
+	Format string `name:"format" enum:"auto,chordsOverLyrics" default:"auto" help:"The format of the song; defaults to 'auto'."`
+	Path   string `arg:"" optional:"" type:"path" help:"The path to the song."`
 }
 
 func (cmd *ViewCmd) Run(cfg *config.Config) error {
-	path := cmd.ensurePath()
-
-	song := cmd.openSong(cfg)
-
-	lines, err := songio.ReadAllLines(song)
-	if err != nil {
-		return err
-	}
-
-	path.Close()
-
-	appModel := models.NewApp(cfg, models.UpdateSongFromSource(cfg.Theory, path.Name(), songio.FromLines(lines)))
+	appModel := models.NewApp(cfg, message.LoadSong(cmd.Path))
 
 	p := tea.NewProgram(
 		appModel,

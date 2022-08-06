@@ -31,7 +31,7 @@ type Styles struct {
 	Directive     Style `json:"directive,omitempty"`
 	Lyrics        Style `json:"lyrics,omitempty"`
 	SectionName   Style `json:"sectionName,omitempty"`
-	TitleStyle    Style `json:"titleStyle,omitempty"`
+	Title         Style `json:"titleStyle,omitempty"`
 }
 
 type Style struct {
@@ -74,10 +74,14 @@ func (s *Style) Apply(style lipgloss.Style) lipgloss.Style {
 }
 
 func (s *Style) Render(text string) string {
+	return s.Style().Render(text)
+}
+
+func (s *Style) Style() lipgloss.Style {
 	if s.style == nil {
 		ns := s.Apply(lipgloss.NewStyle())
 		s.style = &ns
 	}
 
-	return s.style.Render(text)
+	return *s.style
 }
