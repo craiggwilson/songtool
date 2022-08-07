@@ -7,9 +7,12 @@ import (
 )
 
 func LoadSong(path string) tea.Cmd {
-	return func() tea.Msg {
-		return OpenSongMsg{Path: path}
-	}
+	return tea.Batch(
+		func() tea.Msg {
+			return OpenSongMsg{Path: path}
+		},
+		EnterSongMode(),
+	)
 }
 
 type OpenSongMsg struct {

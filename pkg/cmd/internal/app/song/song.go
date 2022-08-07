@@ -3,10 +3,12 @@ package song
 import (
 	"fmt"
 
+	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/footer"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/header"
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/message"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/songtext"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/config"
 )
@@ -50,7 +52,19 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		cmds []tea.Cmd
 	)
 
-	m.songtext.KeyMap = m.KeyMap
+	switch tmsg := msg.(type) {
+	case tea.KeyMsg:
+		switch {
+		case key.Matches(tmsg, m.KeyMap.Transpose):
+			return m, message.EnterCommandMode("transpose ")
+		case key.Matches(tmsg, m.KeyMap.TransposeDown1):
+			return m, message.Eval("transpose -- -1")
+		case key.Matches(tmsg, m.KeyMap.TransposeUp1):
+			return m, message.Eval("transpose 1")
+		}
+	}
+
+	m.songtext.KeyMap = m.KeyMap.KeyMap
 	m.header.Width = m.Width
 	m.songtext.Width = m.Width
 	m.footer.Width = m.Width

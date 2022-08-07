@@ -18,7 +18,7 @@ func New() Model {
 }
 
 type Model struct {
-	HelpKeyMap HelpKeyMap
+	HelpKeyMap help.KeyMap
 	KeyMap     KeyMap
 	Width      int
 
@@ -35,9 +35,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		cmd  tea.Cmd
 		cmds []tea.Cmd
 	)
-
-	m.command.Width = m.Width
-	m.help.Width = m.Width
 
 	switch tmsg := msg.(type) {
 	case message.ChangeHelpModeMsg:
@@ -80,6 +77,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		}
 	}
 
+	m.command.Width = m.Width
+	m.help.Width = m.Width
+
 	if _, ok := msg.(tea.KeyMsg); !ok {
 		m.command, cmd = m.command.Update(msg)
 		cmds = append(cmds, cmd)
@@ -99,9 +99,5 @@ func (m Model) View() string {
 		v += lipgloss.NewStyle().Foreground(lipgloss.Color("1")).Render(m.err.Error()) + "\n"
 	}
 
-	if m.help.ShowAll {
-		return v + m.help.FullHelpView(m.HelpKeyMap.FullHelp(m.commandMode))
-	}
-
-	return v + m.help.ShortHelpView(m.HelpKeyMap.ShortHelp(m.commandMode))
+	return v + m.help.View(m.HelpKeyMap)
 }

@@ -15,3 +15,15 @@ func ExitCommandMode() tea.Cmd {
 }
 
 type ExitCommandModeMsg struct{}
+
+func EnterSongMode() tea.Cmd {
+	return func() tea.Msg { return EnterSongModeMsg{} }
+}
+
+type EnterSongModeMsg struct{}
+
+func EnterExplorerMode() tea.Cmd {
+	return func() tea.Msg { return EnterExplorerModeMsg{} }
+}
+
+type EnterExplorerModeMsg struct{}

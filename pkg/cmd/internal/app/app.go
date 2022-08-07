@@ -7,6 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/eval"
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/explorer"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/message"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/song"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/status"
@@ -37,12 +38,13 @@ type appModel struct {
 	initCmds []tea.Cmd
 
 	ready bool
+	mode  mode
 
-	eval   eval.Model
-	song   song.Model
-	status status.Model
+	eval     eval.Model
+	song     song.Model
+	explorer explorer.Model
+	status   status.Model
 
-	mode         Mode
 	helpModeFull bool
 	hasStatus    bool
 
@@ -62,34 +64,64 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch tmsg := msg.(type) {
 	case message.EnterCommandModeMsg:
-		m.mode = ModeNormalCommand
+		m.mode |= modeCommand
+		defaultKeyMap.Command.SetEnabled(true)
+		defaultKeyMap.Explorer.SetEnabled(false)
+		defaultKeyMap.Global.SetEnabled(false)
+		defaultKeyMap.Song.SetEnabled(false)
 	case message.ExitCommandModeMsg:
-		m.mode = ModeNormal
+		m.mode ^= modeCommand
+		defaultKeyMap.Command.SetEnabled(false)
+		defaultKeyMap.Explorer.SetEnabled(m.mode.IsSongMode())
+		defaultKeyMap.Global.SetEnabled(true)
+		defaultKeyMap.Song.SetEnabled(m.mode.IsSongMode())
+	case message.EnterExplorerModeMsg:
+		cmdMode := m.mode.IsCommandMode()
+		m.mode = modeExplorer
+		if cmdMode {
+			m.mode |= modeCommand
+		}
+		defaultKeyMap.Global.Explorer.SetEnabled(false)
+		defaultKeyMap.Global.Song.SetEnabled(true)
+		defaultKeyMap.Explorer.SetEnabled(true)
+		defaultKeyMap.Song.SetEnabled(false)
+		cmds = append(cmds, message.Invalidate())
+	case message.EnterSongModeMsg:
+		cmdMode := m.mode.IsCommandMode()
+		m.mode = modeSong
+		if cmdMode {
+			m.mode |= modeCommand
+		}
+		defaultKeyMap.Global.Explorer.SetEnabled(true)
+		defaultKeyMap.Global.Song.SetEnabled(false)
+		defaultKeyMap.Explorer.SetEnabled(false)
+		defaultKeyMap.Song.SetEnabled(true)
+		cmds = append(cmds, message.Invalidate())
+	case message.InvalidateMsg:
+		m.song.Height = m.height - lipgloss.Height(m.status.View())
 	case message.UpdateStatusMsg:
 		m.hasStatus = tmsg.Info != "" || tmsg.Err != nil
 	case tea.KeyMsg:
-		if m.mode == ModeNormalCommand {
+		if m.mode.IsCommandMode() {
 			m.status, cmd = m.status.Update(msg)
 			return m, cmd
 		} else {
 			switch {
-			case key.Matches(tmsg, defaultKeyMap.Normal.CommandMode):
+			case key.Matches(tmsg, defaultKeyMap.Global.CommandMode):
 				return m, message.EnterCommandMode("")
-			case key.Matches(tmsg, defaultKeyMap.Normal.Help):
+			case key.Matches(tmsg, defaultKeyMap.Global.Explorer):
+				return m, message.EnterExplorerMode()
+			case key.Matches(tmsg, defaultKeyMap.Global.Song):
+				return m, message.EnterSongMode()
+			case key.Matches(tmsg, defaultKeyMap.Global.Help):
 				m.helpModeFull = !m.helpModeFull
 				return m, message.ChangeHelpMode(m.helpModeFull)
-			case key.Matches(tmsg, defaultKeyMap.Normal.Quit):
+			case key.Matches(tmsg, defaultKeyMap.Global.Quit):
 				if m.hasStatus {
 					return m, message.ClearStatus()
 				}
 
 				return m, tea.Quit
-			case key.Matches(tmsg, defaultKeyMap.Normal.Transpose):
-				return m, message.EnterCommandMode("transpose ")
-			case key.Matches(tmsg, defaultKeyMap.Normal.TransposeDown1):
-				return m, message.Eval("transpose -- -1")
-			case key.Matches(tmsg, defaultKeyMap.Normal.TransposeUp1):
-				return m, message.Eval("transpose 1")
 			}
 		}
 
@@ -102,15 +134,18 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.status.Width = m.width
 
 		m.song.Height = m.height - lipgloss.Height(m.status.View())
-	case message.InvalidateMsg:
-		m.song.Height = m.height - lipgloss.Height(m.status.View())
 	}
 
 	m.eval, cmd = m.eval.Update(msg)
 	cmds = append(cmds, cmd)
 
-	m.song, cmd = m.song.Update(msg)
-	cmds = append(cmds, cmd)
+	if m.mode.IsSongMode() {
+		m.song, cmd = m.song.Update(msg)
+		cmds = append(cmds, cmd)
+	} else if m.mode.IsExplorerMode() {
+		m.explorer, cmd = m.explorer.Update(msg)
+		cmds = append(cmds, cmd)
+	}
 
 	m.status, cmd = m.status.Update(msg)
 	cmds = append(cmds, cmd)
@@ -123,5 +158,11 @@ func (m appModel) View() string {
 		return "\n  Initializing..."
 	}
 
-	return fmt.Sprintf("%s\n%s", m.song.View(), m.status.View())
+	if m.mode.IsSongMode() {
+		return fmt.Sprintf("%s\n%s", m.song.View(), m.status.View())
+	} else if m.mode.IsExplorerMode() {
+		return fmt.Sprintf("%s\n%s", m.explorer.View(), m.status.View())
+	}
+
+	return "\n  Problems..."
 }

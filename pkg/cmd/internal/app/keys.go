@@ -2,65 +2,71 @@ package app
 
 import (
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/viewport"
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/explorer"
+	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/song"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/status"
 )
 
-var defaultKeyMap = keyMap{
-	Normal: keyMapNormal{
-		CommandMode:    key.NewBinding(key.WithKeys(":"), key.WithHelp(":", "command mode")),
-		Help:           key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "toggle help")),
-		Quit:           key.NewBinding(key.WithKeys("q", "ctlr+c", "esc"), key.WithHelp("q", "quit")),
-		Transpose:      key.NewBinding(key.WithKeys("t"), key.WithHelp("t", "transpose")),
-		TransposeDown1: key.NewBinding(key.WithKeys("h", "left"), key.WithHelp("←/h", "stepdown")),
-		TransposeUp1:   key.NewBinding(key.WithKeys("l", "right"), key.WithHelp("→/l", "stepup")),
-	},
-	Command: status.DefaultKeyMap(),
-	Song:    viewport.DefaultKeyMap(),
-}
+var defaultKeyMap = func() *keyMap {
+	km := keyMap{
+		Global: globalKeyMap{
+			CommandMode: key.NewBinding(key.WithKeys(":"), key.WithHelp(":", "command mode")),
+			Explorer:    key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "explorer mode")),
+			Song:        key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "song mode")),
+			Help:        key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "toggle help")),
+			Quit:        key.NewBinding(key.WithKeys("q", "ctlr+c", "esc"), key.WithHelp("q", "quit")),
+		},
+		Explorer: explorer.DefaultKeyMap(),
+		Song:     song.DefaultKeyMap(),
+		Command:  status.DefaultKeyMap(),
+	}
+
+	km.Command.SetEnabled(false)
+	return &km
+}()
 
 type keyMap struct {
-	Mode Mode
-
-	Normal  keyMapNormal
-	Command status.KeyMap
-	Song    viewport.KeyMap
+	Global   globalKeyMap
+	Explorer explorer.KeyMap
+	Song     song.KeyMap
+	Command  status.KeyMap
 }
 
-type keyMapNormal struct {
-	CommandMode    key.Binding
-	Help           key.Binding
-	Quit           key.Binding
-	Transpose      key.Binding
-	TransposeDown1 key.Binding
-	TransposeUp1   key.Binding
+type globalKeyMap struct {
+	CommandMode key.Binding
+	Explorer    key.Binding
+	Song        key.Binding
+	Help        key.Binding
+	Quit        key.Binding
 }
 
-func (km keyMap) ShortHelp(commandMode bool) []key.Binding {
-	if commandMode {
-		return []key.Binding{km.Command.Accept, km.Command.Clear}
-	}
-
-	switch km.Mode {
-	case ModeNormal:
-		return []key.Binding{km.Normal.Help, km.Normal.Quit, km.Normal.CommandMode, km.Normal.TransposeDown1, km.Normal.TransposeUp1}
-	}
-
-	return nil
+func (km *globalKeyMap) SetEnabled(enabled bool) {
+	km.CommandMode.SetEnabled(enabled)
+	km.Explorer.SetEnabled(enabled)
+	km.Song.SetEnabled(enabled)
+	km.Help.SetEnabled(enabled)
+	km.Quit.SetEnabled(enabled)
 }
 
-func (km keyMap) FullHelp(commandMode bool) [][]key.Binding {
-	if commandMode {
-		return [][]key.Binding{{km.Command.Accept, km.Command.Clear}}
+func (km *keyMap) ShortHelp() []key.Binding {
+	return []key.Binding{
+		km.Command.Accept,
+		km.Command.Clear,
+		km.Global.Help,
+		km.Global.Quit,
+		km.Global.CommandMode,
+		km.Global.Explorer,
+		km.Global.Song,
+		km.Song.TransposeDown1,
+		km.Song.TransposeUp1,
 	}
+}
 
-	switch km.Mode {
-	case ModeNormal:
-		return [][]key.Binding{
-			{km.Normal.Help, km.Normal.Quit, km.Normal.CommandMode, km.Normal.Transpose, km.Normal.TransposeDown1, km.Normal.TransposeUp1},
-			{km.Song.Up, km.Song.Down, km.Song.PageUp, km.Song.PageDown, km.Song.HalfPageUp, km.Song.PageDown},
-		}
+func (km *keyMap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{
+		{km.Command.Accept, km.Command.Clear},
+		{km.Global.Help, km.Global.Quit, km.Global.CommandMode, km.Global.Explorer, km.Global.Song},
+		{km.Song.Transpose, km.Song.TransposeDown1, km.Song.TransposeUp1},
+		{km.Song.Up, km.Song.Down, km.Song.PageUp, km.Song.PageDown, km.Song.HalfPageUp, km.Song.PageDown},
 	}
-
-	return nil
 }

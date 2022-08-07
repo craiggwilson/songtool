@@ -39,15 +39,15 @@ func (m Model) ScrollPercent() float64 {
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
-	m.viewport.Height = m.Height
-	m.viewport.Width = m.Width
-
 	switch tmsg := msg.(type) {
 	case message.UpdateSongMsg:
 		m.Lines = tmsg.Lines
 		m.viewport.SetContent(m.contentView())
 		return m, nil
 	}
+
+	m.viewport.Height = m.Height
+	m.viewport.Width = m.Width
 
 	var cmd tea.Cmd
 	m.viewport, cmd = m.viewport.Update(msg)
