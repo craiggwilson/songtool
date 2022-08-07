@@ -36,6 +36,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case message.UpdateSongMsg:
 		m.Meta = &tmsg.Meta
 	}
+
 	return m, nil
 }
 

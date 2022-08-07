@@ -49,28 +49,23 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		cmds []tea.Cmd
 	)
 
-	appendCmd := func(cmd tea.Cmd) {
-		cmds = append(cmds, cmd)
-	}
-
 	m.header.Width = m.Width
 	m.songtext.Width = m.Width
 	m.footer.Width = m.Width
+	m.footer.ScrollPercent = m.songtext.ScrollPercent()
 
 	headerHeight := lipgloss.Height(m.header.View())
 	footerHeight := lipgloss.Height(m.footer.View())
-
 	m.songtext.Height = m.Height - headerHeight - footerHeight
 
 	m.header, cmd = m.header.Update(msg)
-	appendCmd(cmd)
+	cmds = append(cmds, cmd)
 
 	m.songtext, cmd = m.songtext.Update(msg)
-	appendCmd(cmd)
+	cmds = append(cmds, cmd)
 
-	m.footer.ScrollPercent = m.songtext.ScrollPercent()
 	m.footer, cmd = m.footer.Update(msg)
-	appendCmd(cmd)
+	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
 }

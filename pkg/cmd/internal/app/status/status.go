@@ -45,9 +45,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		cmds []tea.Cmd
 	)
 
-	appendCmd := func(cmd tea.Cmd) {
-		cmds = append(cmds, cmd)
-	}
+	m.command.Width = m.Width
+	m.help.Width = m.Width
+	m.help.ShowAll = m.FullHelpMode
 
 	switch tmsg := msg.(type) {
 	case message.UpdateStatusMsg:
@@ -56,33 +56,28 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		if m.CommandMode {
 			switch {
 			case key.Matches(tmsg, m.KeyMap.Accept):
-				appendCmd(message.Eval(m.command.Value()))
+				value := m.command.Value()
 				m.command.Reset()
 				m.CommandMode = false
-				msg = nil
+				return m, message.Eval(value)
 			case key.Matches(tmsg, m.KeyMap.Clear):
-				appendCmd(message.UpdateStatusError(nil))
 				m.command.Reset()
 				m.CommandMode = false
-				msg = nil
+				return m, message.UpdateStatusError(nil)
 			default:
 				m.command, cmd = m.command.Update(msg)
-				appendCmd(cmd)
-				msg = nil
+				return m, cmd
 			}
 		}
 	}
 
-	m.command.Width = m.Width
-	m.help.Width = m.Width
-
-	m.help.ShowAll = m.FullHelpMode
-
-	m.command, cmd = m.command.Update(msg)
-	appendCmd(cmd)
+	if _, ok := msg.(tea.KeyMsg); !ok {
+		m.command, cmd = m.command.Update(msg)
+		cmds = append(cmds, cmd)
+	}
 
 	m.help, cmd = m.help.Update(msg)
-	appendCmd(cmd)
+	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
 }

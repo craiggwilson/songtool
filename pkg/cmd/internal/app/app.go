@@ -54,38 +54,36 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds []tea.Cmd
 	)
 
-	appendCmd := func(cmd tea.Cmd) {
-		cmds = append(cmds, cmd)
-	}
-
 	switch tmsg := msg.(type) {
 	case tea.KeyMsg:
 		if m.status.CommandMode {
 			m.status, cmd = m.status.Update(msg)
-			appendCmd(cmd)
-			msg = nil
+			return m, cmd
 		} else {
 			switch {
 			case key.Matches(tmsg, defaultKeyMap.CommandMode):
 				m.status.CommandMode = true
-				appendCmd(message.UpdateStatusError(nil))
-				appendCmd(m.status.Focus())
-
-				msg = nil // handled
+				cmd = m.status.Focus()
+				return m, tea.Batch(
+					cmd,
+					message.UpdateStatusError(nil),
+				)
 			case key.Matches(tmsg, defaultKeyMap.Help):
 				m.status.FullHelpMode = !m.status.FullHelpMode
-				appendCmd(func() tea.Msg {
-					return tea.WindowSizeMsg{
-						Width:  m.width,
-						Height: m.height,
-					}
-				})
-				msg = nil
+				m.status, cmd = m.status.Update(msg)
+				return m, tea.Batch(
+					cmd,
+					func() tea.Msg {
+						return tea.WindowSizeMsg{
+							Width:  m.width,
+							Height: m.height,
+						}
+					},
+				)
 			case key.Matches(tmsg, defaultKeyMap.Quit):
 				if m.status.Err != nil {
 					m.status.Err = nil
-					msg = nil
-					break
+					return m, nil
 				}
 
 				return m, tea.Quit
@@ -93,14 +91,12 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.status.Err = nil
 				m.status.SetValue("transpose ")
 				m.status.CommandMode = true
-				appendCmd(m.status.Focus())
-				msg = nil
+				cmd = m.status.Focus()
+				return m, cmd
 			case key.Matches(tmsg, defaultKeyMap.TransposeDown1):
-				appendCmd(message.Eval("transpose -- -1"))
-				msg = nil
+				return m, message.Eval("transpose -- -1")
 			case key.Matches(tmsg, defaultKeyMap.TransposeUp1):
-				appendCmd(message.Eval("transpose 1"))
-				msg = nil
+				return m, message.Eval("transpose 1")
 			}
 		}
 
@@ -116,13 +112,13 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	m.eval, cmd = m.eval.Update(msg)
-	appendCmd(cmd)
+	cmds = append(cmds, cmd)
 
 	m.song, cmd = m.song.Update(msg)
-	appendCmd(cmd)
+	cmds = append(cmds, cmd)
 
 	m.status, cmd = m.status.Update(msg)
-	appendCmd(cmd)
+	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
 }
