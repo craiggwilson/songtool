@@ -1,6 +1,7 @@
 package status
 
 import (
+	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -12,18 +13,22 @@ func New() Model {
 	return Model{
 		KeyMap:  DefaultKeyMap(),
 		command: textinput.New(),
+		help:    help.New(),
 	}
 }
 
 type Model struct {
-	CommandMode bool
-	KeyMap      KeyMap
-	Width       int
+	CommandMode  bool
+	FullHelpMode bool
+	HelpKeyMap   help.KeyMap
+	KeyMap       KeyMap
+	Width        int
 
 	Info string
 	Err  error
 
 	command textinput.Model
+	help    help.Model
 }
 
 func (m *Model) Focus() tea.Cmd {
@@ -54,10 +59,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				appendCmd(message.Eval(m.command.Value()))
 				m.command.Reset()
 				m.CommandMode = false
+				msg = nil
 			case key.Matches(tmsg, m.KeyMap.Clear):
 				appendCmd(message.UpdateStatusError(nil))
 				m.command.Reset()
 				m.CommandMode = false
+				msg = nil
 			default:
 				m.command, cmd = m.command.Update(msg)
 				appendCmd(cmd)
@@ -66,8 +73,17 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		}
 	}
 
+	m.command.Width = m.Width
+	m.help.Width = m.Width
+
+	m.help.ShowAll = m.FullHelpMode
+
 	m.command, cmd = m.command.Update(msg)
 	appendCmd(cmd)
+
+	m.help, cmd = m.help.Update(msg)
+	appendCmd(cmd)
+
 	return m, tea.Batch(cmds...)
 }
 
@@ -78,5 +94,5 @@ func (m Model) View() string {
 		return lipgloss.NewStyle().Foreground(lipgloss.Color("1")).Render(m.Err.Error())
 	}
 
-	return ""
+	return m.help.View(m.HelpKeyMap)
 }

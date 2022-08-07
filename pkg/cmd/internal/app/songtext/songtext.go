@@ -33,10 +33,6 @@ type Model struct {
 	viewport viewport.Model
 }
 
-func (m *Model) SetMaxColumns(maxColumns int) {
-	m.MaxColumns = maxColumns
-}
-
 func (m Model) ScrollPercent() float64 {
 	return m.viewport.ScrollPercent()
 }

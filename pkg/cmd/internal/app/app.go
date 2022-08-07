@@ -19,6 +19,7 @@ func New(cfg *config.Config, cmds ...tea.Cmd) appModel {
 	song := song.New(cfg)
 
 	status := status.New()
+	status.HelpKeyMap = defaultKeyMap
 
 	return appModel{
 		cfg:      cfg,
@@ -39,7 +40,8 @@ type appModel struct {
 	song   song.Model
 	status status.Model
 
-	heights []int
+	height int
+	width  int
 }
 
 func (m appModel) Init() tea.Cmd {
@@ -61,7 +63,7 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.status.CommandMode {
 			m.status, cmd = m.status.Update(msg)
 			appendCmd(cmd)
-			msg = nil // handled
+			msg = nil
 		} else {
 			switch {
 			case key.Matches(tmsg, defaultKeyMap.CommandMode):
@@ -70,9 +72,19 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				appendCmd(m.status.Focus())
 
 				msg = nil // handled
+			case key.Matches(tmsg, defaultKeyMap.Help):
+				m.status.FullHelpMode = !m.status.FullHelpMode
+				appendCmd(func() tea.Msg {
+					return tea.WindowSizeMsg{
+						Width:  m.width,
+						Height: m.height,
+					}
+				})
+				msg = nil
 			case key.Matches(tmsg, defaultKeyMap.Quit):
 				if m.status.Err != nil {
 					m.status.Err = nil
+					msg = nil
 					break
 				}
 
@@ -82,20 +94,25 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.status.SetValue("transpose ")
 				m.status.CommandMode = true
 				appendCmd(m.status.Focus())
+				msg = nil
 			case key.Matches(tmsg, defaultKeyMap.TransposeDown1):
 				appendCmd(message.Eval("transpose -- -1"))
+				msg = nil
 			case key.Matches(tmsg, defaultKeyMap.TransposeUp1):
 				appendCmd(message.Eval("transpose 1"))
+				msg = nil
 			}
 		}
 
 	case tea.WindowSizeMsg:
 		m.ready = true
+		m.height = tmsg.Height
+		m.width = tmsg.Width
 
-		m.song.Width = tmsg.Width
-		m.status.Width = tmsg.Width
+		m.song.Width = m.width
+		m.status.Width = m.width
 
-		m.song.Height = tmsg.Height - lipgloss.Height(m.status.View())
+		m.song.Height = m.height - lipgloss.Height(m.status.View())
 	}
 
 	m.eval, cmd = m.eval.Update(msg)
