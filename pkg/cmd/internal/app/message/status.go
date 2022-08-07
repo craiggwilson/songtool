@@ -4,6 +4,12 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+func ClearStatus() tea.Cmd {
+	return func() tea.Msg {
+		return UpdateStatusMsg{}
+	}
+}
+
 func UpdateStatusInfo(text string) tea.Cmd {
 	return func() tea.Msg {
 		return UpdateStatusMsg{Info: text}

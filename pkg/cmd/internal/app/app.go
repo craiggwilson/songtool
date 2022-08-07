@@ -17,8 +17,10 @@ func New(cfg *config.Config, cmds ...tea.Cmd) appModel {
 	eval := eval.New(cfg.Theory)
 
 	song := song.New(cfg)
+	song.KeyMap = defaultKeyMap.Song
 
 	status := status.New()
+	status.KeyMap = defaultKeyMap.Command
 	status.HelpKeyMap = defaultKeyMap
 
 	return appModel{
@@ -40,6 +42,10 @@ type appModel struct {
 	song   song.Model
 	status status.Model
 
+	mode         Mode
+	helpModeFull bool
+	hasStatus    bool
+
 	height int
 	width  int
 }
@@ -55,47 +61,34 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	)
 
 	switch tmsg := msg.(type) {
+	case message.EnterCommandModeMsg:
+		m.mode = ModeNormalCommand
+	case message.ExitCommandModeMsg:
+		m.mode = ModeNormal
+	case message.UpdateStatusMsg:
+		m.hasStatus = tmsg.Info != "" || tmsg.Err != nil
 	case tea.KeyMsg:
-		if m.status.CommandMode {
+		if m.mode == ModeNormalCommand {
 			m.status, cmd = m.status.Update(msg)
 			return m, cmd
 		} else {
 			switch {
-			case key.Matches(tmsg, defaultKeyMap.CommandMode):
-				m.status.CommandMode = true
-				cmd = m.status.Focus()
-				return m, tea.Batch(
-					cmd,
-					message.UpdateStatusError(nil),
-				)
-			case key.Matches(tmsg, defaultKeyMap.Help):
-				m.status.FullHelpMode = !m.status.FullHelpMode
-				m.status, cmd = m.status.Update(msg)
-				return m, tea.Batch(
-					cmd,
-					func() tea.Msg {
-						return tea.WindowSizeMsg{
-							Width:  m.width,
-							Height: m.height,
-						}
-					},
-				)
-			case key.Matches(tmsg, defaultKeyMap.Quit):
-				if m.status.Err != nil {
-					m.status.Err = nil
-					return m, nil
+			case key.Matches(tmsg, defaultKeyMap.Normal.CommandMode):
+				return m, message.EnterCommandMode("")
+			case key.Matches(tmsg, defaultKeyMap.Normal.Help):
+				m.helpModeFull = !m.helpModeFull
+				return m, message.ChangeHelpMode(m.helpModeFull)
+			case key.Matches(tmsg, defaultKeyMap.Normal.Quit):
+				if m.hasStatus {
+					return m, message.ClearStatus()
 				}
 
 				return m, tea.Quit
-			case key.Matches(tmsg, defaultKeyMap.Transpose):
-				m.status.Err = nil
-				m.status.SetValue("transpose ")
-				m.status.CommandMode = true
-				cmd = m.status.Focus()
-				return m, cmd
-			case key.Matches(tmsg, defaultKeyMap.TransposeDown1):
+			case key.Matches(tmsg, defaultKeyMap.Normal.Transpose):
+				return m, message.EnterCommandMode("transpose ")
+			case key.Matches(tmsg, defaultKeyMap.Normal.TransposeDown1):
 				return m, message.Eval("transpose -- -1")
-			case key.Matches(tmsg, defaultKeyMap.TransposeUp1):
+			case key.Matches(tmsg, defaultKeyMap.Normal.TransposeUp1):
 				return m, message.Eval("transpose 1")
 			}
 		}
@@ -108,6 +101,8 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.song.Width = m.width
 		m.status.Width = m.width
 
+		m.song.Height = m.height - lipgloss.Height(m.status.View())
+	case message.InvalidateMsg:
 		m.song.Height = m.height - lipgloss.Height(m.status.View())
 	}
 

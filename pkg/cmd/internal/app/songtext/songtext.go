@@ -24,6 +24,7 @@ type Model struct {
 	ChordStyle       lipgloss.Style
 	LyricsStyle      lipgloss.Style
 	SectionNameStyle lipgloss.Style
+	KeyMap           KeyMap
 	Height           int
 	MaxColumns       int
 	Width            int

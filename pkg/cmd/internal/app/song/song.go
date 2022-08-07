@@ -37,6 +37,7 @@ func New(cfg *config.Config) Model {
 type Model struct {
 	Height int
 	Width  int
+	KeyMap KeyMap
 
 	header   header.Model
 	songtext songtext.Model
@@ -49,6 +50,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		cmds []tea.Cmd
 	)
 
+	m.songtext.KeyMap = m.KeyMap
 	m.header.Width = m.Width
 	m.songtext.Width = m.Width
 	m.footer.Width = m.Width

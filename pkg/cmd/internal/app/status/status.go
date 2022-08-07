@@ -18,25 +18,16 @@ func New() Model {
 }
 
 type Model struct {
-	CommandMode  bool
-	FullHelpMode bool
-	HelpKeyMap   help.KeyMap
-	KeyMap       KeyMap
-	Width        int
+	HelpKeyMap HelpKeyMap
+	KeyMap     KeyMap
+	Width      int
 
-	Info string
-	Err  error
+	info string
+	err  error
 
-	command textinput.Model
-	help    help.Model
-}
-
-func (m *Model) Focus() tea.Cmd {
-	return m.command.Focus()
-}
-
-func (m *Model) SetValue(value string) {
-	m.command.SetValue(value)
+	commandMode bool
+	command     textinput.Model
+	help        help.Model
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
@@ -47,23 +38,41 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 	m.command.Width = m.Width
 	m.help.Width = m.Width
-	m.help.ShowAll = m.FullHelpMode
 
 	switch tmsg := msg.(type) {
+	case message.ChangeHelpModeMsg:
+		m.help.ShowAll = tmsg.Full
+		m.help, cmd = m.help.Update(msg)
+		return m, tea.Batch(cmd, message.Invalidate())
+	case message.EnterCommandModeMsg:
+		m.err = nil
+		m.commandMode = true
+		if tmsg.Value != "" {
+			m.command.SetValue(tmsg.Value)
+		}
+		cmd = m.command.Focus()
+		return m, tea.Batch(message.Invalidate(), cmd)
+	case message.ExitCommandModeMsg:
+		m.commandMode = false
+		return m, message.Invalidate()
 	case message.UpdateStatusMsg:
-		m.Err = tmsg.Err
+		m.info = tmsg.Info
+		m.err = tmsg.Err
+		return m, message.Invalidate()
 	case tea.KeyMsg:
-		if m.CommandMode {
+		if m.commandMode {
 			switch {
 			case key.Matches(tmsg, m.KeyMap.Accept):
 				value := m.command.Value()
 				m.command.Reset()
-				m.CommandMode = false
-				return m, message.Eval(value)
+				return m, tea.Batch(
+					message.ExitCommandMode(),
+					message.Eval(value),
+				)
 			case key.Matches(tmsg, m.KeyMap.Clear):
 				m.command.Reset()
-				m.CommandMode = false
-				return m, message.UpdateStatusError(nil)
+				m.err = nil
+				return m, message.ExitCommandMode()
 			default:
 				m.command, cmd = m.command.Update(msg)
 				return m, cmd
@@ -83,11 +92,16 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	if m.CommandMode {
-		return m.command.View()
-	} else if m.Err != nil {
-		return lipgloss.NewStyle().Foreground(lipgloss.Color("1")).Render(m.Err.Error())
+	v := ""
+	if m.commandMode {
+		v += m.command.View() + "\n"
+	} else if m.err != nil {
+		v += lipgloss.NewStyle().Foreground(lipgloss.Color("1")).Render(m.err.Error()) + "\n"
 	}
 
-	return m.help.View(m.HelpKeyMap)
+	if m.help.ShowAll {
+		return v + m.help.FullHelpView(m.HelpKeyMap.FullHelp(m.commandMode))
+	}
+
+	return v + m.help.ShortHelpView(m.HelpKeyMap.ShortHelp(m.commandMode))
 }
