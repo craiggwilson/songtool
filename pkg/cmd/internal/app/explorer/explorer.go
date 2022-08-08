@@ -1,8 +1,6 @@
 package explorer
 
 import (
-	"fmt"
-
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -50,7 +48,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		case key.Matches(tmsg, m.KeyMap.Select):
 			item := m.list.SelectedItem().(item)
 			return m, tea.Batch(
-				message.UpdateStatusError(fmt.Errorf(item.Title)),
+				message.LoadSong(item.Path),
 				message.EnterSongMode(),
 			)
 		}

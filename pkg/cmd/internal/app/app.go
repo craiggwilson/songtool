@@ -80,7 +80,6 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.mode |= modeCommand
 		}
 		m.updateKeyBindings()
-		cmds = append(cmds, message.Invalidate())
 	case message.EnterSongModeMsg:
 		cmdMode := m.mode.IsCommandMode()
 		m.mode = modeSong
@@ -88,37 +87,34 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.mode |= modeCommand
 		}
 		m.updateKeyBindings()
-		cmds = append(cmds, message.Invalidate())
-	case message.UpdateFilesMsg:
-		m.explorer, cmd = m.explorer.Update(msg)
-		return m, cmd
-	case message.UpdateSongMsg:
-		m.song, cmd = m.song.Update(msg)
-		return m, cmd
 	case message.UpdateStatusMsg:
 		m.hasStatus = tmsg.Info != "" || tmsg.Err != nil
 	case tea.KeyMsg:
-		if m.mode.IsCommandMode() {
+		switch {
+		case m.mode.IsCommandMode():
 			m.status, cmd = m.status.Update(msg)
 			return m, cmd
-		} else {
-			switch {
-			case key.Matches(tmsg, defaultKeyMap.Global.CommandMode):
-				return m, message.EnterCommandMode("")
-			case key.Matches(tmsg, defaultKeyMap.Global.Explorer):
-				return m, message.EnterExplorerMode()
-			case key.Matches(tmsg, defaultKeyMap.Global.Song):
-				return m, message.EnterSongMode()
-			case key.Matches(tmsg, defaultKeyMap.Global.Help):
-				m.helpModeFull = !m.helpModeFull
-				return m, message.ChangeHelpMode(m.helpModeFull)
-			case key.Matches(tmsg, defaultKeyMap.Global.Quit):
-				if m.hasStatus {
-					return m, message.ClearStatus()
-				}
-
-				return m, tea.Quit
+		case key.Matches(tmsg, defaultKeyMap.Global.CommandMode):
+			return m, message.EnterCommandMode("")
+		case key.Matches(tmsg, defaultKeyMap.Global.Explorer):
+			return m, message.EnterExplorerMode()
+		case key.Matches(tmsg, defaultKeyMap.Global.Song):
+			return m, message.EnterSongMode()
+		case key.Matches(tmsg, defaultKeyMap.Global.Help):
+			m.helpModeFull = !m.helpModeFull
+			return m, message.ChangeHelpMode(m.helpModeFull)
+		case key.Matches(tmsg, defaultKeyMap.Global.Quit):
+			if m.hasStatus {
+				return m, message.ClearStatus()
 			}
+
+			return m, tea.Quit
+		case m.mode.IsExplorerMode():
+			m.explorer, cmd = m.explorer.Update(msg)
+			return m, cmd
+		case m.mode.IsSongMode():
+			m.song, cmd = m.song.Update(msg)
+			return m, cmd
 		}
 	case tea.WindowSizeMsg:
 		m.ready = true
@@ -140,13 +136,11 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.eval, cmd = m.eval.Update(msg)
 	cmds = append(cmds, cmd)
 
-	if m.mode.IsSongMode() {
-		m.song, cmd = m.song.Update(msg)
-		cmds = append(cmds, cmd)
-	} else if m.mode.IsExplorerMode() {
-		m.explorer, cmd = m.explorer.Update(msg)
-		cmds = append(cmds, cmd)
-	}
+	m.song, cmd = m.song.Update(msg)
+	cmds = append(cmds, cmd)
+
+	m.explorer, cmd = m.explorer.Update(msg)
+	cmds = append(cmds, cmd)
 
 	m.status, cmd = m.status.Update(msg)
 	cmds = append(cmds, cmd)
@@ -169,12 +163,16 @@ func (m appModel) View() string {
 }
 
 func (m *appModel) updateKeyBindings() {
+	defaultKeyMap.Command.SetEnabled(m.mode.IsCommandMode())
+
 	if m.mode.IsCommandMode() {
-		defaultKeyMap.Command.SetEnabled(true)
-		defaultKeyMap.Explorer.SetEnabled(false)
 		defaultKeyMap.Global.SetEnabled(false)
+
+		defaultKeyMap.Explorer.SetEnabled(false)
 		defaultKeyMap.Song.SetEnabled(false)
 	} else {
+		defaultKeyMap.Global.SetEnabled(true)
+
 		defaultKeyMap.Global.Explorer.SetEnabled(!m.mode.IsExplorerMode())
 		defaultKeyMap.Global.Song.SetEnabled(!m.mode.IsSongMode())
 		defaultKeyMap.Explorer.SetEnabled(m.mode.IsExplorerMode())
