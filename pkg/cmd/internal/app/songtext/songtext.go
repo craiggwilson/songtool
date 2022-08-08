@@ -21,13 +21,11 @@ func New() Model {
 }
 
 type Model struct {
-	ChordStyle       lipgloss.Style
-	LyricsStyle      lipgloss.Style
-	SectionNameStyle lipgloss.Style
-	KeyMap           KeyMap
-	Height           int
-	MaxColumns       int
-	Width            int
+	Styles     Styles
+	KeyMap     KeyMap
+	Height     int
+	MaxColumns int
+	Width      int
 
 	Lines []songio.Line
 
@@ -68,7 +66,7 @@ func (m Model) contentView() string {
 
 	renderedSections := make([]string, len(sections))
 	for i, section := range sections {
-		rs := section.render(m.SectionNameStyle)
+		rs := section.render(m.Styles.SectionName)
 		maxSectionWidth = max(maxSectionWidth, lipgloss.Width(rs)+colStyle.GetHorizontalFrameSize())
 		renderedSections[i] = rs
 	}
@@ -109,7 +107,7 @@ func (m Model) buildSections() []section {
 		case *songio.SectionEndDirectiveLine:
 			sections = append(sections, currentSection)
 		case *songio.TextLine:
-			currentSection.lines = append(currentSection.lines, m.LyricsStyle.Render(tl.Text))
+			currentSection.lines = append(currentSection.lines, m.Styles.Lyrics.Render(tl.Text))
 		case *songio.ChordLine:
 			row := ""
 			currentOffset := 0
@@ -121,7 +119,7 @@ func (m Model) buildSections() []section {
 				}
 
 				chordName := chordOffset.Chord.Name
-				row += m.ChordStyle.Render(chordName)
+				row += m.Styles.Chord.Render(chordName)
 				currentOffset += len(chordName)
 			}
 

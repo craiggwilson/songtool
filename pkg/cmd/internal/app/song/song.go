@@ -21,9 +21,9 @@ func New(cfg *config.Config) Model {
 
 	songtext := songtext.New()
 	songtext.MaxColumns = cfg.Styles.MaxColumns
-	songtext.ChordStyle = cfg.Styles.Chord.Style()
-	songtext.LyricsStyle = cfg.Styles.Lyrics.Style()
-	songtext.SectionNameStyle = cfg.Styles.SectionName.Style()
+	songtext.Styles.Chord = cfg.Styles.Chord.Style()
+	songtext.Styles.Lyrics = cfg.Styles.Lyrics.Style()
+	songtext.Styles.SectionName = cfg.Styles.SectionName.Style()
 
 	footer := footer.New()
 	footer.BorderColor = cfg.Styles.BoundaryColor.Color()
