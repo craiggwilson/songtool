@@ -1,6 +1,10 @@
 package internal
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/app"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/message"
@@ -13,7 +17,21 @@ type AppCmd struct {
 }
 
 func (cmd *AppCmd) Run(cfg *config.Config) error {
-	appModel := app.New(cfg, message.LoadSong(cmd.Path))
+
+	fi, err := os.Stat(cmd.Path)
+	if err != nil {
+		return fmt.Errorf("could not stat %s: %w", cmd.Path, err)
+	}
+
+	var appCmds []tea.Cmd
+	if !fi.IsDir() {
+		appCmds = append(appCmds, message.LoadSong(cmd.Path))
+		appCmds = append(appCmds, message.LoadDirectory(filepath.Dir(cmd.Path)))
+	} else {
+		appCmds = append(appCmds, message.LoadDirectory(cmd.Path))
+	}
+
+	appModel := app.New(cfg, appCmds...)
 
 	p := tea.NewProgram(
 		appModel,

@@ -9,12 +9,12 @@ import (
 
 var defaultKeyMap = func() *keyMap {
 	km := keyMap{
-		Global: globalKeyMap{
+		Global: &globalKeyMap{
 			CommandMode: key.NewBinding(key.WithKeys(":"), key.WithHelp(":", "command mode")),
-			Explorer:    key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "explorer mode")),
-			Song:        key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "song mode")),
+			Explorer:    key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "explorer mode")),
+			Song:        key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "song mode")),
 			Help:        key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "toggle help")),
-			Quit:        key.NewBinding(key.WithKeys("q", "ctlr+c", "esc"), key.WithHelp("q", "quit")),
+			Quit:        key.NewBinding(key.WithKeys("q", "ctlr+c"), key.WithHelp("q", "quit")),
 		},
 		Explorer: explorer.DefaultKeyMap(),
 		Song:     song.DefaultKeyMap(),
@@ -26,10 +26,10 @@ var defaultKeyMap = func() *keyMap {
 }()
 
 type keyMap struct {
-	Global   globalKeyMap
-	Explorer explorer.KeyMap
-	Song     song.KeyMap
-	Command  status.KeyMap
+	Global   *globalKeyMap
+	Explorer *explorer.KeyMap
+	Song     *song.KeyMap
+	Command  *status.KeyMap
 }
 
 type globalKeyMap struct {

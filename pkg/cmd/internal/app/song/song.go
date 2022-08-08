@@ -39,7 +39,7 @@ func New(cfg *config.Config) Model {
 type Model struct {
 	Height int
 	Width  int
-	KeyMap KeyMap
+	KeyMap *KeyMap
 
 	header   header.Model
 	songtext songtext.Model
@@ -62,17 +62,18 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		case key.Matches(tmsg, m.KeyMap.TransposeUp1):
 			return m, message.Eval("transpose 1")
 		}
+	case message.InvalidateMsg:
+		m.songtext.KeyMap = m.KeyMap.KeyMap
+		m.header.Width = m.Width
+		m.songtext.Width = m.Width
+		m.footer.Width = m.Width
+
+		headerHeight := lipgloss.Height(m.header.View())
+		footerHeight := lipgloss.Height(m.footer.View())
+		m.songtext.Height = m.Height - headerHeight - footerHeight
 	}
 
-	m.songtext.KeyMap = m.KeyMap.KeyMap
-	m.header.Width = m.Width
-	m.songtext.Width = m.Width
-	m.footer.Width = m.Width
 	m.footer.ScrollPercent = m.songtext.ScrollPercent()
-
-	headerHeight := lipgloss.Height(m.header.View())
-	footerHeight := lipgloss.Height(m.footer.View())
-	m.songtext.Height = m.Height - headerHeight - footerHeight
 
 	m.header, cmd = m.header.Update(msg)
 	cmds = append(cmds, cmd)

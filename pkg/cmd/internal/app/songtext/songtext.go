@@ -44,10 +44,10 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m.Lines = tmsg.Lines
 		m.viewport.SetContent(m.contentView())
 		return m, nil
+	case message.InvalidateMsg:
+		m.viewport.Height = m.Height
+		m.viewport.Width = m.Width
 	}
-
-	m.viewport.Height = m.Height
-	m.viewport.Width = m.Width
 
 	var cmd tea.Cmd
 	m.viewport, cmd = m.viewport.Update(msg)

@@ -3,6 +3,7 @@ package eval
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/message"
@@ -27,6 +28,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch tmsg := msg.(type) {
 	case message.EvalMsg:
 		return m, run(m.Context, tmsg.Text)
+	case message.LoadDirectoryMsg:
+		return m, m.listFiles(tmsg.Path)
 	case message.OpenSongMsg:
 		return m, m.openSong(tmsg.Path)
 	case message.TransposeSongMsg:
@@ -37,6 +40,22 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	}
 
 	return m, nil
+}
+
+func (m Model) listFiles(path string) tea.Cmd {
+	return func() tea.Msg {
+		entries, err := os.ReadDir(path)
+		if err != nil {
+			return message.UpdateStatusError(err)()
+		}
+
+		files := make([]message.FileItem, len(entries))
+		for i := range entries {
+			files[i].Path = filepath.Join(path, entries[i].Name())
+		}
+
+		return message.UpdateFiles(files)()
+	}
 }
 
 func (m Model) openSong(path string) tea.Cmd {

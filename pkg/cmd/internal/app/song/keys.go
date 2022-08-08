@@ -5,8 +5,8 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 )
 
-func DefaultKeyMap() KeyMap {
-	return KeyMap{
+func DefaultKeyMap() *KeyMap {
+	return &KeyMap{
 		KeyMap:         viewport.DefaultKeyMap(),
 		Transpose:      key.NewBinding(key.WithKeys("t"), key.WithHelp("t", "transpose")),
 		TransposeDown1: key.NewBinding(key.WithKeys("h", "left"), key.WithHelp("←/h", "transpose down")),

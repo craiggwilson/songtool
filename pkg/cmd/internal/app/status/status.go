@@ -19,7 +19,7 @@ func New() Model {
 
 type Model struct {
 	HelpKeyMap help.KeyMap
-	KeyMap     KeyMap
+	KeyMap     *KeyMap
 	Width      int
 
 	info string
@@ -63,8 +63,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				value := m.command.Value()
 				m.command.Reset()
 				return m, tea.Batch(
-					message.ExitCommandMode(),
 					message.Eval(value),
+					message.ExitCommandMode(),
 				)
 			case key.Matches(tmsg, m.KeyMap.Clear):
 				m.command.Reset()
@@ -75,10 +75,10 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				return m, cmd
 			}
 		}
+	case message.InvalidateMsg:
+		m.command.Width = m.Width
+		m.help.Width = m.Width
 	}
-
-	m.command.Width = m.Width
-	m.help.Width = m.Width
 
 	if _, ok := msg.(tea.KeyMsg); !ok {
 		m.command, cmd = m.command.Update(msg)
