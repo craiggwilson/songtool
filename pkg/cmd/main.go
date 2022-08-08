@@ -3,6 +3,9 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"io"
+	"log"
+	"os"
 	"strconv"
 
 	"github.com/craiggwilson/songtool/pkg/cmd/internal"
@@ -21,6 +24,8 @@ var mainCmd struct {
 	Meta      internal.MetaCmd      `cmd:"" help:"Displays the meta information about a song."`
 	Scales    internal.ScalesCmd    `cmd:"" help:"Tools for working with scales."`
 	Transpose internal.TransposeCmd `cmd:"" help:"Transposes a song."`
+
+	LogFile string `name:"logfile"`
 }
 
 func Run(versionInfo VersionInfo, args []string) int {
@@ -41,6 +46,18 @@ func Run(versionInfo VersionInfo, args []string) int {
 		}
 
 		return 1
+	}
+
+	if len(mainCmd.LogFile) > 0 {
+		f, err := os.OpenFile(mainCmd.LogFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+		if err != nil {
+			fmt.Fprintln(parser.Stdout, fmt.Errorf("opening log file %q: %w", mainCmd.LogFile, err))
+			return 4
+		}
+		defer f.Close()
+		log.SetOutput(f)
+	} else {
+		log.SetOutput(io.Discard)
 	}
 
 	cfg, err := config.Load("")

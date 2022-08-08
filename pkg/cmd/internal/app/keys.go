@@ -14,7 +14,7 @@ var defaultKeyMap = func() *keyMap {
 			Explorer:    key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "explorer mode")),
 			Song:        key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "song mode")),
 			Help:        key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "toggle help")),
-			Quit:        key.NewBinding(key.WithKeys("q", "ctlr+c"), key.WithHelp("q", "quit")),
+			Quit:        key.NewBinding(key.WithKeys("q", "esc", "ctlr+c"), key.WithHelp("q/esc", "quit")),
 		},
 		Explorer: explorer.DefaultKeyMap(),
 		Song:     song.DefaultKeyMap(),

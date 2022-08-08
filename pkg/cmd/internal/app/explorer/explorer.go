@@ -1,36 +1,35 @@
 package explorer
 
 import (
+	"path/filepath"
+	"strconv"
+	"strings"
+
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/message"
 )
 
 func New() Model {
-	items := []list.Item{
-		item{Title: "Funny 1"},
-		item{Title: "All Creatures"},
-	}
-
-	list := list.New(items, newItemDelegate(), 0, 0)
-	list.DisableQuitKeybindings()
-	list.SetShowHelp(false)
-	list.SetShowStatusBar(false)
-	list.SetShowTitle(false)
-
 	return Model{
-		list: list,
+		KeyMap: DefaultKeyMap(),
+		Styles: DefaultStyles(),
 	}
 }
 
 type Model struct {
 	KeyMap *KeyMap
-	Width  int
+	Styles Styles
 	Height int
+	Width  int
 
-	list list.Model
-	path string
+	leftColumnIdx   int
+	selectedItemIdx int
+	items           []item
+	itemsPerColumn  int
+
+	renderedColumns []string
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
@@ -45,33 +44,108 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		cmds = append(cmds, cmd)
 	case tea.KeyMsg:
 		switch {
+		case key.Matches(tmsg, m.KeyMap.MoveRight):
+			if m.selectedItemIdx+m.itemsPerColumn < len(m.items) {
+				m.updateSelectedIndex(m.selectedItemIdx + m.itemsPerColumn)
+			}
+		case key.Matches(tmsg, m.KeyMap.MoveLeft):
+			if m.selectedItemIdx-m.itemsPerColumn >= 0 {
+				m.updateSelectedIndex(m.selectedItemIdx - m.itemsPerColumn)
+			}
+		case key.Matches(tmsg, m.KeyMap.MoveUp):
+			if m.selectedItemIdx > 0 {
+				m.updateSelectedIndex(m.selectedItemIdx - 1)
+			}
+		case key.Matches(tmsg, m.KeyMap.MoveDown):
+			if m.selectedItemIdx+1 < len(m.items) {
+				m.updateSelectedIndex(m.selectedItemIdx + 1)
+			}
 		case key.Matches(tmsg, m.KeyMap.Select):
-			item := m.list.SelectedItem().(item)
-			return m, tea.Batch(
-				message.LoadSong(item.Path),
-				message.EnterSongMode(),
-			)
+			if len(m.items) > 0 {
+				item := m.items[m.selectedItemIdx]
+				return m, tea.Batch(
+					message.LoadSong(item.Path),
+					message.EnterSongMode(),
+				)
+			}
 		}
 	case message.InvalidateMsg:
-		m.list.SetWidth(m.Width)
-		m.list.SetHeight(m.Height)
+		m.itemsPerColumn = m.Height - 1
+		m.renderColumns()
 	}
 
-	m.list, cmd = m.list.Update(msg)
-	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
 }
 
 func (m Model) View() string {
-	return m.list.View()
+	var columnsToRender []string
+
+	currentWidth := 0
+	for i := m.leftColumnIdx; i < len(m.renderedColumns); i++ {
+		width := lipgloss.Width(m.renderedColumns[i])
+		if currentWidth+width > m.Width {
+			break
+		}
+		columnsToRender = append(columnsToRender, m.renderedColumns[i])
+		currentWidth += width
+	}
+
+	return lipgloss.JoinHorizontal(lipgloss.Top, columnsToRender...)
+}
+
+func (m *Model) renderColumns() {
+	m.renderedColumns = m.renderedColumns[:0]
+	colCount := len(m.items)/(m.Height-1) + 1
+
+	for i := 0; i < colCount; i++ {
+		m.renderedColumns = append(m.renderedColumns, m.renderColumn(i))
+	}
+}
+
+func (m *Model) renderColumn(columnIdx int) string {
+	var render strings.Builder
+	for i := (m.Height - 1) * columnIdx; i < len(m.items) && i < (m.Height-1)*(columnIdx+1); i++ {
+		fn := m.Styles.ItemStyle.Render
+		if i == m.selectedItemIdx {
+			fn = m.Styles.SelectedItemStyle.Render
+		}
+
+		render.WriteString(fn(strconv.Itoa(i+1)+". "+filepath.Base(m.items[i].Path)) + "\n")
+	}
+
+	return m.Styles.ColumnStyle.Render(render.String())
 }
 
 func (m *Model) updateItems(files []message.FileItem) tea.Cmd {
-	items := make([]list.Item, len(files))
+	items := make([]item, len(files))
 	for i := range files {
 		items[i] = item{Path: files[i].Path, Title: files[i].Title}
 	}
 
-	m.list.SetItems(items)
-	return nil
+	m.items = items
+	return message.Invalidate()
+}
+
+func (m *Model) updateSelectedIndex(to int) {
+	fromColIdx := m.selectedItemIdx / m.itemsPerColumn
+	toColIdx := to / m.itemsPerColumn
+	m.selectedItemIdx = to
+
+	m.renderedColumns[fromColIdx] = m.renderColumn(fromColIdx)
+	if fromColIdx != toColIdx {
+		m.renderedColumns[toColIdx] = m.renderColumn(toColIdx)
+	}
+
+	if toColIdx > 1 {
+		m.leftColumnIdx = toColIdx - 1
+	} else {
+		m.leftColumnIdx = 0
+	}
+}
+
+func max(a, b int) int {
+	if a >= b {
+		return a
+	}
+	return b
 }

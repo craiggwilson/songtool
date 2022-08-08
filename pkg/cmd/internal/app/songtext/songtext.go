@@ -73,6 +73,10 @@ func (m Model) contentView() string {
 		renderedSections[i] = rs
 	}
 
+	if maxSectionWidth == 0 {
+		maxSectionWidth = m.Width
+	}
+
 	numCols := max(1, min(m.Width/maxSectionWidth, m.MaxColumns))
 	colStyle.Width(maxSectionWidth)
 
