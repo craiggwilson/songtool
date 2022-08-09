@@ -87,6 +87,8 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.mode |= modeCommand
 		}
 		m.updateKeyBindings()
+	case message.UpdateSongMsg:
+		m.updateKeyBindings()
 	case message.UpdateStatusMsg:
 		m.hasStatus = tmsg.Info != "" || tmsg.Err != nil
 	case tea.KeyMsg:

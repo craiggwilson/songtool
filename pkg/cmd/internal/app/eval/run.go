@@ -46,9 +46,11 @@ var mainCmd struct {
 type enharmonicCmd struct{}
 
 func (cmd *enharmonicCmd) Run(ctx Context, result *tea.Cmd) error {
+	if ctx.Meta == nil {
+		return fmt.Errorf("no song loaded")
+	}
 	if ctx.Meta.Key == nil {
-		*result = message.UpdateStatusError(fmt.Errorf("current key is unset"))
-		return nil
+		return fmt.Errorf("current key is unset")
 	}
 
 	*result = message.TransposeSong(ctx.Meta.Key.Enharmonic())
@@ -67,8 +69,11 @@ type transposeCmd struct {
 }
 
 func (cmd *transposeCmd) Run(ctx Context, result *tea.Cmd) error {
+	if ctx.Meta == nil {
+		return fmt.Errorf("no song loaded")
+	}
 	if ctx.Meta.Key == nil {
-		*result = message.UpdateStatusError(fmt.Errorf("current key is unset"))
+		return fmt.Errorf("current key is unset")
 	}
 
 	var intval interval.Interval
