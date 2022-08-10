@@ -2,6 +2,7 @@ package eval
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -49,9 +50,34 @@ func (m Model) listFiles(path string) tea.Cmd {
 			return message.UpdateStatusError(err)()
 		}
 
-		files := make([]message.FileItem, len(entries))
+		files := make([]message.FileItem, 0, len(entries))
 		for i := range entries {
-			files[i].Path = filepath.Join(path, entries[i].Name())
+			if entries[i].IsDir() {
+				continue
+			}
+
+			var file message.FileItem
+
+			//go func(i int) {
+			file.Path = filepath.Join(path, entries[i].Name())
+			f, err := os.Open(file.Path)
+			if err != nil {
+				log.Printf("failed opening %q: %v\n", file.Path, err)
+				f.Close()
+				continue
+			}
+			defer f.Close()
+
+			rdr := songio.ReadChordsOverLyrics(m.Context.Theory, m.Context.Theory, f)
+			meta, err := songio.ReadMeta(m.Context.Theory, rdr, false)
+			if err != nil {
+				log.Printf("failed getting meta for %q: %v\n", file.Path, err)
+				continue
+			}
+
+			file.Meta = &meta
+			files = append(files, file)
+			//}(i)
 		}
 
 		return message.UpdateFiles(files)()
@@ -59,43 +85,47 @@ func (m Model) listFiles(path string) tea.Cmd {
 }
 
 func (m Model) openSong(path string) tea.Cmd {
-	var f *os.File
-	var err error
-	switch path {
-	case "":
-		return message.UpdateStatusError(fmt.Errorf("no file to load"))
-	default:
-		f, err = os.Open(path)
-		if err != nil {
-			return message.UpdateStatusError(err)
+	return func() tea.Msg {
+		var f *os.File
+		var err error
+		switch path {
+		case "":
+			return message.UpdateStatusError(fmt.Errorf("no file to load"))()
+		default:
+			f, err = os.Open(path)
+			if err != nil {
+				return message.UpdateStatusError(err)()
+			}
 		}
-	}
-	defer f.Close()
+		defer f.Close()
 
-	rdr := songio.ReadChordsOverLyrics(m.Context.Theory, m.Context.Theory, f)
-	lines, err := songio.ReadAllLines(rdr)
-	if err != nil {
-		return message.UpdateStatusError(err)
-	}
+		rdr := songio.ReadChordsOverLyrics(m.Context.Theory, m.Context.Theory, f)
+		lines, err := songio.ReadAllLines(rdr)
+		if err != nil {
+			return message.UpdateStatusError(err)()
+		}
 
-	meta, err := songio.ReadMeta(m.Context.Theory, songio.FromLines(lines), true)
-	if err != nil {
-		return message.UpdateStatusError(err)
-	}
+		meta, err := songio.ReadMeta(m.Context.Theory, songio.FromLines(lines), true)
+		if err != nil {
+			return message.UpdateStatusError(err)()
+		}
 
-	if meta.Title == "" {
-		meta.Title = path
-	}
+		if meta.Title == "" {
+			meta.Title = path
+		}
 
-	return message.UpdateSong(meta, lines)
+		return message.UpdateSong(meta, lines)()
+	}
 }
 
 func (m Model) transposeSong(by interval.Interval) tea.Cmd {
-	transposed := songio.Transpose(m.Context.Theory, songio.FromLines(m.Context.Lines), by)
-	meta, err := songio.ReadMeta(m.Context.Theory, transposed, true)
-	if err != nil {
-		return message.UpdateStatusError(err)
-	}
+	return func() tea.Msg {
+		transposed := songio.Transpose(m.Context.Theory, songio.FromLines(m.Context.Lines), by)
+		meta, err := songio.ReadMeta(m.Context.Theory, transposed, true)
+		if err != nil {
+			return message.UpdateStatusError(err)()
+		}
 
-	return message.UpdateSong(meta, m.Context.Lines)
+		return message.UpdateSong(meta, m.Context.Lines)()
+	}
 }

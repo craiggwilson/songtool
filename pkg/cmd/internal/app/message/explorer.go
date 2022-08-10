@@ -1,6 +1,9 @@
 package message
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/craiggwilson/songtool/pkg/songio"
+)
 
 func LoadDirectory(path string) tea.Cmd {
 	return func() tea.Msg {
@@ -23,6 +26,6 @@ type UpdateFilesMsg struct {
 }
 
 type FileItem struct {
-	Path  string
-	Title string
+	Path string
+	Meta *songio.Meta
 }

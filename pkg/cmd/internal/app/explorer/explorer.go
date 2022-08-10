@@ -1,8 +1,8 @@
 package explorer
 
 import (
+	"fmt"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -110,7 +110,7 @@ func (m *Model) renderColumn(columnIdx int) string {
 			fn = m.Styles.SelectedItemStyle.Render
 		}
 
-		render.WriteString(fn(strconv.Itoa(i+1)+". "+filepath.Base(m.items[i].Path)) + "\n")
+		render.WriteString(fn(m.items[i].Text) + "\n")
 	}
 
 	return m.Styles.ColumnStyle.Render(render.String())
@@ -119,7 +119,27 @@ func (m *Model) renderColumn(columnIdx int) string {
 func (m *Model) updateItems(files []message.FileItem) tea.Cmd {
 	items := make([]item, len(files))
 	for i := range files {
-		items[i] = item{Path: files[i].Path, Title: files[i].Title}
+		items[i].Path = files[i].Path
+		title := filepath.Base(items[i].Path)
+		if ext := filepath.Ext(title); len(ext) > 0 {
+			title = strings.TrimSuffix(title, ext)
+		}
+		key := ""
+		if files[i].Meta != nil {
+			if len(files[i].Meta.Title) > 0 {
+				title = files[i].Meta.Title
+			}
+
+			if files[i].Meta.Key != nil {
+				key = files[i].Meta.Key.Name
+			}
+		}
+
+		if key != "" {
+			key = fmt.Sprintf("[%s]", m.Styles.KeyStyle.Render(key))
+		}
+
+		items[i].Text = lipgloss.JoinHorizontal(lipgloss.Top, fmt.Sprintf("%-5s", key), title)
 	}
 
 	m.items = items
