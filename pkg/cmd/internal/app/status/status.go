@@ -1,6 +1,8 @@
 package status
 
 import (
+	"strings"
+
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textinput"
@@ -62,16 +64,28 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			case key.Matches(tmsg, m.KeyMap.Accept):
 				value := m.command.Value()
 				m.command.Reset()
+
+				if strings.HasPrefix(value, "/") {
+					return m, message.ExitCommandMode()
+				}
 				return m, tea.Batch(
 					message.Eval(value),
 					message.ExitCommandMode(),
 				)
 			case key.Matches(tmsg, m.KeyMap.Clear):
+				value := m.command.Value()
 				m.command.Reset()
 				m.err = nil
-				return m, message.ExitCommandMode()
+				if strings.HasPrefix(value, "/") {
+					cmds = append(cmds, message.FilterFiles(""))
+				}
+				cmds = append(cmds, message.ExitCommandMode())
+				return m, tea.Batch(cmds...)
 			default:
 				m.command, cmd = m.command.Update(msg)
+				if v := m.command.Value(); strings.HasPrefix(v, "/") {
+					cmd = tea.Batch(cmd, message.FilterFiles(v[1:]))
+				}
 				return m, cmd
 			}
 		}

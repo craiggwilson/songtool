@@ -5,6 +5,16 @@ import (
 	"github.com/craiggwilson/songtool/pkg/songio"
 )
 
+func FilterFiles(text string) tea.Cmd {
+	return func() tea.Msg {
+		return FilterFilesMsg{Text: text}
+	}
+}
+
+type FilterFilesMsg struct {
+	Text string
+}
+
 func LoadDirectory(path string) tea.Cmd {
 	return func() tea.Msg {
 		return LoadDirectoryMsg{Path: path}

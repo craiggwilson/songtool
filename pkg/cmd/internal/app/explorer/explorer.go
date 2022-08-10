@@ -9,6 +9,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/message"
+	"github.com/sahilm/fuzzy"
 )
 
 func New() Model {
@@ -26,7 +27,9 @@ type Model struct {
 
 	leftColumnIdx   int
 	selectedItemIdx int
-	items           []item
+	filter          string
+	filteredResults fuzzy.Matches
+	items           items
 	itemsPerColumn  int
 
 	renderedColumns []string
@@ -39,13 +42,17 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	)
 
 	switch tmsg := msg.(type) {
+	case message.FilterFilesMsg:
+		m.filter = tmsg.Text
+		m.filterItems()
+		return m, message.Invalidate()
 	case message.UpdateFilesMsg:
 		cmd = m.updateItems(tmsg.Files)
 		cmds = append(cmds, cmd)
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(tmsg, m.KeyMap.MoveRight):
-			if m.selectedItemIdx+m.itemsPerColumn < len(m.items) {
+			if m.selectedItemIdx+m.itemsPerColumn < len(m.filteredResults) {
 				m.updateSelectedIndex(m.selectedItemIdx + m.itemsPerColumn)
 			}
 		case key.Matches(tmsg, m.KeyMap.MoveLeft):
@@ -57,14 +64,14 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				m.updateSelectedIndex(m.selectedItemIdx - 1)
 			}
 		case key.Matches(tmsg, m.KeyMap.MoveDown):
-			if m.selectedItemIdx+1 < len(m.items) {
+			if m.selectedItemIdx+1 < len(m.filteredResults) {
 				m.updateSelectedIndex(m.selectedItemIdx + 1)
 			}
 		case key.Matches(tmsg, m.KeyMap.Select):
-			if len(m.items) > 0 {
-				item := m.items[m.selectedItemIdx]
+			if len(m.filteredResults) > 0 {
+				item := m.filteredResults[m.selectedItemIdx]
 				return m, tea.Batch(
-					message.LoadSong(item.Path),
+					message.LoadSong(m.items[item.Index].Path),
 					message.EnterSongMode(),
 				)
 			}
@@ -93,9 +100,25 @@ func (m Model) View() string {
 	return lipgloss.JoinHorizontal(lipgloss.Top, columnsToRender...)
 }
 
+func (m *Model) filterItems() {
+	if len(m.filter) == 0 {
+		m.filteredResults = make([]fuzzy.Match, len(m.items))
+		for i := 0; i < len(m.filteredResults); i++ {
+			m.filteredResults[i] = fuzzy.Match{
+				Index: i,
+			}
+		}
+	} else {
+		m.filteredResults = fuzzy.FindFrom(m.filter, m.items)
+		if m.selectedItemIdx > len(m.filteredResults) {
+			m.selectedItemIdx = len(m.filteredResults) - 1
+		}
+	}
+}
+
 func (m *Model) renderColumns() {
 	m.renderedColumns = m.renderedColumns[:0]
-	colCount := len(m.items)/(m.Height-1) + 1
+	colCount := len(m.filteredResults)/(m.Height-1) + 1
 
 	for i := 0; i < colCount; i++ {
 		m.renderedColumns = append(m.renderedColumns, m.renderColumn(i))
@@ -104,16 +127,17 @@ func (m *Model) renderColumns() {
 
 func (m *Model) renderColumn(columnIdx int) string {
 	var render strings.Builder
-	for i := (m.Height - 1) * columnIdx; i < len(m.items) && i < (m.Height-1)*(columnIdx+1); i++ {
+
+	for i := (m.Height - 1) * columnIdx; i < len(m.filteredResults) && i < (m.Height-1)*(columnIdx+1); i++ {
 		fn := m.Styles.ItemStyle.Render
 		if i == m.selectedItemIdx {
 			fn = m.Styles.SelectedItemStyle.Render
 		}
 
-		render.WriteString(fn(m.items[i].Text) + "\n")
+		render.WriteString(fn(m.items[m.filteredResults[i].Index].Text) + "\n")
 	}
 
-	return m.Styles.ColumnStyle.Render(render.String())
+	return lipgloss.PlaceVertical(m.Height, lipgloss.Top, m.Styles.ColumnStyle.Render(render.String()))
 }
 
 func (m *Model) updateItems(files []message.FileItem) tea.Cmd {
@@ -143,6 +167,8 @@ func (m *Model) updateItems(files []message.FileItem) tea.Cmd {
 	}
 
 	m.items = items
+	m.filterItems()
+
 	return message.Invalidate()
 }
 
