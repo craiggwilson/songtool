@@ -16,13 +16,15 @@ import (
 	"github.com/craiggwilson/teakwood/stack"
 )
 
+const helpName = "help"
+
 func New(cfg *config.Config, cmds ...tea.Cmd) appModel {
 	app := appModel{
 		cfg:                 cfg,
-		mode:                modeSong,
+		keyMap:              defaultKeyMap,
 		initCmds:            cmds,
 		loadedSongs:         items.NewSlice[*loadedSong](),
-		currentSongSections: items.NewSlice[*loadedSongSection](),
+		currentSongSections: items.NewSlice[string](),
 	}
 
 	app.songView = stack.New(
@@ -37,18 +39,21 @@ func New(cfg *config.Config, cmds ...tea.Cmd) appModel {
 				),
 			),
 			stack.NewProportionalItem(1,
-				named.New("content", flow.New[*loadedSongSection](
+				named.New("content", flow.New[string](
 					app.currentSongSections,
-					items.RenderFunc[*loadedSongSection](func(sm *loadedSongSection) string {
-						return "here"
+					items.RenderFunc[string](func(s string) string {
+						return s
 					}),
-					flow.WithHorizontalAlignment[*loadedSongSection](lipgloss.Center),
-					flow.WithOrientation[*loadedSongSection](flow.Vertical),
-					flow.WithVerticalAlignment[*loadedSongSection](lipgloss.Center),
+					flow.WithHorizontalAlignment[string](lipgloss.Center),
+					flow.WithOrientation[string](flow.Vertical),
+					flow.WithVerticalAlignment[string](lipgloss.Center),
+					flow.WithStyles[string](flow.Styles{
+						Item: lipgloss.NewStyle().Padding(2),
+					}),
 				)),
 			),
 			stack.NewAutoItem(
-				named.New("help", adapter.New(
+				named.New(helpName, adapter.New(
 					help.New(),
 					adapter.WithUpdateBounds(func(m help.Model, bounds teakwood.Rectangle) help.Model {
 						m.Width = bounds.Width
@@ -68,15 +73,16 @@ func New(cfg *config.Config, cmds ...tea.Cmd) appModel {
 type appModel struct {
 	cfg      *config.Config
 	initCmds []tea.Cmd
+	keyMap   *keyMap
 
-	ready bool
-	mode  mode
+	mode mode
 
-	loadedSongs         *items.Slice[*loadedSong]
+	loadedSongs *items.Slice[*loadedSong]
+
 	currentSongIdx      int
-	currentSongSections items.Source[*loadedSongSection]
+	currentSongSections *items.Slice[string]
 
-	songView stack.Model
+	songView tea.Model
 
 	hasStatus bool
 }
@@ -92,83 +98,62 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	)
 
 	switch tmsg := msg.(type) {
+	case EnterSongModeMsg:
+		m.mode = modeSong
+		m.updateKeyBindings()
+	case OpenSongMsg:
+		cmds = append(cmds, m.openSong(tmsg.Path))
 	case SongOpenedMsg:
 		m.loadedSongs.Add(&loadedSong{
 			path:  tmsg.Path,
 			meta:  &tmsg.Meta,
 			lines: tmsg.Lines,
 		})
-		return m, nil
-	case OpenSongMsg:
-		return m, m.openSong(tmsg.Path)
+		m.currentSongIdx = m.loadedSongs.Len() - 1
+		m.currentSongSections.Clear()
+		m.currentSongSections.Add(m.loadedSongs.Item(m.currentSongIdx).Sections(m.cfg.Styles)...)
 	case tea.KeyMsg:
 		switch {
-		case m.mode.IsCommandMode():
-			return m, cmd
-		case key.Matches(tmsg, defaultKeyMap.Global.CommandMode):
+		// case m.mode.IsCommandMode():
+		// 	return m, cmd
+		case key.Matches(tmsg, m.keyMap.Global.CommandMode):
 			return m, message.EnterCommandMode("")
-		case key.Matches(tmsg, defaultKeyMap.Global.Explorer):
+		case key.Matches(tmsg, m.keyMap.Global.Explorer):
 			return m, message.EnterExplorerMode()
-		case key.Matches(tmsg, defaultKeyMap.Global.Song):
+		case key.Matches(tmsg, m.keyMap.Global.Song):
 			return m, message.EnterSongMode()
-		case key.Matches(tmsg, defaultKeyMap.Global.Help):
-			return m, named.Update("help", func(a adapter.Model[help.Model], m2 tea.Msg) (tea.Model, tea.Cmd) {
+		case key.Matches(tmsg, m.keyMap.Global.Help):
+			cmds = append(cmds, named.Update(helpName, func(a adapter.Model[help.Model], _ tea.Msg) (tea.Model, tea.Cmd) {
 				a.UpdateAdaptee(func(h help.Model) help.Model {
 					h.ShowAll = !h.ShowAll
 					return h
 				})
-				return a, nil
-			})
-		case key.Matches(tmsg, defaultKeyMap.Global.Quit):
-			if m.hasStatus {
-				return m, message.ClearStatus()
+				return a, invalidate
+			}))
+		case key.Matches(tmsg, m.keyMap.Global.Quit):
+			if !m.hasStatus {
+				return m, tea.Quit
 			}
 
-			return m, tea.Quit
-		case m.mode.IsExplorerMode():
-			return m, cmd
-		case m.mode.IsSongMode():
-			return m, cmd
+			cmds = append(cmds, message.ClearStatus())
 		}
 	case tea.WindowSizeMsg:
-		m.ready = true
-		v := m.songView.UpdateBounds(teakwood.NewRectangle(0, 0, tmsg.Width-1, tmsg.Height-1))
-		m.songView = v.(stack.Model)
+		m.songView = m.songView.(stack.Model).UpdateBounds(teakwood.NewRectangle(0, 0, tmsg.Width, tmsg.Height))
 	}
 
-	newSongView, cmd := m.songView.Update(msg)
-	m.songView = newSongView.(stack.Model)
+	m.songView, cmd = m.songView.Update(msg)
 	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
 }
 
 func (m appModel) View() string {
-	if !m.ready {
-		return "\n  Initializing..."
-	}
-
-	if m.mode.IsSongMode() {
-		return m.songView.View()
-	}
-
-	return "\n  Problems..."
+	return m.songView.View()
 }
 
-func (m *appModel) updateKeyBindings() {
-	defaultKeyMap.Command.SetEnabled(m.mode.IsCommandMode())
-
-	if m.mode.IsCommandMode() {
-		defaultKeyMap.Global.SetEnabled(false)
-
-		defaultKeyMap.Explorer.SetEnabled(false)
-		defaultKeyMap.Song.SetEnabled(false)
-	} else {
-		defaultKeyMap.Global.SetEnabled(true)
-
-		defaultKeyMap.Global.Explorer.SetEnabled(!m.mode.IsExplorerMode())
-		defaultKeyMap.Global.Song.SetEnabled(!m.mode.IsSongMode())
-		defaultKeyMap.Explorer.SetEnabled(m.mode.IsExplorerMode())
-		defaultKeyMap.Song.SetEnabled(m.mode.IsSongMode())
-	}
+// this is a little hack to handle getting around bounds updates through the stack.
+func invalidate() tea.Msg {
+	return invalidateMsg{}
 }
+
+type invalidateMsg struct{}

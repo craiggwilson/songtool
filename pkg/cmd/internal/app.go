@@ -3,11 +3,9 @@ package internal
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/app"
-	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/message"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/config"
 )
 
@@ -27,14 +25,13 @@ func (cmd *AppCmd) Run(cfg *config.Config) error {
 
 		if !fi.IsDir() {
 			appCmds = append(appCmds,
-				message.LoadSong(cmd.Path),
-				message.LoadDirectory(filepath.Dir(cmd.Path)),
-				message.EnterSongMode(),
+				app.OpenSong(cmd.Path),
+				app.EnterSongMode(),
 			)
 		} else {
 			appCmds = append(appCmds,
-				message.LoadDirectory(cmd.Path),
-				message.EnterExplorerMode(),
+				// message.LoadDirectory(cmd.Path),
+				app.EnterExplorerMode(),
 			)
 		}
 	}
@@ -44,7 +41,6 @@ func (cmd *AppCmd) Run(cfg *config.Config) error {
 	p := tea.NewProgram(
 		appModel,
 		tea.WithAltScreen(),
-		tea.WithMouseCellMotion(),
 	)
 
 	return p.Start()

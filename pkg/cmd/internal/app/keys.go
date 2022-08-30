@@ -22,6 +22,8 @@ var defaultKeyMap = func() *keyMap {
 	}
 
 	km.Command.SetEnabled(false)
+	km.Song.SetEnabled(false)
+	km.Explorer.SetEnabled(false)
 	return &km
 }()
 
@@ -68,5 +70,23 @@ func (km *keyMap) FullHelp() [][]key.Binding {
 		{km.Global.Help, km.Global.Quit, km.Global.CommandMode, km.Global.Explorer, km.Global.Song},
 		{km.Song.Transpose, km.Song.TransposeDown1, km.Song.TransposeUp1},
 		{km.Song.Up, km.Song.Down, km.Song.PageUp, km.Song.PageDown, km.Song.HalfPageUp, km.Song.PageDown},
+	}
+}
+
+func (m *appModel) updateKeyBindings() {
+	m.keyMap.Command.SetEnabled(m.mode.IsCommandMode())
+
+	if m.mode.IsCommandMode() {
+		m.keyMap.Global.SetEnabled(false)
+
+		m.keyMap.Explorer.SetEnabled(false)
+		m.keyMap.Song.SetEnabled(false)
+	} else {
+		m.keyMap.Global.SetEnabled(true)
+
+		m.keyMap.Global.Explorer.SetEnabled(!m.mode.IsExplorerMode())
+		m.keyMap.Global.Song.SetEnabled(!m.mode.IsSongMode())
+		m.keyMap.Explorer.SetEnabled(m.mode.IsExplorerMode())
+		m.keyMap.Song.SetEnabled(m.mode.IsSongMode())
 	}
 }
