@@ -1,17 +1,24 @@
 module github.com/craiggwilson/songtool
 
-go 1.17
+go 1.18
+
+replace (
+	github.com/charmbracelet/bubbles => github.com/craiggwilson/bubbles v0.0.0-20220818185048-768742688814
+	github.com/craiggwilson/teakwood => c:/projects/github.com/craiggwilson/teakwood
+)
 
 require (
 	github.com/alecthomas/kong v0.6.1
 	github.com/charmbracelet/bubbles v0.13.0
 	github.com/charmbracelet/bubbletea v0.22.0
 	github.com/charmbracelet/lipgloss v0.5.0
+	github.com/craiggwilson/teakwood v0.0.0-00010101000000-000000000000
 	github.com/kirsle/configdir v0.0.0-20170128060238-e45d2f54772f
 	github.com/knadh/koanf v1.4.2
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/mitchellh/mapstructure v1.4.1
 	github.com/muesli/termenv v0.11.1-0.20220212125758-44cd13922739
+	github.com/sahilm/fuzzy v0.1.0
 	github.com/stretchr/testify v1.8.0
 )
 
@@ -31,7 +38,6 @@ require (
 	github.com/pelletier/go-toml v1.7.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
-	github.com/sahilm/fuzzy v0.1.0 // indirect
 	golang.org/x/sys v0.0.0-20220209214540-3681064d5158 // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

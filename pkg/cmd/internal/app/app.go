@@ -1,40 +1,68 @@
 package app
 
 import (
-	"fmt"
-
+	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/eval"
-	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/explorer"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/message"
-	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/song"
-	"github.com/craiggwilson/songtool/pkg/cmd/internal/app/status"
 	"github.com/craiggwilson/songtool/pkg/cmd/internal/config"
+	"github.com/craiggwilson/teakwood"
+	"github.com/craiggwilson/teakwood/adapter"
+	"github.com/craiggwilson/teakwood/items"
+	"github.com/craiggwilson/teakwood/items/flow"
+	"github.com/craiggwilson/teakwood/items/tabs"
+	"github.com/craiggwilson/teakwood/named"
+	"github.com/craiggwilson/teakwood/stack"
 )
 
 func New(cfg *config.Config, cmds ...tea.Cmd) appModel {
-	explorer := explorer.New()
-	explorer.KeyMap = defaultKeyMap.Explorer
-
-	eval := eval.New(cfg.Theory)
-
-	song := song.New(cfg)
-	song.KeyMap = defaultKeyMap.Song
-
-	status := status.New()
-	status.KeyMap = defaultKeyMap.Command
-	status.HelpKeyMap = defaultKeyMap
-
-	return appModel{
-		cfg:      cfg,
-		initCmds: cmds,
-		eval:     eval,
-		explorer: explorer,
-		song:     song,
-		status:   status,
+	app := appModel{
+		cfg:                 cfg,
+		mode:                modeSong,
+		initCmds:            cmds,
+		loadedSongs:         items.NewSlice[*loadedSong](),
+		currentSongSections: items.NewSlice[*loadedSongSection](),
 	}
+
+	app.songView = stack.New(
+		stack.WithOrientation(stack.Vertical),
+		stack.WithItems(
+			stack.NewAutoItem(
+				tabs.New[*loadedSong](
+					app.loadedSongs,
+					items.RenderFunc[*loadedSong](func(sm *loadedSong) string {
+						return sm.meta.Title
+					}),
+				),
+			),
+			stack.NewProportionalItem(1,
+				named.New("content", flow.New[*loadedSongSection](
+					app.currentSongSections,
+					items.RenderFunc[*loadedSongSection](func(sm *loadedSongSection) string {
+						return "here"
+					}),
+					flow.WithHorizontalAlignment[*loadedSongSection](lipgloss.Center),
+					flow.WithOrientation[*loadedSongSection](flow.Vertical),
+					flow.WithVerticalAlignment[*loadedSongSection](lipgloss.Center),
+				)),
+			),
+			stack.NewAutoItem(
+				named.New("help", adapter.New(
+					help.New(),
+					adapter.WithUpdateBounds(func(m help.Model, bounds teakwood.Rectangle) help.Model {
+						m.Width = bounds.Width
+						return m
+					}),
+					adapter.WithView(func(m help.Model) string {
+						return m.View(defaultKeyMap)
+					}),
+				)),
+			),
+		),
+	)
+
+	return app
 }
 
 type appModel struct {
@@ -44,16 +72,13 @@ type appModel struct {
 	ready bool
 	mode  mode
 
-	eval     eval.Model
-	song     song.Model
-	explorer explorer.Model
-	status   status.Model
+	loadedSongs         *items.Slice[*loadedSong]
+	currentSongIdx      int
+	currentSongSections items.Source[*loadedSongSection]
 
-	helpModeFull bool
-	hasStatus    bool
+	songView stack.Model
 
-	height int
-	width  int
+	hasStatus bool
 }
 
 func (m appModel) Init() tea.Cmd {
@@ -67,34 +92,18 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	)
 
 	switch tmsg := msg.(type) {
-	case message.EnterCommandModeMsg:
-		m.mode |= modeCommand
-		m.updateKeyBindings()
-	case message.ExitCommandModeMsg:
-		m.mode ^= modeCommand
-		m.updateKeyBindings()
-	case message.EnterExplorerModeMsg:
-		cmdMode := m.mode.IsCommandMode()
-		m.mode = modeExplorer
-		if cmdMode {
-			m.mode |= modeCommand
-		}
-		m.updateKeyBindings()
-	case message.EnterSongModeMsg:
-		cmdMode := m.mode.IsCommandMode()
-		m.mode = modeSong
-		if cmdMode {
-			m.mode |= modeCommand
-		}
-		m.updateKeyBindings()
-	case message.UpdateSongMsg:
-		m.updateKeyBindings()
-	case message.UpdateStatusMsg:
-		m.hasStatus = tmsg.Info != "" || tmsg.Err != nil
+	case SongOpenedMsg:
+		m.loadedSongs.Add(&loadedSong{
+			path:  tmsg.Path,
+			meta:  &tmsg.Meta,
+			lines: tmsg.Lines,
+		})
+		return m, nil
+	case OpenSongMsg:
+		return m, m.openSong(tmsg.Path)
 	case tea.KeyMsg:
 		switch {
 		case m.mode.IsCommandMode():
-			m.status, cmd = m.status.Update(msg)
 			return m, cmd
 		case key.Matches(tmsg, defaultKeyMap.Global.CommandMode):
 			return m, message.EnterCommandMode("")
@@ -103,8 +112,13 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(tmsg, defaultKeyMap.Global.Song):
 			return m, message.EnterSongMode()
 		case key.Matches(tmsg, defaultKeyMap.Global.Help):
-			m.helpModeFull = !m.helpModeFull
-			return m, message.ChangeHelpMode(m.helpModeFull)
+			return m, named.Update("help", func(a adapter.Model[help.Model], m2 tea.Msg) (tea.Model, tea.Cmd) {
+				a.UpdateAdaptee(func(h help.Model) help.Model {
+					h.ShowAll = !h.ShowAll
+					return h
+				})
+				return a, nil
+			})
 		case key.Matches(tmsg, defaultKeyMap.Global.Quit):
 			if m.hasStatus {
 				return m, message.ClearStatus()
@@ -112,39 +126,18 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			return m, tea.Quit
 		case m.mode.IsExplorerMode():
-			m.explorer, cmd = m.explorer.Update(msg)
 			return m, cmd
 		case m.mode.IsSongMode():
-			m.song, cmd = m.song.Update(msg)
 			return m, cmd
 		}
 	case tea.WindowSizeMsg:
 		m.ready = true
-		m.height = tmsg.Height
-		m.width = tmsg.Width
-
-		return m, message.Invalidate()
-	case message.InvalidateMsg:
-		m.explorer.Width = m.width
-		m.song.Width = m.width
-		m.status.Width = m.width
-
-		statusHeight := lipgloss.Height(m.status.View())
-
-		m.explorer.Height = m.height - statusHeight
-		m.song.Height = m.height - statusHeight
+		v := m.songView.UpdateBounds(teakwood.NewRectangle(0, 0, tmsg.Width-1, tmsg.Height-1))
+		m.songView = v.(stack.Model)
 	}
 
-	m.eval, cmd = m.eval.Update(msg)
-	cmds = append(cmds, cmd)
-
-	m.song, cmd = m.song.Update(msg)
-	cmds = append(cmds, cmd)
-
-	m.explorer, cmd = m.explorer.Update(msg)
-	cmds = append(cmds, cmd)
-
-	m.status, cmd = m.status.Update(msg)
+	newSongView, cmd := m.songView.Update(msg)
+	m.songView = newSongView.(stack.Model)
 	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
@@ -156,9 +149,7 @@ func (m appModel) View() string {
 	}
 
 	if m.mode.IsSongMode() {
-		return fmt.Sprintf("%s\n%s", m.song.View(), m.status.View())
-	} else if m.mode.IsExplorerMode() {
-		return fmt.Sprintf("%s\n%s", m.explorer.View(), m.status.View())
+		return m.songView.View()
 	}
 
 	return "\n  Problems..."
